@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EventHub · 흩어진 모든 할인을 한 곳에</title>
+<script>
+  // Applied before first paint so switching pages / reloading never flashes the wrong theme.
+  (function () {
+    try {
+      var saved = localStorage.getItem("eventhub-theme");
+      var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- ===== Header ===== -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-top">
+        <h1 class="logo">Event<span>Hub</span></h1>
+        <div class="header-actions">
+          <button class="icon-btn" id="themeToggleBtn" aria-label="화면 모드 전환">
+            <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" width="20" height="20"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" width="20" height="20" hidden><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" fill="currentColor"/></svg>
+          </button>
+          <button class="icon-btn" id="profileBtn" aria-label="프로필">
+            <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z" fill="currentColor"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" class="search-icon"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm10 2-5.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="text" id="globalSearch" placeholder="이벤트, 브랜드, 카테고리 검색...">
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Category Tabs ===== -->
+  <nav class="category-tabs" id="categoryTabs"></nav>
+
+  <main class="main-scroll">
+
+    <!-- ===== AI Recommendation ===== -->
+    <section class="ai-section">
+      <div class="ai-section-head">
+        <span class="ai-badge">AI</span>
+        <div>
+          <p class="ai-title">나만의 맞춤 혜택 찾기</p>
+          <p class="ai-sub">관심사를 입력하면 AI가 딱 맞는 이벤트를 골라드려요</p>
+        </div>
+      </div>
+      <div class="ai-input-row">
+        <input type="text" id="aiInput" placeholder="예: 여름 원피스, 카페 할인, 캠핑용품...">
+        <button class="ai-btn" id="aiRecommendBtn">추천받기</button>
+      </div>
+      <p class="ai-result" id="aiResult" hidden></p>
+    </section>
+
+    <!-- ===== Realtime Ranking ===== -->
+    <section class="ranking-section">
+      <div class="section-head">
+        <h2>🔥 실시간 인기 이벤트</h2>
+        <span class="live-dot">LIVE</span>
+      </div>
+      <ul class="ranking-list" id="rankingList"></ul>
+    </section>
+
+    <!-- ===== Hero Banner ===== -->
+    <section class="hero-banner">
+      <p class="hero-eyebrow">SUMMER SPECIAL</p>
+      <h2 class="hero-title">Big Savings,<br>Bigger Experiences!</h2>
+      <p class="hero-sub">Top brands. Limited time offers. Don't miss out!</p>
+      <button class="hero-btn" id="heroShopBtn">Shop Now →</button>
+      <div class="hero-tag">UP TO<br><strong>70%</strong><br>OFF</div>
+    </section>
+
+    <!-- ===== Feed ===== -->
+    <section class="feed-section">
+      <div class="section-head">
+        <h2 id="feedTitle">전체 이벤트</h2>
+        <span class="feed-count" id="feedCount"></span>
+      </div>
+      <div class="feed-grid" id="feedGrid"></div>
+    </section>
+
+  </main>
+
+  <!-- ===== Bottom Nav ===== -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-nav="home">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M3 11.5 12 4l9 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" data-nav="search">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm10 2-5.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Search</span>
+    </button>
+    <button class="nav-item" data-nav="saved">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 21s-7.2-4.5-9.6-9C.8 8.4 2.6 5 6 5c2 0 3.4 1 6 3.5C14.6 6 16 5 18 5c3.4 0 5.2 3.4 3.6 7-2.4 4.5-9.6 9-9.6 9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span>Saved</span>
+    </button>
+    <button class="nav-item" data-nav="profile">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z" fill="currentColor"/></svg>
+      <span>Profile</span>
+    </button>
+  </nav>
+
+  <!-- ===== Toast ===== -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ===== Bottom Sheet Modal ===== -->
+  <div class="sheet-overlay" id="sheetOverlay">
+    <div class="bottom-sheet" id="bottomSheet">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" id="sheetClose" aria-label="닫기">✕</button>
+
+      <div class="sheet-hero">
+        <img id="sheetImage" class="sheet-photo" src="" alt="">
+        <div class="sheet-hero-overlay">
+          <div class="sheet-brand-logo-wrap">
+            <img id="sheetBrandLogo" src="" alt="">
+          </div>
+          <p class="sheet-eyebrow" id="sheetSubtitle"></p>
+          <h2 class="sheet-title" id="sheetTitle"></h2>
+          <span class="sheet-discount" id="sheetDiscount"></span>
+        </div>
+      </div>
+
+      <div class="sheet-body">
+        <div class="sheet-meta">
+          <div class="meta-item">
+            <span class="meta-icon">📅</span>
+            <div>
+              <p class="meta-label">이벤트 기간</p>
+              <p class="meta-value" id="sheetPeriod"></p>
+            </div>
+          </div>
+          <div class="meta-item">
+            <span class="meta-icon">📍</span>
+            <div>
+              <p class="meta-label">참여 방법</p>
+              <p class="meta-value" id="sheetChannel"></p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="sheet-h3">이벤트 상세</h3>
+        <p class="sheet-desc" id="sheetDesc"></p>
+
+        <div class="sheet-tags" id="sheetTags"></div>
+
+        <button class="like-btn" id="likeBtn">
+          <span class="like-icon" id="likeIcon">♡</span>
+          <span id="likeText">관심 이벤트로 등록하기</span>
+        </button>
+
+        <button class="download-btn" id="downloadBtn">
+          <span>⬇</span> 쿠폰 다운로드 받기
+        </button>
+
+        <a class="visit-btn" id="visitBtn" href="#" target="_blank" rel="noopener noreferrer">
+          브랜드 공식 이벤트 화면으로 이동하기 ↗
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>
