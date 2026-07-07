@@ -66,7 +66,7 @@
     <!-- ===== Realtime Ranking ===== -->
     <section class="ranking-section">
       <div class="section-head">
-        <h2>🔥 실시간 인기 이벤트</h2>
+        <h2 id="rankingTitle">🔥 실시간 인기 이벤트</h2>
         <span class="live-dot">LIVE</span>
       </div>
       <ul class="ranking-list" id="rankingList"></ul>
@@ -88,6 +88,23 @@
         <span class="feed-count" id="feedCount"></span>
       </div>
       <div class="feed-grid" id="feedGrid"></div>
+    </section>
+
+    <!-- ===== Inquiry (문의하기) ===== -->
+    <section class="inquiry-section">
+      <div class="section-head">
+        <h2>💬 문의하기</h2>
+      </div>
+      <form class="inquiry-form" id="inquiryForm">
+        <input type="text" id="inquiryName" placeholder="이름 (선택)">
+        <input type="email" id="inquiryEmail" placeholder="이메일" required>
+        <textarea id="inquiryMessage" placeholder="문의 내용을 입력해주세요" rows="3" required></textarea>
+        <button type="submit" class="inquiry-submit-btn" id="inquirySubmitBtn">문의 등록하기</button>
+        <p class="inquiry-status" id="inquiryStatus" hidden></p>
+      </form>
+
+      <h3 class="sheet-h3" style="margin-top:18px;">최근 문의</h3>
+      <ul class="inquiry-list" id="inquiryList"></ul>
     </section>
 
   </main>

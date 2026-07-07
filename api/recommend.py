@@ -21,7 +21,7 @@ class handler(BaseHTTPRequestHandler):
         # 2. JSON 파싱
         try:
             data = json.loads(body)
-            interest = data.get("interest", "")
+            interest = data.get("interest", "") or data.get("query", "")
         except Exception:
             self._send_json(400, {"error": "잘못된 요청 형식입니다."})
             return
@@ -40,7 +40,7 @@ class handler(BaseHTTPRequestHandler):
         # 5. Gemini API 호출
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+            f"gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
         )
 
         prompt = (

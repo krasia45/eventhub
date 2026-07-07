@@ -1037,7 +1037,7 @@ document.getElementById("aiRecommendBtn").addEventListener("click", async () => 
     const response = await fetch("/api/recommend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: input })
+      body: JSON.stringify({ interest: input })
     });
 
     // HTTP 오류 상태코드 처리 (400, 500 등)
@@ -1049,11 +1049,11 @@ document.getElementById("aiRecommendBtn").addEventListener("click", async () => 
     const data = await response.json();
 
     // ── 성공: 결과 표시 ───────────────────────────────
-    resultEl.textContent = `✨ "${input}" 추천 결과\n\n${data.result}`;
+    resultEl.textContent = `✨ "${input}" 추천 결과\n\n${data.recommendation}`;
     resultEl.style.color = "";
 
     // ── 보너스: localStorage에 히스토리 저장 ──────────
-    saveHistory(input, data.result);
+    saveHistory(input, data.recommendation);
     renderHistory();
 
     // 피드 시각적 반응 (개인화 느낌)
@@ -1209,51 +1209,96 @@ themeToggleBtn.addEventListener("click", () => {
   localStorage.setItem(THEME_KEY, next);
   showToast(next === "dark" ? "🌙 다크 모드로 전환했어요" : "☀️ 라이트 모드로 전환했어요");
 });
-/* ---------- AI 추천 API 연동 로직 (추가 필요) ---------- */
-const aiSubmitBtn = document.getElementById("aiSubmitBtn"); // 전송 버튼 ID에 맞게 수정
-const aiInput = document.getElementById("aiInput");         // 입력창 ID에 맞게 수정
-const aiResult = document.getElementById("aiResult");       // 결과 표시 영역 ID에 맞게 수정
+/* =========================================================
+   문의하기 (Inquiry) — Google Apps Script 웹앱 연동
+   1) 아래 APPS_SCRIPT_URL을 배포한 웹앱 URL로 교체하세요.
+   2) Apps Script 쪽은 doPost(저장+메일알림), doGet(목록 조회)를
+      구현해야 합니다. (Code.gs 파일 참고)
+   ========================================================= */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT2nT_dRD95Ywv6eWSF-JDxDTvI0MOVACQncxAdIRX5kuC2NQc2vNYi4RP71uqx3EO/exec";
 
-if (aiSubmitBtn && aiInput) {
-  aiSubmitBtn.addEventListener("click", async () => {
-    const keyword = aiInput.value.trim();
+const inquiryForm = document.getElementById("inquiryForm");
+const inquiryStatus = document.getElementById("inquiryStatus");
+const inquirySubmitBtn = document.getElementById("inquirySubmitBtn");
 
-    // 1. 빈 입력값 예외 처리
-    if (!keyword) {
-      alert("추천받고 싶은 브랜드나 상황을 입력해주세요!");
-      aiInput.focus();
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function showInquiryStatus(message, isError) {
+  inquiryStatus.hidden = false;
+  inquiryStatus.textContent = message;
+  inquiryStatus.style.color = isError ? "#E53E3E" : "";
+}
+
+if (inquiryForm) {
+  inquiryForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("inquiryName").value.trim();
+    const email = document.getElementById("inquiryEmail").value.trim();
+    const message = document.getElementById("inquiryMessage").value.trim();
+
+    if (!email || !isValidEmail(email)) {
+      showInquiryStatus("올바른 이메일을 입력해주세요.", true);
+      return;
+    }
+    if (!message) {
+      showInquiryStatus("문의 내용을 입력해주세요.", true);
       return;
     }
 
+    inquirySubmitBtn.disabled = true;
+    inquirySubmitBtn.textContent = "등록 중...";
+    showInquiryStatus("문의를 등록하는 중입니다...", false);
+
     try {
-      // 로딩 상태 표시 등 처리 가능
-      
-      const response = await fetch('/api/recommend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // 🌟 핵심: recommend.py가 'interest' 키를 찾으므로 반드시 { interest: keyword }여야 합니다!
-        body: JSON.stringify({ interest: keyword }) 
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ name, email, message }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "서버 오류가 발생했습니다.");
-      }
-
-      // 성공 시 화면에 결과 출력
-      if (aiResult) {
-        aiResult.innerHTML = `<p>${data.recommendation}</p>`;
-      }
-
-      // 보너스: localStorage 히스토리 저장 로직 등 추가 수행
-      saveHistoryToLocalStorage(keyword, data.recommendation);
+      showInquiryStatus("문의가 정상적으로 접수되었습니다. 감사합니다!", false);
+      inquiryForm.reset();
+      loadInquiries();
 
     } catch (err) {
-      console.error(err);
-      if (aiResult) {
-        aiResult.innerHTML = `<p>죄송합니다. AI 서비스 서버가 바쁩니다. 잠시 후 다시 시도해주세요.</p>`;
-      }
+      console.error("문의 등록 오류:", err);
+      showInquiryStatus("잠시 후 다시 시도해주세요.", true);
+
+    } finally {
+      inquirySubmitBtn.disabled = false;
+      inquirySubmitBtn.textContent = "문의 등록하기";
     }
   });
 }
+
+async function loadInquiries() {
+  const listEl = document.getElementById("inquiryList");
+  if (!listEl) return;
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL);
+    const data = await res.json();
+
+    if (!Array.isArray(data) || data.length === 0) {
+      listEl.innerHTML = `<li class="empty-state">아직 등록된 문의가 없어요.</li>`;
+      return;
+    }
+
+    listEl.innerHTML = data.map(item => `
+      <li class="inquiry-item">
+        <p class="inquiry-item-name">${item.name || "익명"}</p>
+        <p class="inquiry-item-message">${item.message}</p>
+        <p class="inquiry-item-time">${item.time}</p>
+      </li>
+    `).join("");
+
+  } catch (err) {
+    console.error("문의 목록 조회 오류:", err);
+    listEl.innerHTML = `<li class="empty-state">문의 목록을 불러오지 못했어요.</li>`;
+  }
+}
+
+loadInquiries();
