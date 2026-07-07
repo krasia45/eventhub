@@ -3,7 +3,7 @@
   "routes": [
     {
       "src": "/api/recommend",
-      "dest": "/api/recommen.py"
+      "dest": "/api/recommend.py"
     },
     {
       "src": "/(.*)",
