@@ -8,7 +8,7 @@
   "routes": [
     {
       "src": "/api/recommend",
-      "dest": "/api/recommend.py"
+      "dest": "/api/recommend"
     },
     {
       "src": "/(.*)",
