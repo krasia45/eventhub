@@ -6,13 +6,13 @@
       "use": "@vercel/python"
     },
     {
-      "src": "frontend/index.html",
+      "src": "frontend/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/api/recommend",
       "dest": "/api/recommen.py"
     },
     {
