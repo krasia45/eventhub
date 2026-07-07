@@ -1209,3 +1209,51 @@ themeToggleBtn.addEventListener("click", () => {
   localStorage.setItem(THEME_KEY, next);
   showToast(next === "dark" ? "🌙 다크 모드로 전환했어요" : "☀️ 라이트 모드로 전환했어요");
 });
+/* ---------- AI 추천 API 연동 로직 (추가 필요) ---------- */
+const aiSubmitBtn = document.getElementById("aiSubmitBtn"); // 전송 버튼 ID에 맞게 수정
+const aiInput = document.getElementById("aiInput");         // 입력창 ID에 맞게 수정
+const aiResult = document.getElementById("aiResult");       // 결과 표시 영역 ID에 맞게 수정
+
+if (aiSubmitBtn && aiInput) {
+  aiSubmitBtn.addEventListener("click", async () => {
+    const keyword = aiInput.value.trim();
+
+    // 1. 빈 입력값 예외 처리
+    if (!keyword) {
+      alert("추천받고 싶은 브랜드나 상황을 입력해주세요!");
+      aiInput.focus();
+      return;
+    }
+
+    try {
+      // 로딩 상태 표시 등 처리 가능
+      
+      const response = await fetch('/api/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // 🌟 핵심: recommend.py가 'interest' 키를 찾으므로 반드시 { interest: keyword }여야 합니다!
+        body: JSON.stringify({ interest: keyword }) 
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "서버 오류가 발생했습니다.");
+      }
+
+      // 성공 시 화면에 결과 출력
+      if (aiResult) {
+        aiResult.innerHTML = `<p>${data.recommendation}</p>`;
+      }
+
+      // 보너스: localStorage 히스토리 저장 로직 등 추가 수행
+      saveHistoryToLocalStorage(keyword, data.recommendation);
+
+    } catch (err) {
+      console.error(err);
+      if (aiResult) {
+        aiResult.innerHTML = `<p>죄송합니다. AI 서비스 서버가 바쁩니다. 잠시 후 다시 시도해주세요.</p>`;
+      }
+    }
+  });
+}
