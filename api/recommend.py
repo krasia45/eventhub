@@ -29,7 +29,7 @@ class handler(BaseHTTPRequestHandler):
             return
 
         # ✅ Gemini API 호출
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
         prompt = f"사용자의 관심사: {interest}\n\n이 관심사에 맞는 이벤트나 행사를 3가지 추천해주세요. 각각 제목과 간단한 설명을 포함해주세요."
 
