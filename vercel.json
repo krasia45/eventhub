@@ -1,14 +1,9 @@
 {
   "version": 2,
-  "functions": {
-    "api/recommend.py": {
-      "runtime": "vercel-python@3.0.7"
-    }
-  },
   "routes": [
     {
       "src": "/api/recommend",
-      "dest": "/api/recommend"
+      "dest": "/api/recommend.py"
     },
     {
       "src": "/(.*)",
