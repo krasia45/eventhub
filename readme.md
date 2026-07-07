@@ -12,7 +12,7 @@
 ## 🛠️ 기술 스택 (Tech Stack)
 * **Frontend:** 순수 HTML5, CSS3 (CSS Variables, Flexbox, Media Query), Vanilla JavaScript (ES6+)
 * **Backend:** Vercel Serverless Functions (Python)
-* **AI Model:** Google Gemini API (`gemini-1.5-flash`)
+* **AI Model:** Google Gemini API (`gemini-2.5-flash`)
 * **Database & Notification:** Google Sheets (Apps Script Webhook) 연동을 통한 문의 데이터 저장 및 Gmail 자동 알림 발송
 * **Deployment:** Vercel
 
