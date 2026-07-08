@@ -45,7 +45,26 @@
   <!-- ===== Category Tabs ===== -->
   <nav class="category-tabs" id="categoryTabs"></nav>
 
+  <!-- ===== Discount Quick Filters + GPS ===== -->
+  <div class="filter-row">
+    <div class="discount-tabs" id="discountTabs">
+      <button class="discount-pill active" data-discount="all">전체</button>
+      <button class="discount-pill" data-discount="1+1">1+1</button>
+      <button class="discount-pill" data-discount="50plus">50% 이상 할인</button>
+    </div>
+    <button class="gps-chip" id="gpsFilterChip">📍 내 주변 20km</button>
+  </div>
+
   <main class="main-scroll">
+
+    <!-- ===== Weather Widget ===== -->
+    <section class="weather-widget" id="weatherWidget">
+      <span class="weather-icon" id="weatherIcon">⏳</span>
+      <div class="weather-text">
+        <p class="weather-summary" id="weatherSummary">날씨 정보를 불러오는 중이에요...</p>
+        <p class="weather-sub" id="weatherSub">위치 권한을 허용하면 우리 동네 날씨를 알려드려요</p>
+      </div>
+    </section>
 
     <!-- ===== AI Recommendation ===== -->
     <section class="ai-section">
@@ -60,7 +79,15 @@
         <input type="text" id="aiInput" placeholder="예: 여름 원피스, 카페 할인, 캠핑용품...">
         <button class="ai-btn" id="aiRecommendBtn">추천받기</button>
       </div>
-      <p class="ai-result" id="aiResult" hidden></p>
+
+      <div class="ai-spinner-wrap" id="aiSpinnerWrap" hidden>
+        <span class="ai-spinner"></span>
+        <p>잠시만 기다려 주세요...</p>
+      </div>
+
+      <p class="ai-error" id="aiError" hidden></p>
+
+      <div class="ai-result-cards" id="aiResultCards" hidden></div>
     </section>
 
     <!-- ===== Realtime Ranking ===== -->
@@ -121,7 +148,7 @@
     </button>
     <button class="nav-item" data-nav="saved">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 21s-7.2-4.5-9.6-9C.8 8.4 2.6 5 6 5c2 0 3.4 1 6 3.5C14.6 6 16 5 18 5c3.4 0 5.2 3.4 3.6 7-2.4 4.5-9.6 9-9.6 9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-      <span>Saved</span>
+      <span>쿠폰함</span>
     </button>
     <button class="nav-item" data-nav="profile">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z" fill="currentColor"/></svg>
@@ -182,9 +209,26 @@
           <span>⬇</span> 쿠폰 다운로드 받기
         </button>
 
+        <button class="calendar-btn" id="calendarBtn">
+          <span>📅</span> 구글 캘린더에 일정 등록하기
+        </button>
+
         <a class="visit-btn" id="visitBtn" href="#" target="_blank" rel="noopener noreferrer">
           브랜드 공식 이벤트 화면으로 이동하기 ↗
         </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Coupon Wallet (통합 쿠폰함) ===== -->
+  <div class="sheet-overlay" id="couponWalletOverlay">
+    <div class="bottom-sheet coupon-wallet-sheet" id="couponWalletSheet">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" id="couponWalletClose" aria-label="닫기">✕</button>
+      <div class="coupon-wallet-body">
+        <h2 class="coupon-wallet-title">🎟 내 쿠폰함</h2>
+        <p class="coupon-wallet-sub">관심 등록한 이벤트의 쿠폰을 한눈에 모아봤어요</p>
+        <ul class="coupon-wallet-list" id="couponWalletList"></ul>
       </div>
     </div>
   </div>

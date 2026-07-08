@@ -2,22 +2,28 @@
    EventHub Prototype — main.js
    ========================================================= */
 
+/* Google Apps Script 웹앱 URL — 문의하기 + 이벤트 통계(조회수/좋아요)에 공용으로 사용됩니다.
+   배포한 웹앱 URL로 교체하세요. (.../exec 로 끝나는 형태) */
+const APPS_SCRIPT_URL = "여기에_배포한_Apps_Script_웹앱_URL을_붙여넣으세요";
+
 /* ---------- Category Definitions ---------- */
 const CATEGORIES = [
-  { id: "all",       label: "전체",     emoji: "🏠" },
-  { id: "fashion",   label: "패션",     emoji: "👗" },
-  { id: "beauty",    label: "뷰티",     emoji: "💄" },
-  { id: "food",      label: "푸드",     emoji: "🍔" },
-  { id: "tech",      label: "전자기기", emoji: "📱" },
-  { id: "delivery",  label: "배달",     emoji: "🛵" },
-  { id: "stay",      label: "숙박",     emoji: "🏨" },
-  { id: "living",    label: "리빙",     emoji: "🛋️" },
+  { id: "all",       label: "전체",       emoji: "🏠" },
+  { id: "fashion",   label: "패션",       emoji: "👗" },
+  { id: "beauty",    label: "뷰티",       emoji: "💄" },
+  { id: "food",      label: "푸드",       emoji: "🍔" },
+  { id: "tech",      label: "전자기기",   emoji: "📱" },
+  { id: "delivery",  label: "배달",       emoji: "🛵" },
+  { id: "stay",      label: "숙박",       emoji: "🏨" },
+  { id: "living",    label: "리빙",       emoji: "🛋️" },
+  { id: "popup",     label: "팝업스토어", emoji: "🎪" },
 ];
 
 /* ---------- Event Dummy Dataset (14 brands / 8 categories) ---------- */
 const EVENTS = [
   {
     id: "e001", category: "fashion", brand: "ZARA",
+    lat: 37.676, lng: 127.20792, merchantType: "브랜드",
     title: "시즌 오프 세일", subtitle: "신상 컬렉션을 합리적인 가격에",
     discount: "40% OFF", period: "2026.05.05 - 2026.05.15", channel: "온라인 & 오프라인 매장",
     dday: "D-1",
@@ -29,6 +35,7 @@ const EVENTS = [
   },
   {
     id: "e002", category: "fashion", brand: "Nike",
+    lat: 37.67647, lng: 127.20889, merchantType: "소상공인",
     title: "위크엔드 스타일 위크", subtitle: "매장 및 온라인 동시 진행되는 할인전",
     discount: "45% OFF", period: "2026.05.08 - 2026.05.23", channel: "온라인 전용",
     dday: "D-2",
@@ -40,6 +47,7 @@ const EVENTS = [
   },
   {
     id: "e003", category: "fashion", brand: "MANGO",
+    lat: 37.67693, lng: 127.20987, merchantType: "브랜드",
     title: "뉴 아라이벌 컬렉션", subtitle: "이번 시즌 놓치면 안 될 스타일 제안",
     discount: "1+1", period: "2026.05.12 - 2026.06.01", channel: "오프라인 매장 전용",
     dday: "D-3",
@@ -51,6 +59,7 @@ const EVENTS = [
   },
   {
     id: "e004", category: "fashion", brand: "H&M",
+    lat: 37.6774, lng: 127.21084, merchantType: "브랜드",
     title: "클로짓 리프레시 이벤트", subtitle: "데일리룩 완성을 위한 아이템 모음",
     discount: "50% OFF", period: "2026.05.13 - 2026.06.07", channel: "온라인 & 오프라인 매장",
     dday: "D-4",
@@ -62,6 +71,7 @@ const EVENTS = [
   },
   {
     id: "e005", category: "fashion", brand: "adidas",
+    lat: 37.67786, lng: 127.21182, merchantType: "브랜드",
     title: "스트릿 무드 특가전", subtitle: "시즌 아우터부터 액세서리까지 한번에",
     discount: "20% OFF", period: "2026.05.19 - 2026.05.29", channel: "온라인 전용",
     dday: "D-5",
@@ -73,6 +83,7 @@ const EVENTS = [
   },
   {
     id: "e006", category: "fashion", brand: "GUESS",
+    lat: 37.67832, lng: 127.21279, merchantType: "브랜드",
     title: "시즌 오프 세일", subtitle: "신상 컬렉션을 합리적인 가격에",
     discount: "20% OFF", period: "2026.05.21 - 2026.06.05", channel: "오프라인 매장 전용",
     dday: "D-6",
@@ -84,6 +95,7 @@ const EVENTS = [
   },
   {
     id: "e007", category: "fashion", brand: "Uniqlo",
+    lat: 37.67879, lng: 127.21376, merchantType: "브랜드",
     title: "위크엔드 스타일 위크", subtitle: "매장 및 온라인 동시 진행되는 할인전",
     discount: "30% OFF", period: "2026.05.25 - 2026.06.14", channel: "온라인 & 오프라인 매장",
     dday: "D-7",
@@ -95,6 +107,7 @@ const EVENTS = [
   },
   {
     id: "e008", category: "fashion", brand: "8seconds",
+    lat: 37.67925, lng: 127.21474, merchantType: "브랜드",
     title: "뉴 아라이벌 컬렉션", subtitle: "이번 시즌 놓치면 안 될 스타일 제안",
     discount: "45% OFF", period: "2026.05.30 - 2026.06.24", channel: "온라인 전용",
     dday: "D-8",
@@ -106,6 +119,7 @@ const EVENTS = [
   },
   {
     id: "e009", category: "fashion", brand: "New Balance",
+    lat: 37.67972, lng: 127.21571, merchantType: "소상공인",
     title: "클로짓 리프레시 이벤트", subtitle: "데일리룩 완성을 위한 아이템 모음",
     discount: "최대 70% OFF", period: "2026.05.06 - 2026.05.16", channel: "오프라인 매장 전용",
     dday: "D-9",
@@ -117,6 +131,7 @@ const EVENTS = [
   },
   {
     id: "e010", category: "fashion", brand: "Levi's",
+    lat: 37.68992, lng: 127.23715, merchantType: "브랜드",
     title: "스트릿 무드 특가전", subtitle: "시즌 아우터부터 액세서리까지 한번에",
     discount: "45% OFF", period: "2026.05.04 - 2026.05.19", channel: "온라인 & 오프라인 매장",
     dday: "D-10",
@@ -128,6 +143,7 @@ const EVENTS = [
   },
   {
     id: "e011", category: "beauty", brand: "MAC",
+    lat: 37.69039, lng: 127.23812, merchantType: "브랜드",
     title: "글로우 뷰티 위크", subtitle: "피부 타입별 맞춤 스킨케어 제안",
     discount: "35% OFF", period: "2026.05.04 - 2026.05.14", channel: "온라인 전용",
     dday: "D-1",
@@ -139,6 +155,7 @@ const EVENTS = [
   },
   {
     id: "e012", category: "beauty", brand: "Innisfree",
+    lat: 37.69085, lng: 127.23909, merchantType: "브랜드",
     title: "스킨케어 리추얼 프로모션", subtitle: "베스트셀러 라인업을 합리적인 가격에",
     discount: "20% OFF", period: "2026.05.13 - 2026.05.28", channel: "온라인 & 오프라인 매장",
     dday: "D-2",
@@ -150,6 +167,7 @@ const EVENTS = [
   },
   {
     id: "e013", category: "beauty", brand: "Sulwhasoo",
+    lat: 37.69132, lng: 127.24007, merchantType: "브랜드",
     title: "베스트셀러 특가전", subtitle: "그린 성분 기반 클린 뷰티 아이템 모음",
     discount: "25% OFF", period: "2026.05.16 - 2026.06.05", channel: "오프라인 매장 전용",
     dday: "D-3",
@@ -161,6 +179,7 @@ const EVENTS = [
   },
   {
     id: "e014", category: "beauty", brand: "Etude",
+    lat: 37.69178, lng: 127.24104, merchantType: "브랜드",
     title: "클린 뷰티 캠페인", subtitle: "메이크업 필수템을 한자리에서",
     discount: "최대 60% OFF", period: "2026.05.15 - 2026.06.09", channel: "온라인 전용",
     dday: "D-4",
@@ -172,6 +191,7 @@ const EVENTS = [
   },
   {
     id: "e015", category: "beauty", brand: "The Face Shop",
+    lat: 37.69224, lng: 127.24202, merchantType: "브랜드",
     title: "메이크업 앳홈 이벤트", subtitle: "촉촉한 여름 피부를 위한 준비",
     discount: "1+1", period: "2026.05.26 - 2026.06.05", channel: "온라인 & 오프라인 매장",
     dday: "D-5",
@@ -183,6 +203,7 @@ const EVENTS = [
   },
   {
     id: "e016", category: "beauty", brand: "Laneige",
+    lat: 37.69271, lng: 127.24299, merchantType: "소상공인",
     title: "글로우 뷰티 위크", subtitle: "피부 타입별 맞춤 스킨케어 제안",
     discount: "30% OFF", period: "2026.05.23 - 2026.06.07", channel: "오프라인 매장 전용",
     dday: "D-6",
@@ -194,6 +215,7 @@ const EVENTS = [
   },
   {
     id: "e017", category: "beauty", brand: "Nature Republic",
+    lat: 37.69317, lng: 127.24397, merchantType: "브랜드",
     title: "스킨케어 리추얼 프로모션", subtitle: "베스트셀러 라인업을 합리적인 가격에",
     discount: "25% OFF", period: "2026.05.04 - 2026.05.24", channel: "온라인 전용",
     dday: "D-7",
@@ -205,6 +227,7 @@ const EVENTS = [
   },
   {
     id: "e018", category: "beauty", brand: "Missha",
+    lat: 37.69364, lng: 127.24494, merchantType: "브랜드",
     title: "베스트셀러 특가전", subtitle: "그린 성분 기반 클린 뷰티 아이템 모음",
     discount: "35% OFF", period: "2026.05.28 - 2026.06.22", channel: "온라인 & 오프라인 매장",
     dday: "D-8",
@@ -216,6 +239,7 @@ const EVENTS = [
   },
   {
     id: "e019", category: "beauty", brand: "Clio",
+    lat: 37.6941, lng: 127.24591, merchantType: "브랜드",
     title: "클린 뷰티 캠페인", subtitle: "메이크업 필수템을 한자리에서",
     discount: "30% OFF", period: "2026.05.29 - 2026.06.08", channel: "오프라인 매장 전용",
     dday: "D-9",
@@ -227,6 +251,7 @@ const EVENTS = [
   },
   {
     id: "e020", category: "beauty", brand: "Tonymoly",
+    lat: 37.70431, lng: 127.26735, merchantType: "브랜드",
     title: "메이크업 앳홈 이벤트", subtitle: "촉촉한 여름 피부를 위한 준비",
     discount: "1+1", period: "2026.05.06 - 2026.05.21", channel: "온라인 전용",
     dday: "D-10",
@@ -238,6 +263,7 @@ const EVENTS = [
   },
   {
     id: "e021", category: "food", brand: "Starbucks",
+    lat: 37.70477, lng: 127.26832, merchantType: "브랜드",
     title: "시즌 음료 프로모션", subtitle: "시원한 시즌 메뉴를 특별한 가격에",
     discount: "최대 70% OFF", period: "2026.05.10 - 2026.05.20", channel: "오프라인 매장 전용",
     dday: "D-1",
@@ -249,6 +275,7 @@ const EVENTS = [
   },
   {
     id: "e022", category: "food", brand: "Baskin Robbins",
+    lat: 37.70524, lng: 127.2693, merchantType: "브랜드",
     title: "베이커리 위크 할인전", subtitle: "갓 구운 베이커리를 합리적으로",
     discount: "45% OFF", period: "2026.05.18 - 2026.06.02", channel: "온라인 & 오프라인 매장",
     dday: "D-2",
@@ -260,6 +287,7 @@ const EVENTS = [
   },
   {
     id: "e023", category: "food", brand: "Paris Baguette",
+    lat: 37.7057, lng: 127.27027, merchantType: "소상공인",
     title: "디저트 페스타", subtitle: "달콤한 디저트 메뉴 할인 프로모션",
     discount: "50% OFF", period: "2026.05.21 - 2026.06.10", channel: "앱 주문 전용",
     dday: "D-3",
@@ -271,6 +299,7 @@ const EVENTS = [
   },
   {
     id: "e024", category: "food", brand: "Tous les Jours",
+    lat: 37.70616, lng: 127.27124, merchantType: "브랜드",
     title: "모닝 세트 스페셜", subtitle: "바쁜 아침을 위한 든든한 세트 구성",
     discount: "1+1", period: "2026.05.24 - 2026.06.18", channel: "오프라인 매장 전용",
     dday: "D-4",
@@ -282,6 +311,7 @@ const EVENTS = [
   },
   {
     id: "e025", category: "food", brand: "Ediya Coffee",
+    lat: 37.70663, lng: 127.27222, merchantType: "브랜드",
     title: "여름 시원 메뉴 이벤트", subtitle: "무더위를 날려줄 시원한 메뉴 모음",
     discount: "50% OFF", period: "2026.05.25 - 2026.06.04", channel: "온라인 & 오프라인 매장",
     dday: "D-5",
@@ -293,6 +323,7 @@ const EVENTS = [
   },
   {
     id: "e026", category: "food", brand: "A Twosome Place",
+    lat: 37.70709, lng: 127.27319, merchantType: "브랜드",
     title: "시즌 음료 프로모션", subtitle: "시원한 시즌 메뉴를 특별한 가격에",
     discount: "20% OFF", period: "2026.05.01 - 2026.05.16", channel: "앱 주문 전용",
     dday: "D-6",
@@ -304,6 +335,7 @@ const EVENTS = [
   },
   {
     id: "e027", category: "food", brand: "BBQ Chicken",
+    lat: 37.70756, lng: 127.27417, merchantType: "브랜드",
     title: "베이커리 위크 할인전", subtitle: "갓 구운 베이커리를 합리적으로",
     discount: "1+1", period: "2026.05.30 - 2026.06.19", channel: "오프라인 매장 전용",
     dday: "D-7",
@@ -315,6 +347,7 @@ const EVENTS = [
   },
   {
     id: "e028", category: "food", brand: "Mega Coffee",
+    lat: 37.70802, lng: 127.27514, merchantType: "브랜드",
     title: "디저트 페스타", subtitle: "달콤한 디저트 메뉴 할인 프로모션",
     discount: "최대 60% OFF", period: "2026.05.03 - 2026.05.28", channel: "온라인 & 오프라인 매장",
     dday: "D-8",
@@ -326,6 +359,7 @@ const EVENTS = [
   },
   {
     id: "e029", category: "food", brand: "Compose Coffee",
+    lat: 37.70848, lng: 127.27612, merchantType: "브랜드",
     title: "모닝 세트 스페셜", subtitle: "바쁜 아침을 위한 든든한 세트 구성",
     discount: "30% OFF", period: "2026.05.09 - 2026.05.19", channel: "앱 주문 전용",
     dday: "D-9",
@@ -337,6 +371,7 @@ const EVENTS = [
   },
   {
     id: "e030", category: "food", brand: "Domino's Pizza",
+    lat: 37.5701, lng: 126.98587, merchantType: "소상공인",
     title: "여름 시원 메뉴 이벤트", subtitle: "무더위를 날려줄 시원한 메뉴 모음",
     discount: "35% OFF", period: "2026.05.12 - 2026.05.27", channel: "오프라인 매장 전용",
     dday: "D-10",
@@ -348,6 +383,7 @@ const EVENTS = [
   },
   {
     id: "e031", category: "tech", brand: "Samsung",
+    lat: 37.57055, lng: 126.98686, merchantType: "브랜드",
     title: "신제품 런칭 프로모션", subtitle: "최신 기기로 업그레이드할 최적의 타이밍",
     discount: "1+1", period: "2026.05.08 - 2026.05.18", channel: "온라인 & 오프라인 매장",
     dday: "D-1",
@@ -359,6 +395,7 @@ const EVENTS = [
   },
   {
     id: "e032", category: "tech", brand: "Apple",
+    lat: 37.571, lng: 126.98784, merchantType: "브랜드",
     title: "보상판매 업그레이드 이벤트", subtitle: "기존 기기 반납 시 추가 할인 혜택",
     discount: "50% OFF", period: "2026.05.09 - 2026.05.24", channel: "온라인 전용",
     dday: "D-2",
@@ -370,6 +407,7 @@ const EVENTS = [
   },
   {
     id: "e033", category: "tech", brand: "LG Electronics",
+    lat: 37.57145, lng: 126.98883, merchantType: "브랜드",
     title: "홈 가전 리프레시 위크", subtitle: "여름철 필수 가전을 합리적인 가격에",
     discount: "50% OFF", period: "2026.05.21 - 2026.06.10", channel: "공식 스토어 전용",
     dday: "D-3",
@@ -381,6 +419,7 @@ const EVENTS = [
   },
   {
     id: "e034", category: "tech", brand: "Xiaomi",
+    lat: 37.57191, lng: 126.98981, merchantType: "브랜드",
     title: "오디오 사운드 페스타", subtitle: "몰입감 넘치는 사운드 경험을 위한 준비",
     discount: "최대 70% OFF", period: "2026.05.16 - 2026.06.10", channel: "온라인 & 오프라인 매장",
     dday: "D-4",
@@ -392,6 +431,7 @@ const EVENTS = [
   },
   {
     id: "e035", category: "tech", brand: "Sony",
+    lat: 37.57236, lng: 126.9908, merchantType: "브랜드",
     title: "액세서리 번들 할인전", subtitle: "필수 액세서리를 한번에 구성해보세요",
     discount: "최대 60% OFF", period: "2026.05.17 - 2026.05.27", channel: "온라인 전용",
     dday: "D-5",
@@ -403,6 +443,7 @@ const EVENTS = [
   },
   {
     id: "e036", category: "tech", brand: "Dyson",
+    lat: 37.57281, lng: 126.99178, merchantType: "브랜드",
     title: "신제품 런칭 프로모션", subtitle: "최신 기기로 업그레이드할 최적의 타이밍",
     discount: "20% OFF", period: "2026.05.21 - 2026.06.05", channel: "공식 스토어 전용",
     dday: "D-6",
@@ -414,6 +455,7 @@ const EVENTS = [
   },
   {
     id: "e037", category: "tech", brand: "Bose",
+    lat: 37.57326, lng: 126.99276, merchantType: "소상공인",
     title: "보상판매 업그레이드 이벤트", subtitle: "기존 기기 반납 시 추가 할인 혜택",
     discount: "20% OFF", period: "2026.05.23 - 2026.06.12", channel: "온라인 & 오프라인 매장",
     dday: "D-7",
@@ -425,6 +467,7 @@ const EVENTS = [
   },
   {
     id: "e038", category: "tech", brand: "JBL",
+    lat: 37.57371, lng: 126.99375, merchantType: "브랜드",
     title: "홈 가전 리프레시 위크", subtitle: "여름철 필수 가전을 합리적인 가격에",
     discount: "20% OFF", period: "2026.05.25 - 2026.06.19", channel: "온라인 전용",
     dday: "D-8",
@@ -436,6 +479,7 @@ const EVENTS = [
   },
   {
     id: "e039", category: "tech", brand: "Logitech",
+    lat: 37.57416, lng: 126.99473, merchantType: "브랜드",
     title: "오디오 사운드 페스타", subtitle: "몰입감 넘치는 사운드 경험을 위한 준비",
     discount: "50% OFF", period: "2026.05.03 - 2026.05.13", channel: "공식 스토어 전용",
     dday: "D-9",
@@ -447,6 +491,7 @@ const EVENTS = [
   },
   {
     id: "e040", category: "tech", brand: "Anker",
+    lat: 37.58407, lng: 127.01639, merchantType: "브랜드",
     title: "액세서리 번들 할인전", subtitle: "필수 액세서리를 한번에 구성해보세요",
     discount: "40% OFF", period: "2026.05.03 - 2026.05.18", channel: "온라인 & 오프라인 매장",
     dday: "D-10",
@@ -458,6 +503,7 @@ const EVENTS = [
   },
   {
     id: "e041", category: "delivery", brand: "배달의민족",
+    lat: 37.58452, lng: 127.01737, merchantType: "브랜드",
     title: "첫 주문 할인 쿠폰", subtitle: "신규 및 복귀 고객을 위한 특별 혜택",
     discount: "45% OFF", period: "2026.05.06 - 2026.05.16", channel: "앱 전용",
     dday: "D-1",
@@ -469,6 +515,7 @@ const EVENTS = [
   },
   {
     id: "e042", category: "delivery", brand: "요기요",
+    lat: 37.58497, lng: 127.01836, merchantType: "브랜드",
     title: "런치 타임 특가", subtitle: "점심시간 한정 할인 쿠폰 제공",
     discount: "40% OFF", period: "2026.05.07 - 2026.05.22", channel: "앱 & 웹",
     dday: "D-2",
@@ -480,6 +527,7 @@ const EVENTS = [
   },
   {
     id: "e043", category: "delivery", brand: "쿠팡이츠",
+    lat: 37.58542, lng: 127.01934, merchantType: "브랜드",
     title: "주말 배달비 무료 이벤트", subtitle: "주말 동안 배달비 부담 없이 주문",
     discount: "50% OFF", period: "2026.05.11 - 2026.05.31", channel: "앱 주문 전용",
     dday: "D-3",
@@ -491,6 +539,7 @@ const EVENTS = [
   },
   {
     id: "e044", category: "delivery", brand: "Domino's Pizza",
+    lat: 37.58587, lng: 127.02032, merchantType: "소상공인",
     title: "신메뉴 출시 기념 할인", subtitle: "새로 출시된 메뉴를 할인가에 맛보세요",
     discount: "1+1", period: "2026.05.24 - 2026.06.18", channel: "앱 전용",
     dday: "D-4",
@@ -502,6 +551,7 @@ const EVENTS = [
   },
   {
     id: "e045", category: "delivery", brand: "Pizza Hut",
+    lat: 37.58632, lng: 127.02131, merchantType: "브랜드",
     title: "단골 고객 감사 프로모션", subtitle: "자주 이용해주신 고객님께 드리는 혜택",
     discount: "35% OFF", period: "2026.05.22 - 2026.06.01", channel: "앱 & 웹",
     dday: "D-5",
@@ -513,6 +563,7 @@ const EVENTS = [
   },
   {
     id: "e046", category: "delivery", brand: "Mister Pizza",
+    lat: 37.58677, lng: 127.02229, merchantType: "브랜드",
     title: "첫 주문 할인 쿠폰", subtitle: "신규 및 복귀 고객을 위한 특별 혜택",
     discount: "1+1", period: "2026.05.28 - 2026.06.12", channel: "앱 주문 전용",
     dday: "D-6",
@@ -524,6 +575,7 @@ const EVENTS = [
   },
   {
     id: "e047", category: "delivery", brand: "bhc치킨",
+    lat: 37.58722, lng: 127.02328, merchantType: "브랜드",
     title: "런치 타임 특가", subtitle: "점심시간 한정 할인 쿠폰 제공",
     discount: "25% OFF", period: "2026.05.24 - 2026.06.13", channel: "앱 전용",
     dday: "D-7",
@@ -535,6 +587,7 @@ const EVENTS = [
   },
   {
     id: "e048", category: "delivery", brand: "교촌치킨",
+    lat: 37.58767, lng: 127.02426, merchantType: "브랜드",
     title: "주말 배달비 무료 이벤트", subtitle: "주말 동안 배달비 부담 없이 주문",
     discount: "25% OFF", period: "2026.05.26 - 2026.06.20", channel: "앱 & 웹",
     dday: "D-8",
@@ -546,6 +599,7 @@ const EVENTS = [
   },
   {
     id: "e049", category: "delivery", brand: "네네치킨",
+    lat: 37.58812, lng: 127.02525, merchantType: "브랜드",
     title: "신메뉴 출시 기념 할인", subtitle: "새로 출시된 메뉴를 할인가에 맛보세요",
     discount: "30% OFF", period: "2026.05.29 - 2026.06.08", channel: "앱 주문 전용",
     dday: "D-9",
@@ -557,6 +611,7 @@ const EVENTS = [
   },
   {
     id: "e050", category: "delivery", brand: "굽네치킨",
+    lat: 37.59803, lng: 127.0469, merchantType: "브랜드",
     title: "단골 고객 감사 프로모션", subtitle: "자주 이용해주신 고객님께 드리는 혜택",
     discount: "35% OFF", period: "2026.05.02 - 2026.05.17", channel: "앱 전용",
     dday: "D-10",
@@ -568,6 +623,7 @@ const EVENTS = [
   },
   {
     id: "e051", category: "stay", brand: "야놀자",
+    lat: 37.59848, lng: 127.04789, merchantType: "소상공인",
     title: "얼리버드 예약 특가", subtitle: "조기 예약 시 더 큰 폭의 할인 혜택",
     discount: "35% OFF", period: "2026.05.04 - 2026.05.14", channel: "앱 & 웹",
     dday: "D-1",
@@ -579,6 +635,7 @@ const EVENTS = [
   },
   {
     id: "e052", category: "stay", brand: "Agoda",
+    lat: 37.59893, lng: 127.04887, merchantType: "브랜드",
     title: "여름휴가 프로모션", subtitle: "여름 휴가철을 위한 인기 숙소 모음",
     discount: "50% OFF", period: "2026.05.09 - 2026.05.24", channel: "앱 전용",
     dday: "D-2",
@@ -590,6 +647,7 @@ const EVENTS = [
   },
   {
     id: "e053", category: "stay", brand: "Booking.com",
+    lat: 37.59938, lng: 127.04985, merchantType: "브랜드",
     title: "주말 스테이케이션 할인", subtitle: "가까운 곳에서 즐기는 힐링 스테이",
     discount: "35% OFF", period: "2026.05.18 - 2026.06.07", channel: "웹 전용",
     dday: "D-3",
@@ -601,6 +659,7 @@ const EVENTS = [
   },
   {
     id: "e054", category: "stay", brand: "Hotels.com",
+    lat: 37.59983, lng: 127.05084, merchantType: "브랜드",
     title: "장기 숙박 할인 이벤트", subtitle: "3박 이상 예약 시 추가 할인 제공",
     discount: "35% OFF", period: "2026.05.20 - 2026.06.14", channel: "앱 & 웹",
     dday: "D-4",
@@ -612,6 +671,7 @@ const EVENTS = [
   },
   {
     id: "e055", category: "stay", brand: "Airbnb",
+    lat: 37.60028, lng: 127.05182, merchantType: "브랜드",
     title: "국내외 숙소 특가 위크", subtitle: "인기 여행지 숙소를 특가로 만나보세요",
     discount: "20% OFF", period: "2026.05.19 - 2026.05.29", channel: "앱 전용",
     dday: "D-5",
@@ -623,6 +683,7 @@ const EVENTS = [
   },
   {
     id: "e056", category: "stay", brand: "여기어때",
+    lat: 37.60073, lng: 127.05281, merchantType: "브랜드",
     title: "얼리버드 예약 특가", subtitle: "조기 예약 시 더 큰 폭의 할인 혜택",
     discount: "최대 70% OFF", period: "2026.05.20 - 2026.06.04", channel: "웹 전용",
     dday: "D-6",
@@ -634,6 +695,7 @@ const EVENTS = [
   },
   {
     id: "e057", category: "stay", brand: "Marriott",
+    lat: 37.60118, lng: 127.05379, merchantType: "브랜드",
     title: "여름휴가 프로모션", subtitle: "여름 휴가철을 위한 인기 숙소 모음",
     discount: "40% OFF", period: "2026.05.27 - 2026.06.16", channel: "앱 & 웹",
     dday: "D-7",
@@ -645,6 +707,7 @@ const EVENTS = [
   },
   {
     id: "e058", category: "stay", brand: "Hilton",
+    lat: 37.60164, lng: 127.05478, merchantType: "소상공인",
     title: "주말 스테이케이션 할인", subtitle: "가까운 곳에서 즐기는 힐링 스테이",
     discount: "35% OFF", period: "2026.05.28 - 2026.06.22", channel: "앱 전용",
     dday: "D-8",
@@ -656,6 +719,7 @@ const EVENTS = [
   },
   {
     id: "e059", category: "stay", brand: "Expedia",
+    lat: 37.60209, lng: 127.05576, merchantType: "브랜드",
     title: "장기 숙박 할인 이벤트", subtitle: "3박 이상 예약 시 추가 할인 제공",
     discount: "45% OFF", period: "2026.05.02 - 2026.05.12", channel: "웹 전용",
     dday: "D-9",
@@ -667,6 +731,7 @@ const EVENTS = [
   },
   {
     id: "e060", category: "stay", brand: "Trip.com",
+    lat: 37.612, lng: 127.07741, merchantType: "브랜드",
     title: "국내외 숙소 특가 위크", subtitle: "인기 여행지 숙소를 특가로 만나보세요",
     discount: "1+1", period: "2026.05.06 - 2026.05.21", channel: "앱 & 웹",
     dday: "D-10",
@@ -678,6 +743,7 @@ const EVENTS = [
   },
   {
     id: "e061", category: "living", brand: "IKEA",
+    lat: 37.61245, lng: 127.0784, merchantType: "브랜드",
     title: "홈코디 리뉴얼 위크", subtitle: "계절이 바뀌는 지금, 홈 인테리어 리프레시",
     discount: "40% OFF", period: "2026.05.05 - 2026.05.15", channel: "온라인 & 오프라인 매장",
     dday: "D-1",
@@ -689,6 +755,7 @@ const EVENTS = [
   },
   {
     id: "e062", category: "living", brand: "무인양품",
+    lat: 37.6129, lng: 127.07938, merchantType: "브랜드",
     title: "침구 & 매트리스 특가전", subtitle: "숙면을 위한 침구류를 합리적인 가격에",
     discount: "45% OFF", period: "2026.05.08 - 2026.05.23", channel: "온라인 전용",
     dday: "D-2",
@@ -700,6 +767,7 @@ const EVENTS = [
   },
   {
     id: "e063", category: "living", brand: "현대리바트",
+    lat: 37.61335, lng: 127.08037, merchantType: "브랜드",
     title: "수납가구 할인 이벤트", subtitle: "정리정돈을 위한 수납가구 모음",
     discount: "1+1", period: "2026.05.12 - 2026.06.01", channel: "오프라인 매장 전용",
     dday: "D-3",
@@ -711,6 +779,7 @@ const EVENTS = [
   },
   {
     id: "e064", category: "living", brand: "에이스침대",
+    lat: 37.6138, lng: 127.08135, merchantType: "브랜드",
     title: "미니멀 라이프 캠페인", subtitle: "심플하고 실용적인 라이프스타일 제안",
     discount: "최대 60% OFF", period: "2026.05.15 - 2026.06.09", channel: "온라인 & 오프라인 매장",
     dday: "D-4",
@@ -722,6 +791,7 @@ const EVENTS = [
   },
   {
     id: "e065", category: "living", brand: "Zara Home",
+    lat: 37.61425, lng: 127.08234, merchantType: "소상공인",
     title: "웰컴 홈 스타일링 프로모션", subtitle: "신혼집·자취방 스타일링에 필요한 아이템",
     discount: "35% OFF", period: "2026.05.22 - 2026.06.01", channel: "온라인 전용",
     dday: "D-5",
@@ -733,6 +803,7 @@ const EVENTS = [
   },
   {
     id: "e066", category: "living", brand: "Nitori",
+    lat: 37.6147, lng: 127.08332, merchantType: "브랜드",
     title: "홈코디 리뉴얼 위크", subtitle: "계절이 바뀌는 지금, 홈 인테리어 리프레시",
     discount: "25% OFF", period: "2026.05.22 - 2026.06.06", channel: "오프라인 매장 전용",
     dday: "D-6",
@@ -744,6 +815,7 @@ const EVENTS = [
   },
   {
     id: "e067", category: "living", brand: "한샘",
+    lat: 37.61515, lng: 127.0843, merchantType: "브랜드",
     title: "침구 & 매트리스 특가전", subtitle: "숙면을 위한 침구류를 합리적인 가격에",
     discount: "최대 60% OFF", period: "2026.05.21 - 2026.06.10", channel: "온라인 & 오프라인 매장",
     dday: "D-7",
@@ -755,6 +827,7 @@ const EVENTS = [
   },
   {
     id: "e068", category: "living", brand: "Tempur",
+    lat: 37.6156, lng: 127.08529, merchantType: "브랜드",
     title: "수납가구 할인 이벤트", subtitle: "정리정돈을 위한 수납가구 모음",
     discount: "35% OFF", period: "2026.05.28 - 2026.06.22", channel: "온라인 전용",
     dday: "D-8",
@@ -766,6 +839,7 @@ const EVENTS = [
   },
   {
     id: "e069", category: "living", brand: "Casper",
+    lat: 37.61605, lng: 127.08627, merchantType: "브랜드",
     title: "미니멀 라이프 캠페인", subtitle: "심플하고 실용적인 라이프스타일 제안",
     discount: "40% OFF", period: "2026.05.01 - 2026.05.11", channel: "오프라인 매장 전용",
     dday: "D-9",
@@ -777,6 +851,7 @@ const EVENTS = [
   },
   {
     id: "e070", category: "living", brand: "코웨이",
+    lat: 37.62596, lng: 127.10793, merchantType: "브랜드",
     title: "웰컴 홈 스타일링 프로모션", subtitle: "신혼집·자취방 스타일링에 필요한 아이템",
     discount: "30% OFF", period: "2026.05.01 - 2026.05.16", channel: "온라인 & 오프라인 매장",
     dday: "D-10",
@@ -786,11 +861,224 @@ const EVENTS = [
     domain: "coway.com",
     link: "https://www.coway.com/"
   },
+  {
+    id: "e071", category: "popup", brand: "무신사 스탠다드",
+    lat: 37.5563, lng: 126.9236, merchantType: "브랜드",
+    title: "성수 팝업스토어 오픈", subtitle: "신상 컬렉션을 가장 먼저 만나보는 오프라인 공간",
+    discount: "방문 인증 시 사은품", period: "2026.07.10 - 2026.07.20", channel: "성수동 팝업스토어",
+    dday: "D-3",
+    desc: "무신사 스탠다드의 성수 팝업스토어. 신상 컬렉션을 가장 먼저 체험하고, 현장 구매 시 한정판 굿즈를 증정합니다.",
+    tags: ["팝업스토어", "성수동", "포토스팟"],
+    image: "https://picsum.photos/seed/musinsa-popup-1/600/600",
+    domain: "musinsa.com",
+    link: "https://www.musinsa.com/"
+  },
+  {
+    id: "e072", category: "popup", brand: "다이슨",
+    lat: 37.5219, lng: 127.0411, merchantType: "브랜드",
+    title: "청담 신제품 체험존", subtitle: "신제품을 미리 체험해보는 프리미엄 팝업",
+    discount: "체험 예약 시 시타 할인쿠폰", period: "2026.07.08 - 2026.07.31", channel: "청담동 팝업스토어",
+    dday: "D-1",
+    desc: "다이슨 신제품을 가장 먼저 체험할 수 있는 팝업스토어. 사전 예약 시 대기 없이 입장 가능합니다.",
+    tags: ["팝업스토어", "신제품체험", "청담동"],
+    image: "https://picsum.photos/seed/dyson-popup-2/600/600",
+    domain: "dyson.co.kr",
+    link: "https://www.dyson.co.kr/"
+  },
+  {
+    id: "e073", category: "popup", brand: "동네빵집 밀도",
+    lat: 37.5486, lng: 126.9228, merchantType: "소상공인",
+    title: "성수 베이커리 팝업", subtitle: "소상공인 베이커리의 시그니처 빵 시식회",
+    discount: "1+1", period: "2026.07.05 - 2026.07.14", channel: "성수동 골목 팝업",
+    dday: "D-2",
+    desc: "성수동 로컬 베이커리 '밀도'의 시그니처 메뉴를 만나는 팝업. 소상공인 브랜드를 직접 응원할 수 있어요.",
+    tags: ["팝업스토어", "소상공인", "베이커리"],
+    image: "https://picsum.photos/seed/mildo-popup-3/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e074", category: "popup", brand: "라네즈",
+    lat: 37.5013, lng: 127.0396, merchantType: "브랜드",
+    title: "강남 뷰티 체험 팝업", subtitle: "신제품 메이크업 체험 + 포토부스",
+    discount: "구매 시 미니어처 증정", period: "2026.07.09 - 2026.07.23", channel: "강남역 팝업스토어",
+    dday: "D-4",
+    desc: "라네즈 신제품을 직접 체험하고 나만의 컬러를 찾아보는 뷰티 팝업. 포토부스 촬영 이벤트도 진행돼요.",
+    tags: ["팝업스토어", "뷰티체험", "포토스팟"],
+    image: "https://picsum.photos/seed/laneige-popup-4/600/600",
+    domain: "laneige.com",
+    link: "https://www.laneige.com/"
+  },
+  {
+    id: "e075", category: "popup", brand: "카페 소슬",
+    lat: 37.5407, lng: 127.0793, merchantType: "소상공인",
+    title: "건대 로컬 카페 팝업", subtitle: "동네 카페 사장님이 직접 준비한 시즌 메뉴",
+    discount: "30% OFF", period: "2026.07.01 - 2026.07.31", channel: "건대입구 팝업",
+    dday: "D-9",
+    desc: "건대 인근 소상공인 카페 '소슬'의 여름 시즌 메뉴 팝업. 동네 상권 활성화를 함께 응원해주세요.",
+    tags: ["팝업스토어", "소상공인", "카페"],
+    image: "https://picsum.photos/seed/sosle-popup-5/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
 ];
 
 /* ---------- State ---------- */
 let currentCategory = "all";
-let likedEvents = new Set();
+let currentDiscountFilter = "all"; // "all" | "1+1" | "50plus"
+let gpsFilterActive = false;
+let userLocation = null; // { lat, lng }
+let likedEvents = new Set(JSON.parse(localStorage.getItem("eventhub-liked") || "[]"));
+let eventStatsCache = {}; // { eventId: { views, likes } } — 백엔드에서 불러온 실제 조회수/좋아요
+
+async function loadEventStats() {
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?type=stats`);
+    const data = await res.json();
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      eventStatsCache = data;
+      renderRanking(); // 통계 로드 완료 후 랭킹 다시 그리기
+    }
+  } catch (err) {
+    console.error("이벤트 통계 조회 오류:", err);
+  }
+}
+
+function sendEventStat(action, eventId) {
+  // 실패해도 화면 동작에 영향 없는 백그라운드 요청 (fire-and-forget)
+  fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action, eventId }),
+  }).catch(err => console.error("통계 전송 오류:", err));
+}
+
+function getEventScore(eventId) {
+  const s = eventStatsCache[eventId] || { views: 0, likes: 0 };
+  return s.likes * 3 + s.views; // 좋아요에 더 큰 가중치
+}
+
+/* ---------- 날씨 위젯 ---------- */
+const DEFAULT_WEATHER_LOCATION = { lat: 37.5665, lng: 126.9780 }; // 서울시청 기준
+
+function getQuietLocation() {
+  // GPS 필터처럼 명시적 버튼 클릭 없이, 이미 허용된 위치 권한이 있으면 사용하고
+  // 없거나 거부되면 서울 기준으로 조용히 대체합니다.
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve(DEFAULT_WEATHER_LOCATION); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(DEFAULT_WEATHER_LOCATION),
+      { timeout: 5000 }
+    );
+  });
+}
+
+async function loadWeather(loc) {
+  const iconEl = document.getElementById("weatherIcon");
+  const summaryEl = document.getElementById("weatherSummary");
+  const subEl = document.getElementById("weatherSub");
+
+  const target = loc || await getQuietLocation();
+
+  try {
+    const res = await fetch(`/api/weather?lat=${target.lat}&lng=${target.lng}`);
+    const data = await res.json();
+
+    if (!res.ok || data.error) throw new Error(data.error || "날씨 조회 실패");
+
+    iconEl.textContent = data.icon || "🌤";
+    summaryEl.textContent = `${data.location} 현재 ${data.tempC}°C, ${data.description}`;
+    subEl.textContent = data.advice || "";
+
+  } catch (err) {
+    // ── 예외처리: 날씨 API 실패 시 Fallback UI ──────────
+    console.error("날씨 조회 오류:", err);
+    iconEl.textContent = "⚠️";
+    summaryEl.textContent = "날씨 정보를 불러오지 못했어요.";
+    subEl.textContent = "잠시 후 다시 시도해주세요.";
+  }
+}
+
+/* ---------- 거리 계산 (Haversine) & GPS 20km 필터 ---------- */
+function haversineDistanceKm(lat1, lng1, lat2, lng2) {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const R = 6371; // 지구 반지름(km)
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function matchesDiscountFilter(ev, filter) {
+  if (filter === "all") return true;
+  if (filter === "1+1") return ev.discount.includes("1+1");
+  if (filter === "50plus") {
+    const match = ev.discount.match(/(\d+)\s*%/);
+    return !!match && parseInt(match[1], 10) >= 50;
+  }
+  return true;
+}
+
+/* 카테고리 + 할인유형 + GPS(선택) 필터를 모두 적용한 이벤트 목록 */
+function getFilteredEvents() {
+  let list = currentCategory === "all"
+    ? EVENTS
+    : EVENTS.filter(ev => ev.category === currentCategory);
+
+  list = list.filter(ev => matchesDiscountFilter(ev, currentDiscountFilter));
+
+  if (gpsFilterActive && userLocation) {
+    list = list.filter(ev => haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng) <= 20);
+  }
+
+  return list;
+}
+
+/* ---------- GPS 20km 필터 토글 ---------- */
+function toggleGpsFilter() {
+  const btn = document.getElementById("gpsFilterChip");
+
+  if (gpsFilterActive) {
+    gpsFilterActive = false;
+    btn.classList.remove("active");
+    btn.textContent = "📍 내 주변 20km";
+    renderFeed();
+    renderRanking();
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    showToast("이 브라우저는 위치 정보를 지원하지 않아요.");
+    return;
+  }
+
+  btn.textContent = "📍 위치 확인 중...";
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      gpsFilterActive = true;
+      btn.classList.add("active");
+      btn.textContent = "📍 내 주변 20km ✓";
+      renderFeed();
+      renderRanking();
+      loadWeather(userLocation);
+    },
+    (err) => {
+      console.error("위치 정보 오류:", err);
+      btn.textContent = "📍 내 주변 20km";
+      if (err.code === err.PERMISSION_DENIED) {
+        showToast("위치 권한이 거부되어 전체 이벤트를 표시할게요.");
+      } else {
+        showToast("위치 정보를 가져오지 못했어요. 잠시 후 다시 시도해주세요.");
+      }
+    },
+    { timeout: 8000 }
+  );
+}
 
 /* ---------- Real Brand Logo Helper ----------
    Fetches each brand's actual logo straight from their real company domain
@@ -862,14 +1150,50 @@ function renderCategoryTabs() {
       currentCategory = btn.dataset.cat;
       renderCategoryTabs();
       renderFeed();
+      renderRanking();
     });
   });
 }
 
-/* ---------- Render: Ranking (random top 5) ---------- */
+/* ---------- Discount Quick Filters (1+1 / 50%+) ---------- */
+function bindDiscountTabs() {
+  const wrap = document.getElementById("discountTabs");
+  wrap.querySelectorAll(".discount-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentDiscountFilter = btn.dataset.discount;
+      wrap.querySelectorAll(".discount-pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderFeed();
+      renderRanking();
+    });
+  });
+}
+
+document.getElementById("gpsFilterChip").addEventListener("click", toggleGpsFilter);
+
+/* ---------- Render: Ranking (조회수·좋아요 기반 실제 랭킹, 카테고리별) ---------- */
 function renderRanking() {
   const list = document.getElementById("rankingList");
-  const rankedEvents = shuffleArray(EVENTS).slice(0, 5);
+  const titleEl = document.getElementById("rankingTitle");
+
+  const pool = getFilteredEvents();
+
+  titleEl.textContent = currentCategory === "all"
+    ? "🔥 실시간 인기 이벤트"
+    : `🔥 ${getCategoryLabel(currentCategory)} 인기 이벤트`;
+
+  if (pool.length === 0) {
+    list.innerHTML = `<li class="empty-state">아직 랭킹에 표시할 이벤트가 없어요.</li>`;
+    return;
+  }
+
+  // 좋아요*3 + 조회수 점수로 정렬. 아직 통계가 없으면(전부 0점) 데모 노출을 위해 무작위 섞기.
+  const hasAnyStats = Object.keys(eventStatsCache).length > 0;
+  const sorted = hasAnyStats
+    ? [...pool].sort((a, b) => getEventScore(b.id) - getEventScore(a.id))
+    : shuffleArray(pool);
+
+  const rankedEvents = sorted.slice(0, 5);
 
   list.innerHTML = rankedEvents.map((ev, idx) => `
     <li class="rank-item" data-id="${ev.id}">
@@ -896,9 +1220,7 @@ function renderFeed() {
   const title = document.getElementById("feedTitle");
   const count = document.getElementById("feedCount");
 
-  const filtered = currentCategory === "all"
-    ? EVENTS
-    : EVENTS.filter(ev => ev.category === currentCategory);
+  const filtered = getFilteredEvents();
 
   title.textContent = currentCategory === "all" ? "전체 이벤트" : `${getCategoryLabel(currentCategory)} 이벤트`;
   count.textContent = `${filtered.length}개`;
@@ -908,7 +1230,14 @@ function renderFeed() {
     return;
   }
 
-  grid.innerHTML = filtered.map(ev => `
+  grid.innerHTML = filtered.map(ev => {
+    const distanceLabel = (gpsFilterActive && userLocation)
+      ? `<span class="card-distance">${haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng).toFixed(1)}km</span>`
+      : "";
+    const merchantBadge = ev.merchantType === "소상공인"
+      ? `<span class="card-merchant-badge">소상공인</span>`
+      : "";
+    return `
     <div class="event-card" data-id="${ev.id}">
       <div class="card-media">
         <img class="card-photo" src="${ev.image}" alt="${ev.title}" loading="lazy">
@@ -917,15 +1246,17 @@ function renderFeed() {
         </span>
         <span class="card-discount">${ev.discount}</span>
         <span class="card-dday">${ev.dday}</span>
+        ${distanceLabel}
       </div>
       <div class="card-body">
-        <p class="card-brand-name">${ev.brand}</p>
+        <p class="card-brand-name">${ev.brand} ${merchantBadge}</p>
         <p class="card-title">${ev.title}</p>
         <p class="card-sub">${ev.subtitle}</p>
         <p class="card-meta">📍 ${ev.channel}</p>
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
 
   grid.querySelectorAll(".event-card").forEach(card => {
     card.addEventListener("click", () => openSheet(card.dataset.id));
@@ -960,6 +1291,11 @@ function openSheet(eventId) {
 
   updateLikeButton();
 
+  // 조회수 집계 (백그라운드로 전송, 화면 동작 차단 안 함)
+  eventStatsCache[eventId] = eventStatsCache[eventId] || { views: 0, likes: 0 };
+  eventStatsCache[eventId].views += 1;
+  sendEventStat("trackView", eventId);
+
   sheetOverlay.classList.add("open");
   document.body.style.overflow = "hidden";
 }
@@ -988,19 +1324,71 @@ sheetOverlay.addEventListener("click", (e) => {
 
 document.getElementById("likeBtn").addEventListener("click", () => {
   if (!activeEventId) return;
+  eventStatsCache[activeEventId] = eventStatsCache[activeEventId] || { views: 0, likes: 0 };
+
   if (likedEvents.has(activeEventId)) {
     likedEvents.delete(activeEventId);
+    eventStatsCache[activeEventId].likes = Math.max(0, eventStatsCache[activeEventId].likes - 1);
+    sendEventStat("unlike", activeEventId);
     showToast("관심 이벤트에서 삭제되었습니다");
   } else {
     likedEvents.add(activeEventId);
+    eventStatsCache[activeEventId].likes += 1;
+    sendEventStat("like", activeEventId);
     showToast("관심 이벤트로 등록되었습니다 ❤");
   }
+  localStorage.setItem("eventhub-liked", JSON.stringify([...likedEvents]));
   updateLikeButton();
+  renderRanking(); // 좋아요 반영된 최신 랭킹으로 갱신
 });
 
 document.getElementById("downloadBtn").addEventListener("click", () => {
   const ev = EVENTS.find(e => e.id === activeEventId);
   showToast(`${ev ? ev.brand + " " : ""}쿠폰이 다운로드되었습니다 🎉`);
+});
+
+/* ---------- 캘린더 등록 (구글 캘린더 바로가기 링크) ---------- */
+function parsePeriodToGCalDates(period) {
+  // "2026.05.28 - 2026.06.22" → { start: "20260528", end: "20260623" }
+  // (구글 캘린더 종료일은 배타적이라 실제 종료일 다음날로 +1일 처리)
+  const parts = period.split("-").map(s => s.trim());
+  if (parts.length !== 2) return null;
+
+  const parseDatePart = (str) => {
+    const m = str.match(/(\d{4})\.(\d{2})\.(\d{2})/);
+    if (!m) return null;
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  };
+
+  const startDate = parseDatePart(parts[0]);
+  const endDateRaw = parseDatePart(parts[1]);
+  if (!startDate || !endDateRaw) return null;
+
+  const endDate = new Date(endDateRaw);
+  endDate.setDate(endDate.getDate() + 1);
+
+  const fmt = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  return { start: fmt(startDate), end: fmt(endDate) };
+}
+
+document.getElementById("calendarBtn").addEventListener("click", () => {
+  const ev = EVENTS.find(e => e.id === activeEventId);
+  if (!ev) return;
+
+  const dates = parsePeriodToGCalDates(ev.period);
+  if (!dates) {
+    showToast("일정 등록 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.");
+    return;
+  }
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `[EventHub] ${ev.brand} - ${ev.title}`,
+    dates: `${dates.start}/${dates.end}`,
+    details: `${ev.desc}\n\n혜택: ${ev.discount}\n참여 방법: ${ev.channel}\n\n${ev.link}`,
+  });
+
+  window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, "_blank", "noopener,noreferrer");
 });
 
 /* ---------- AI Recommendation ---------- */
@@ -1012,68 +1400,101 @@ const AI_RESPONSES = [
 ];
 
 // ✅ 이 코드로 교체하세요
+const AI_EXAMPLE_QUERIES = ["여름 원피스", "카페 할인", "캠핑용품", "홈 인테리어", "반려동물 용품"];
+
 document.getElementById("aiRecommendBtn").addEventListener("click", async () => {
   const input = document.getElementById("aiInput").value.trim();
-  const resultEl = document.getElementById("aiResult");
+  const spinnerWrap = document.getElementById("aiSpinnerWrap");
+  const errorEl = document.getElementById("aiError");
+  const cardsEl = document.getElementById("aiResultCards");
   const btn = document.getElementById("aiRecommendBtn");
+
+  errorEl.hidden = true;
+  cardsEl.hidden = true;
 
   // ── 예외처리 1: 빈 입력값 ──────────────────────────
   if (!input) {
-    resultEl.hidden = false;
-    resultEl.textContent = "⚠️ 추천받고 싶은 브랜드나 상황을 입력해주세요!";
-    resultEl.style.color = "#E53E3E";
+    showAiError("⚠️ 추천받고 싶은 브랜드나 상황을 입력해주세요!");
     return;
   }
 
-  // ── 예외처리 2: 로딩 상태 표시 ────────────────────
-  resultEl.hidden = false;
-  resultEl.textContent = "⏳ AI가 맞춤 이벤트를 찾는 중입니다...";
-  resultEl.style.color = "";
-  btn.disabled = true;           // 중복 클릭 방지
+  // ── 로딩 스피너 표시 ────────────────────────────────
+  spinnerWrap.hidden = false;
+  btn.disabled = true;
   btn.textContent = "분석 중...";
 
   try {
-    // ── 실제 백엔드 API 호출 ──────────────────────────
     const response = await fetch("/api/recommend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ interest: input })
     });
 
-    // HTTP 오류 상태코드 처리 (400, 500 등)
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error || `서버 오류 (${response.status})`);
-    }
-
     const data = await response.json();
 
-    // ── 성공: 결과 표시 ───────────────────────────────
-    resultEl.textContent = `✨ "${input}" 추천 결과\n\n${data.recommendation}`;
-    resultEl.style.color = "";
+    // ── 예외처리 2: 서버 에러 / AI가 이해 못한 모호한 입력 ──
+    if (!response.ok || data.error || !Array.isArray(data.results) || data.results.length === 0) {
+      showAiError(data.error || "다른 검색어로 입력해 주세요.");
+      return;
+    }
 
-    // ── 보너스: localStorage에 히스토리 저장 ──────────
-    saveHistory(input, data.recommendation);
+    // ── 성공: 카드 3개 렌더링 ───────────────────────────
+    renderAiCards(input, data.results);
+    saveHistory(input, data.results.map(r => r.title).join(", "));
     renderHistory();
 
-    // 피드 시각적 반응 (개인화 느낌)
     renderRanking();
     const grid = document.getElementById("feedGrid");
     grid.style.opacity = "0.4";
     setTimeout(() => { grid.style.opacity = "1"; }, 220);
 
   } catch (error) {
-    // ── 예외처리 3: API 오류/네트워크 오류 ───────────
+    // ── 예외처리 3: 네트워크 오류 ───────────────────────
     console.error("AI 추천 오류:", error);
-    resultEl.textContent = "😥 죄송합니다. AI 서비스 서버가 바쁩니다. 잠시 후 다시 시도해주세요.";
-    resultEl.style.color = "#E53E3E";
+    showAiError("😥 죄송합니다. AI 서비스 서버가 바쁩니다. 잠시 후 다시 시도해주세요.");
 
   } finally {
-    // 성공/실패 관계없이 버튼 항상 복구
+    spinnerWrap.hidden = true;
     btn.disabled = false;
     btn.textContent = "추천받기";
   }
 });
+
+function showAiError(message) {
+  const errorEl = document.getElementById("aiError");
+  errorEl.hidden = false;
+  errorEl.innerHTML = `
+    <p>${message}</p>
+    <div class="ai-example-chips">
+      ${AI_EXAMPLE_QUERIES.map(q => `<button class="ai-example-chip" data-query="${q}">${q}</button>`).join("")}
+    </div>
+  `;
+  errorEl.querySelectorAll(".ai-example-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      document.getElementById("aiInput").value = chip.dataset.query;
+      document.getElementById("aiRecommendBtn").click();
+    });
+  });
+}
+
+const CATEGORY_ICON_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c.emoji]));
+
+function renderAiCards(query, results) {
+  const cardsEl = document.getElementById("aiResultCards");
+  cardsEl.hidden = false;
+  cardsEl.innerHTML = `
+    <p class="ai-result-heading">✨ "${query}" 추천 결과</p>
+    <div class="ai-card-row">
+      ${results.slice(0, 3).map(r => `
+        <div class="ai-result-card">
+          <span class="ai-result-card-emoji">${CATEGORY_ICON_MAP[r.category] || "🎁"}</span>
+          <p class="ai-result-card-title">${r.title}</p>
+          <p class="ai-result-card-desc">${r.description}</p>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
 
 // ── localStorage 히스토리 함수들 ──────────────────────────────────────────
 
@@ -1167,16 +1588,73 @@ document.querySelectorAll(".nav-item").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    if (btn.dataset.nav !== "home") {
+
+    if (btn.dataset.nav === "saved") {
+      openCouponWallet();
+    } else if (btn.dataset.nav !== "home") {
       showToast("준비 중인 기능이에요");
     }
   });
 });
 
+/* ---------- 통합 쿠폰함 (관심 등록한 이벤트 모아보기) ---------- */
+const couponWalletOverlay = document.getElementById("couponWalletOverlay");
+
+function openCouponWallet() {
+  renderCouponWallet();
+  couponWalletOverlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeCouponWallet() {
+  couponWalletOverlay.classList.remove("open");
+  document.body.style.overflow = "";
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+  document.querySelector('.nav-item[data-nav="home"]').classList.add("active");
+}
+
+function renderCouponWallet() {
+  const listEl = document.getElementById("couponWalletList");
+  const likedList = EVENTS.filter(ev => likedEvents.has(ev.id));
+
+  if (likedList.length === 0) {
+    listEl.innerHTML = `<li class="empty-state">아직 관심 등록한 이벤트가 없어요. 이벤트 상세에서 ♡를 눌러보세요!</li>`;
+    return;
+  }
+
+  listEl.innerHTML = likedList.map(ev => `
+    <li class="coupon-wallet-item" data-id="${ev.id}">
+      <img class="coupon-wallet-logo" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고" data-domain="${ev.domain}" data-brand="${ev.brand}">
+      <div class="coupon-wallet-info">
+        <p class="coupon-wallet-brand">${ev.brand}</p>
+        <p class="coupon-wallet-item-title">${ev.title}</p>
+        <p class="coupon-wallet-period">${ev.period}</p>
+      </div>
+      <span class="coupon-wallet-discount">${ev.discount}</span>
+    </li>
+  `).join("");
+
+  listEl.querySelectorAll(".coupon-wallet-item").forEach(item => {
+    item.addEventListener("click", () => {
+      closeCouponWallet();
+      openSheet(item.dataset.id);
+    });
+  });
+  listEl.querySelectorAll(".coupon-wallet-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+}
+
+document.getElementById("couponWalletClose").addEventListener("click", closeCouponWallet);
+couponWalletOverlay.addEventListener("click", (e) => {
+  if (e.target === couponWalletOverlay) closeCouponWallet();
+});
+
 /* ---------- Init ---------- */
 renderCategoryTabs();
+bindDiscountTabs();
 renderRanking();
 renderFeed();
+loadEventStats();
+loadWeather(); // 위치 권한 없으면 서울 기준으로 기본 표시
 
 /* ---------- Day / Night Theme Toggle ----------
    Reads any saved preference from localStorage; otherwise falls back to
@@ -1209,14 +1687,10 @@ themeToggleBtn.addEventListener("click", () => {
   localStorage.setItem(THEME_KEY, next);
   showToast(next === "dark" ? "🌙 다크 모드로 전환했어요" : "☀️ 라이트 모드로 전환했어요");
 });
+
 /* =========================================================
    문의하기 (Inquiry) — Google Apps Script 웹앱 연동
-   1) 아래 APPS_SCRIPT_URL을 배포한 웹앱 URL로 교체하세요.
-   2) Apps Script 쪽은 doPost(저장+메일알림), doGet(목록 조회)를
-      구현해야 합니다. (Code.gs 파일 참고)
    ========================================================= */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT2nT_dRD95Ywv6eWSF-JDxDTvI0MOVACQncxAdIRX5kuC2NQc2vNYi4RP71uqx3EO/exec";
-
 const inquiryForm = document.getElementById("inquiryForm");
 const inquiryStatus = document.getElementById("inquiryStatus");
 const inquirySubmitBtn = document.getElementById("inquirySubmitBtn");
@@ -1239,10 +1713,12 @@ if (inquiryForm) {
     const email = document.getElementById("inquiryEmail").value.trim();
     const message = document.getElementById("inquiryMessage").value.trim();
 
+    // ── 예외처리 1: 이메일 형식 오류
     if (!email || !isValidEmail(email)) {
       showInquiryStatus("올바른 이메일을 입력해주세요.", true);
       return;
     }
+    // ── 예외처리 2: 빈 문의 내용
     if (!message) {
       showInquiryStatus("문의 내용을 입력해주세요.", true);
       return;
@@ -1253,6 +1729,8 @@ if (inquiryForm) {
     showInquiryStatus("문의를 등록하는 중입니다...", false);
 
     try {
+      // 주의: Content-Type을 text/plain으로 보내야 Apps Script와의
+      // CORS 프리플라이트(OPTIONS) 문제를 피할 수 있습니다.
       await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -1264,6 +1742,7 @@ if (inquiryForm) {
       loadInquiries();
 
     } catch (err) {
+      // ── 예외처리 3: 네트워크/서버 오류
       console.error("문의 등록 오류:", err);
       showInquiryStatus("잠시 후 다시 시도해주세요.", true);
 
@@ -1287,13 +1766,21 @@ async function loadInquiries() {
       return;
     }
 
-    listEl.innerHTML = data.map(item => `
+    listEl.innerHTML = data.map(item => {
+      const answered = item.status === "답변완료";
+      return `
       <li class="inquiry-item">
-        <p class="inquiry-item-name">${item.name || "익명"}</p>
+        <div class="inquiry-item-head">
+          <p class="inquiry-item-name">${item.name || "익명"}</p>
+          <span class="inquiry-status-badge ${answered ? "answered" : "pending"}">
+            ${answered ? "답변완료" : "답변대기"}
+          </span>
+        </div>
         <p class="inquiry-item-message">${item.message}</p>
         <p class="inquiry-item-time">${item.time}</p>
       </li>
-    `).join("");
+    `;
+    }).join("");
 
   } catch (err) {
     console.error("문의 목록 조회 오류:", err);

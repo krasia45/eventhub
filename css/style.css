@@ -300,6 +300,175 @@ a { text-decoration: none; color: inherit; }
   line-height: 1.5;
 }
 
+/* ---------- AI 로딩 스피너 ---------- */
+.ai-spinner-wrap {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.ai-spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #FFD9AE;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: ai-spin 0.7s linear infinite;
+}
+@keyframes ai-spin { to { transform: rotate(360deg); } }
+
+/* ---------- AI 에러 + 추천 검색어 ---------- */
+.ai-error {
+  margin-top: 12px;
+  background: #fff;
+  border: 1px solid #FBD5D5;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+.ai-error > p { font-size: 12.5px; font-weight: 700; color: #C53030; margin-bottom: 8px; }
+.ai-example-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ai-example-chip {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+.ai-example-chip:active { transform: scale(0.96); }
+
+/* ---------- AI 추천 결과 카드 ---------- */
+.ai-result-heading { margin-top: 12px; font-size: 12.5px; font-weight: 700; color: var(--accent-dark); margin-bottom: 8px; }
+.ai-card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 640px) {
+  .ai-card-row { grid-template-columns: 1fr; }
+}
+.ai-result-card {
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  border: 1px solid #FFE1C0;
+}
+.ai-result-card-emoji { font-size: 20px; }
+.ai-result-card-title { font-size: 13px; font-weight: 800; color: var(--text-1); margin-top: 6px; }
+.ai-result-card-desc { font-size: 11.5px; color: var(--text-2); margin-top: 4px; line-height: 1.4; }
+
+/* ===================== 할인 퀵필터 + GPS 필터 ===================== */
+.filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 clamp(16px, 4vw, 48px) 14px;
+  max-width: var(--max-page);
+  margin: 0 auto;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filter-row::-webkit-scrollbar { display: none; }
+
+.discount-tabs { display: flex; gap: 6px; flex-shrink: 0; }
+.discount-pill {
+  flex-shrink: 0;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.discount-pill.active {
+  background: var(--text-1);
+  color: #fff;
+  border-color: var(--text-1);
+}
+
+.gps-chip {
+  flex-shrink: 0;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.gps-chip.active {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+/* ===================== 날씨 위젯 ===================== */
+.weather-widget {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-card);
+}
+.weather-icon { font-size: 28px; flex-shrink: 0; }
+.weather-summary { font-size: 13.5px; font-weight: 700; color: var(--text-1); }
+.weather-sub { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+
+/* ===================== 카드 배지: 거리 / 소상공인 ===================== */
+.card-distance {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.card-merchant-badge {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ===================== 통합 쿠폰함 ===================== */
+.coupon-wallet-sheet { max-width: 520px; }
+.coupon-wallet-body { padding: 8px 4px 4px; }
+.coupon-wallet-title { font-size: 18px; font-weight: 800; color: var(--text-1); }
+.coupon-wallet-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; margin-bottom: 16px; }
+
+.coupon-wallet-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.coupon-wallet-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+}
+.coupon-wallet-logo { width: 40px; height: 40px; border-radius: 10px; object-fit: contain; background: #fff; flex-shrink: 0; }
+.coupon-wallet-info { flex: 1; min-width: 0; }
+.coupon-wallet-brand { font-size: 11.5px; font-weight: 700; color: var(--text-3); }
+.coupon-wallet-item-title { font-size: 13px; font-weight: 700; color: var(--text-1); margin-top: 2px; }
+.coupon-wallet-period { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.coupon-wallet-discount { flex-shrink: 0; font-size: 12.5px; font-weight: 800; color: var(--accent); }
+
 @media (min-width: 760px) {
   .ai-section { padding: 22px 26px; }
   .ai-input-row { max-width: 640px; }
@@ -871,6 +1040,25 @@ a { text-decoration: none; color: inherit; }
 }
 .download-btn:active { transform: scale(0.98); }
 
+.calendar-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.calendar-btn:active { transform: scale(0.98); }
+.calendar-btn:hover { border-color: var(--accent); }
+
 .visit-btn {
   display: flex;
   align-items: center;
@@ -1000,11 +1188,38 @@ a { text-decoration: none; color: inherit; }
   border-left: 3px solid var(--accent);
 }
 
+.inquiry-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
 .inquiry-item-name {
   font-size: 12.5px;
   font-weight: 700;
   color: var(--text-1);
-  margin-bottom: 4px;
+}
+
+.inquiry-status-badge {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.inquiry-status-badge.pending {
+  background: var(--border);
+  color: var(--text-2);
+}
+.inquiry-status-badge.answered {
+  background: #E1F6EA;
+  color: #1E8A4C;
+}
+html[data-theme="dark"] .inquiry-status-badge.answered {
+  background: #163826;
+  color: #4ADE80;
 }
 
 .inquiry-item-message {
