@@ -4,7 +4,7 @@
 
 /* Google Apps Script 웹앱 URL — 문의하기 + 이벤트 통계(조회수/좋아요)에 공용으로 사용됩니다.
    배포한 웹앱 URL로 교체하세요. (.../exec 로 끝나는 형태) */
-const APPS_SCRIPT_URL = "여기에_배포한_Apps_Script_웹앱_URL을_붙여넣으세요";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/krasia45/exec";
 
 /* 카카오맵 JavaScript 키 — Kakao Developers에서 발급, 배포 도메인 등록 필요 */
 const KAKAO_JS_KEY = "2a4211503ca5201a29e348b22957fba4";
