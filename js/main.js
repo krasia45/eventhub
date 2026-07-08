@@ -6,6 +6,80 @@
    배포한 웹앱 URL로 교체하세요. (.../exec 로 끝나는 형태) */
 const APPS_SCRIPT_URL = "여기에_배포한_Apps_Script_웹앱_URL을_붙여넣으세요";
 
+/* 카카오맵 JavaScript 키 — Kakao Developers에서 발급, 배포 도메인 등록 필요 */
+const KAKAO_JS_KEY = "2a4211503ca5201a29e348b22957fba4";
+
+let kakaoMapSdkPromise = null;
+function loadKakaoMapSdk() {
+  if (kakaoMapSdkPromise) return kakaoMapSdkPromise;
+  kakaoMapSdkPromise = new Promise((resolve, reject) => {
+    if (window.kakao && window.kakao.maps) { resolve(); return; }
+    const script = document.createElement("script");
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&autoload=false`;
+    script.onload = () => window.kakao.maps.load(resolve);
+    script.onerror = () => reject(new Error("카카오맵 SDK 로드 실패"));
+    document.head.appendChild(script);
+  });
+  return kakaoMapSdkPromise;
+}
+
+async function renderEventMap(ev) {
+  const mapEl = document.getElementById("kakaoMap");
+  mapEl.innerHTML = `<div class="map-status">지도를 불러오는 중...</div>`;
+
+  try {
+    await loadKakaoMapSdk();
+    mapEl.innerHTML = "";
+
+    const center = new kakao.maps.LatLng(ev.lat, ev.lng);
+    const map = new kakao.maps.Map(mapEl, { center, level: 6 });
+
+    new kakao.maps.Marker({ position: center, map });
+
+    // 위치 권한을 이미 허용한 상태라면(GPS 필터 사용 시) 내 위치 ↔ 이벤트 위치 직선을 함께 표시.
+    // 실제 도보/차량 경로는 아래 "카카오맵에서 실제 길찾기" 버튼으로 안내합니다.
+    if (userLocation) {
+      const userPos = new kakao.maps.LatLng(userLocation.lat, userLocation.lng);
+      new kakao.maps.Marker({
+        position: userPos,
+        map,
+        image: new kakao.maps.MarkerImage(
+          "https://t1.daumcdn.net/mapjsapi/images/marker.png",
+          new kakao.maps.Size(24, 35)
+        ),
+      });
+
+      new kakao.maps.Polyline({
+        map,
+        path: [userPos, center],
+        strokeWeight: 3,
+        strokeColor: "#FF6F00",
+        strokeOpacity: 0.75,
+        strokeStyle: "dashed",
+      });
+
+      const bounds = new kakao.maps.LatLngBounds();
+      bounds.extend(userPos);
+      bounds.extend(center);
+      map.setBounds(bounds);
+    }
+  } catch (err) {
+    // ── 예외처리: 지도 SDK 로드 실패(도메인 미등록 등) ──
+    console.error("카카오맵 로드 오류:", err);
+    mapEl.innerHTML = `<div class="map-status map-error">지도를 불러오지 못했어요. 카카오 개발자 콘솔에서 이 도메인이 등록되어 있는지 확인해주세요.</div>`;
+  }
+}
+
+function getKakaoRouteLink(ev) {
+  // 카카오맵 딥링크: API 키 없이도 동작하는 무료 길찾기 링크 (실제 도보/차량 경로 안내는 카카오맵이 처리)
+  const to = `${encodeURIComponent(ev.brand)},${ev.lat},${ev.lng}`;
+  if (userLocation) {
+    const from = `${encodeURIComponent("내 위치")},${userLocation.lat},${userLocation.lng}`;
+    return `https://map.kakao.com/link/from/${from}/to/${to}`;
+  }
+  return `https://map.kakao.com/link/to/${to}`;
+}
+
 /* ---------- Category Definitions ---------- */
 const CATEGORIES = [
   { id: "all",       label: "전체",       emoji: "🏠" },
@@ -921,6 +995,1026 @@ const EVENTS = [
     domain: "instagram.com",
     link: "https://www.instagram.com/"
   },
+  {
+    id: "e076", category: "fashion", brand: "폴로 랄프로렌",
+    lat: 37.62866, lng: 127.11383, merchantType: "브랜드",
+    title: "폴로 랄프로렌 시즌 컬렉션 할인", subtitle: "인기 스타일을 합리적인 가격에 만나보세요",
+    discount: "45% OFF", period: "2026.07.10 - 2026.07.20", channel: "온라인 & 오프라인 매장",
+    dday: "D-14",
+    desc: "폴로 랄프로렌의 폴로 랄프로렌 시즌 컬렉션 할인. 인기 스타일을 합리적인 가격에 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["신상","시즌오프","온오프라인"],
+    image: "https://picsum.photos/seed/-fashion-77/600/600",
+    domain: "brand-fashion.com",
+    link: "https://www.brand-fashion.com/"
+  },
+  {
+    id: "e077", category: "fashion", brand: "챔피온",
+    lat: 37.62911, lng: 127.11482, merchantType: "브랜드",
+    title: "챔피온 시즌 컬렉션 할인", subtitle: "인기 스타일을 합리적인 가격에 만나보세요",
+    discount: "20% OFF", period: "2026.07.15 - 2026.07.31", channel: "온라인 & 오프라인 매장",
+    dday: "D-20",
+    desc: "챔피온의 챔피온 시즌 컬렉션 할인. 인기 스타일을 합리적인 가격에 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["신상","시즌오프","온오프라인"],
+    image: "https://picsum.photos/seed/-fashion-78/600/600",
+    domain: "brand-fashion.com",
+    link: "https://www.brand-fashion.com/"
+  },
+  {
+    id: "e078", category: "fashion", brand: "스파오",
+    lat: 37.62956, lng: 127.1158, merchantType: "브랜드",
+    title: "스파오 시즌 컬렉션 할인", subtitle: "인기 스타일을 합리적인 가격에 만나보세요",
+    discount: "30% OFF", period: "2026.08.01 - 2026.08.15", channel: "온라인 & 오프라인 매장",
+    dday: "D-3",
+    desc: "스파오의 스파오 시즌 컬렉션 할인. 인기 스타일을 합리적인 가격에 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["신상","시즌오프","온오프라인"],
+    image: "https://picsum.photos/seed/-fashion-79/600/600",
+    domain: "brand-fashion.com",
+    link: "https://www.brand-fashion.com/"
+  },
+  {
+    id: "e079", category: "fashion", brand: "탑텐",
+    lat: 37.63001, lng: 127.11679, merchantType: "소상공인",
+    title: "탑텐 시즌 컬렉션 할인", subtitle: "인기 스타일을 합리적인 가격에 만나보세요",
+    discount: "45% OFF", period: "2026.07.20 - 2026.08.05", channel: "온라인 & 오프라인 매장",
+    dday: "D-7",
+    desc: "탑텐의 탑텐 시즌 컬렉션 할인. 인기 스타일을 합리적인 가격에 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["신상","시즌오프","온오프라인"],
+    image: "https://picsum.photos/seed/-fashion-80/600/600",
+    domain: "brand-fashion.com",
+    link: "https://www.brand-fashion.com/"
+  },
+  {
+    id: "e080", category: "fashion", brand: "에잇세컨즈",
+    lat: 37.63992, lng: 127.13844, merchantType: "브랜드",
+    title: "에잇세컨즈 시즌 컬렉션 할인", subtitle: "인기 스타일을 합리적인 가격에 만나보세요",
+    discount: "30% OFF", period: "2026.07.10 - 2026.07.20", channel: "온라인 & 오프라인 매장",
+    dday: "D-14",
+    desc: "에잇세컨즈의 에잇세컨즈 시즌 컬렉션 할인. 인기 스타일을 합리적인 가격에 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["신상","시즌오프","온오프라인"],
+    image: "https://picsum.photos/seed/-fashion-81/600/600",
+    domain: "brand-fashion.com",
+    link: "https://www.brand-fashion.com/"
+  },
+  {
+    id: "e081", category: "fashion", brand: "커버낫",
+    lat: 37.64037, lng: 127.13943, merchantType: "브랜드",
+    title: "커버낫 시즌 컬렉션 할인", subtitle: "인기 스타일을 합리적인 가격에 만나보세요",
+    discount: "방문 인증 시 사은품", period: "2026.07.15 - 2026.07.31", channel: "온라인 & 오프라인 매장",
+    dday: "D-20",
+    desc: "커버낫의 커버낫 시즌 컬렉션 할인. 인기 스타일을 합리적인 가격에 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["신상","시즌오프","온오프라인"],
+    image: "https://picsum.photos/seed/-fashion-82/600/600",
+    domain: "brand-fashion.com",
+    link: "https://www.brand-fashion.com/"
+  },
+  {
+    id: "e082", category: "fashion", brand: "디스커버리 익스페디션",
+    lat: 37.64082, lng: 127.14041, merchantType: "브랜드",
+    title: "디스커버리 익스페디션 시즌 컬렉션 할인", subtitle: "인기 스타일을 합리적인 가격에 만나보세요",
+    discount: "방문 인증 시 사은품", period: "2026.08.01 - 2026.08.15", channel: "온라인 & 오프라인 매장",
+    dday: "D-3",
+    desc: "디스커버리 익스페디션의 디스커버리 익스페디션 시즌 컬렉션 할인. 인기 스타일을 합리적인 가격에 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["신상","시즌오프","온오프라인"],
+    image: "https://picsum.photos/seed/-fashion-83/600/600",
+    domain: "brand-fashion.com",
+    link: "https://www.brand-fashion.com/"
+  },
+  {
+    id: "e083", category: "fashion", brand: "내셔널지오그래픽",
+    lat: 37.64127, lng: 127.14139, merchantType: "브랜드",
+    title: "내셔널지오그래픽 시즌 컬렉션 할인", subtitle: "인기 스타일을 합리적인 가격에 만나보세요",
+    discount: "40% OFF", period: "2026.07.20 - 2026.08.05", channel: "온라인 & 오프라인 매장",
+    dday: "D-7",
+    desc: "내셔널지오그래픽의 내셔널지오그래픽 시즌 컬렉션 할인. 인기 스타일을 합리적인 가격에 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["신상","시즌오프","온오프라인"],
+    image: "https://picsum.photos/seed/-fashion-84/600/600",
+    domain: "brand-fashion.com",
+    link: "https://www.brand-fashion.com/"
+  },
+  {
+    id: "e084", category: "fashion", brand: "반스",
+    lat: 37.64173, lng: 127.14238, merchantType: "브랜드",
+    title: "반스 시즌 컬렉션 할인", subtitle: "인기 스타일을 합리적인 가격에 만나보세요",
+    discount: "20% OFF", period: "2026.08.05 - 2026.08.20", channel: "온라인 & 오프라인 매장",
+    dday: "D-10",
+    desc: "반스의 반스 시즌 컬렉션 할인. 인기 스타일을 합리적인 가격에 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["신상","시즌오프","온오프라인"],
+    image: "https://picsum.photos/seed/-fashion-85/600/600",
+    domain: "brand-fashion.com",
+    link: "https://www.brand-fashion.com/"
+  },
+  {
+    id: "e085", category: "fashion", brand: "컨버스",
+    lat: 37.64218, lng: 127.14336, merchantType: "브랜드",
+    title: "컨버스 시즌 컬렉션 할인", subtitle: "인기 스타일을 합리적인 가격에 만나보세요",
+    discount: "25% OFF", period: "2026.07.10 - 2026.07.20", channel: "온라인 & 오프라인 매장",
+    dday: "D-14",
+    desc: "컨버스의 컨버스 시즌 컬렉션 할인. 인기 스타일을 합리적인 가격에 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["신상","시즌오프","온오프라인"],
+    image: "https://picsum.photos/seed/-fashion-86/600/600",
+    domain: "brand-fashion.com",
+    link: "https://www.brand-fashion.com/"
+  },
+  {
+    id: "e086", category: "beauty", brand: "입생로랑뷰티",
+    lat: 37.64263, lng: 127.14435, merchantType: "소상공인",
+    title: "입생로랑뷰티 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
+    discount: "25% OFF", period: "2026.07.15 - 2026.07.31", channel: "온라인 & 백화점 매장",
+    dday: "D-20",
+    desc: "입생로랑뷰티의 입생로랑뷰티 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["뷰티","스킨케어","메이크업"],
+    image: "https://picsum.photos/seed/-beauty-87/600/600",
+    domain: "brand-beauty.com",
+    link: "https://www.brand-beauty.com/"
+  },
+  {
+    id: "e087", category: "beauty", brand: "에뛰드",
+    lat: 37.64308, lng: 127.14533, merchantType: "브랜드",
+    title: "에뛰드 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
+    discount: "1+1", period: "2026.08.01 - 2026.08.15", channel: "온라인 & 백화점 매장",
+    dday: "D-3",
+    desc: "에뛰드의 에뛰드 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["뷰티","스킨케어","메이크업"],
+    image: "https://picsum.photos/seed/-beauty-88/600/600",
+    domain: "brand-beauty.com",
+    link: "https://www.brand-beauty.com/"
+  },
+  {
+    id: "e088", category: "beauty", brand: "미샤",
+    lat: 37.64353, lng: 127.14632, merchantType: "브랜드",
+    title: "미샤 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
+    discount: "40% OFF", period: "2026.07.20 - 2026.08.05", channel: "온라인 & 백화점 매장",
+    dday: "D-7",
+    desc: "미샤의 미샤 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["뷰티","스킨케어","메이크업"],
+    image: "https://picsum.photos/seed/-beauty-89/600/600",
+    domain: "brand-beauty.com",
+    link: "https://www.brand-beauty.com/"
+  },
+  {
+    id: "e089", category: "beauty", brand: "클리오",
+    lat: 37.64398, lng: 127.1473, merchantType: "브랜드",
+    title: "클리오 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
+    discount: "15% OFF", period: "2026.08.05 - 2026.08.20", channel: "온라인 & 백화점 매장",
+    dday: "D-10",
+    desc: "클리오의 클리오 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["뷰티","스킨케어","메이크업"],
+    image: "https://picsum.photos/seed/-beauty-90/600/600",
+    domain: "brand-beauty.com",
+    link: "https://www.brand-beauty.com/"
+  },
+  {
+    id: "e090", category: "beauty", brand: "롬앤",
+    lat: 37.65389, lng: 127.16895, merchantType: "브랜드",
+    title: "롬앤 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
+    discount: "25% OFF", period: "2026.07.15 - 2026.07.31", channel: "온라인 & 백화점 매장",
+    dday: "D-20",
+    desc: "롬앤의 롬앤 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["뷰티","스킨케어","메이크업"],
+    image: "https://picsum.photos/seed/-beauty-91/600/600",
+    domain: "brand-beauty.com",
+    link: "https://www.brand-beauty.com/"
+  },
+  {
+    id: "e091", category: "beauty", brand: "3CE",
+    lat: 37.65434, lng: 127.16994, merchantType: "브랜드",
+    title: "3CE 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
+    discount: "15% OFF", period: "2026.08.01 - 2026.08.15", channel: "온라인 & 백화점 매장",
+    dday: "D-3",
+    desc: "3CE의 3CE 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["뷰티","스킨케어","메이크업"],
+    image: "https://picsum.photos/seed/3ce-beauty-92/600/600",
+    domain: "brand-beauty.com",
+    link: "https://www.brand-beauty.com/"
+  },
+  {
+    id: "e092", category: "beauty", brand: "닥터자르트",
+    lat: 37.65479, lng: 127.17092, merchantType: "브랜드",
+    title: "닥터자르트 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
+    discount: "45% OFF", period: "2026.07.20 - 2026.08.05", channel: "온라인 & 백화점 매장",
+    dday: "D-7",
+    desc: "닥터자르트의 닥터자르트 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["뷰티","스킨케어","메이크업"],
+    image: "https://picsum.photos/seed/-beauty-93/600/600",
+    domain: "brand-beauty.com",
+    link: "https://www.brand-beauty.com/"
+  },
+  {
+    id: "e093", category: "beauty", brand: "아누아",
+    lat: 37.65524, lng: 127.17191, merchantType: "소상공인",
+    title: "아누아 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
+    discount: "25% OFF", period: "2026.08.05 - 2026.08.20", channel: "온라인 & 백화점 매장",
+    dday: "D-10",
+    desc: "아누아의 아누아 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["뷰티","스킨케어","메이크업"],
+    image: "https://picsum.photos/seed/-beauty-94/600/600",
+    domain: "brand-beauty.com",
+    link: "https://www.brand-beauty.com/"
+  },
+  {
+    id: "e094", category: "beauty", brand: "토니모리",
+    lat: 37.65569, lng: 127.17289, merchantType: "브랜드",
+    title: "토니모리 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
+    discount: "55% OFF", period: "2026.07.10 - 2026.07.20", channel: "온라인 & 백화점 매장",
+    dday: "D-14",
+    desc: "토니모리의 토니모리 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["뷰티","스킨케어","메이크업"],
+    image: "https://picsum.photos/seed/-beauty-95/600/600",
+    domain: "brand-beauty.com",
+    link: "https://www.brand-beauty.com/"
+  },
+  {
+    id: "e095", category: "beauty", brand: "네이처리퍼블릭",
+    lat: 37.65614, lng: 127.17388, merchantType: "브랜드",
+    title: "네이처리퍼블릭 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
+    discount: "방문 인증 시 사은품", period: "2026.07.15 - 2026.07.31", channel: "온라인 & 백화점 매장",
+    dday: "D-20",
+    desc: "네이처리퍼블릭의 네이처리퍼블릭 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["뷰티","스킨케어","메이크업"],
+    image: "https://picsum.photos/seed/-beauty-96/600/600",
+    domain: "brand-beauty.com",
+    link: "https://www.brand-beauty.com/"
+  },
+  {
+    id: "e096", category: "food", brand: "파리바게뜨",
+    lat: 37.65659, lng: 127.17486, merchantType: "브랜드",
+    title: "파리바게뜨 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
+    discount: "35% OFF", period: "2026.08.01 - 2026.08.15", channel: "매장 방문 또는 앱 주문",
+    dday: "D-3",
+    desc: "파리바게뜨의 파리바게뜨 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["푸드","시즌메뉴","포장가능"],
+    image: "https://picsum.photos/seed/-food-97/600/600",
+    domain: "brand-food.com",
+    link: "https://www.brand-food.com/"
+  },
+  {
+    id: "e097", category: "food", brand: "뚜레쥬르",
+    lat: 37.65704, lng: 127.17584, merchantType: "브랜드",
+    title: "뚜레쥬르 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
+    discount: "55% OFF", period: "2026.07.20 - 2026.08.05", channel: "매장 방문 또는 앱 주문",
+    dday: "D-7",
+    desc: "뚜레쥬르의 뚜레쥬르 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["푸드","시즌메뉴","포장가능"],
+    image: "https://picsum.photos/seed/-food-98/600/600",
+    domain: "brand-food.com",
+    link: "https://www.brand-food.com/"
+  },
+  {
+    id: "e098", category: "food", brand: "맘스터치",
+    lat: 37.65749, lng: 127.17683, merchantType: "브랜드",
+    title: "맘스터치 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
+    discount: "10% OFF", period: "2026.08.05 - 2026.08.20", channel: "매장 방문 또는 앱 주문",
+    dday: "D-10",
+    desc: "맘스터치의 맘스터치 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["푸드","시즌메뉴","포장가능"],
+    image: "https://picsum.photos/seed/-food-99/600/600",
+    domain: "brand-food.com",
+    link: "https://www.brand-food.com/"
+  },
+  {
+    id: "e099", category: "food", brand: "버거킹",
+    lat: 37.65794, lng: 127.17781, merchantType: "브랜드",
+    title: "버거킹 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
+    discount: "55% OFF", period: "2026.07.10 - 2026.07.20", channel: "매장 방문 또는 앱 주문",
+    dday: "D-14",
+    desc: "버거킹의 버거킹 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["푸드","시즌메뉴","포장가능"],
+    image: "https://picsum.photos/seed/-food-100/600/600",
+    domain: "brand-food.com",
+    link: "https://www.brand-food.com/"
+  },
+  {
+    id: "e100", category: "food", brand: "롯데리아",
+    lat: 37.66302, lng: 127.217, merchantType: "소상공인",
+    title: "롯데리아 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
+    discount: "20% OFF", period: "2026.07.20 - 2026.08.05", channel: "매장 방문 또는 앱 주문",
+    dday: "D-7",
+    desc: "롯데리아의 롯데리아 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["푸드","시즌메뉴","포장가능"],
+    image: "https://picsum.photos/seed/-food-101/600/600",
+    domain: "brand-food.com",
+    link: "https://www.brand-food.com/"
+  },
+  {
+    id: "e101", category: "food", brand: "서브웨이",
+    lat: 37.66343, lng: 127.21801, merchantType: "브랜드",
+    title: "서브웨이 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
+    discount: "50% OFF", period: "2026.08.05 - 2026.08.20", channel: "매장 방문 또는 앱 주문",
+    dday: "D-10",
+    desc: "서브웨이의 서브웨이 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["푸드","시즌메뉴","포장가능"],
+    image: "https://picsum.photos/seed/-food-102/600/600",
+    domain: "brand-food.com",
+    link: "https://www.brand-food.com/"
+  },
+  {
+    id: "e102", category: "food", brand: "배스킨라빈스",
+    lat: 37.66384, lng: 127.21902, merchantType: "브랜드",
+    title: "배스킨라빈스 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
+    discount: "방문 인증 시 사은품", period: "2026.07.10 - 2026.07.20", channel: "매장 방문 또는 앱 주문",
+    dday: "D-14",
+    desc: "배스킨라빈스의 배스킨라빈스 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["푸드","시즌메뉴","포장가능"],
+    image: "https://picsum.photos/seed/-food-103/600/600",
+    domain: "brand-food.com",
+    link: "https://www.brand-food.com/"
+  },
+  {
+    id: "e103", category: "food", brand: "공차",
+    lat: 37.66425, lng: 127.22003, merchantType: "브랜드",
+    title: "공차 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
+    discount: "60% OFF", period: "2026.07.15 - 2026.07.31", channel: "매장 방문 또는 앱 주문",
+    dday: "D-20",
+    desc: "공차의 공차 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["푸드","시즌메뉴","포장가능"],
+    image: "https://picsum.photos/seed/-food-104/600/600",
+    domain: "brand-food.com",
+    link: "https://www.brand-food.com/"
+  },
+  {
+    id: "e104", category: "food", brand: "할리스",
+    lat: 37.66466, lng: 127.22105, merchantType: "브랜드",
+    title: "할리스 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
+    discount: "50% OFF", period: "2026.08.01 - 2026.08.15", channel: "매장 방문 또는 앱 주문",
+    dday: "D-3",
+    desc: "할리스의 할리스 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["푸드","시즌메뉴","포장가능"],
+    image: "https://picsum.photos/seed/-food-105/600/600",
+    domain: "brand-food.com",
+    link: "https://www.brand-food.com/"
+  },
+  {
+    id: "e105", category: "food", brand: "이디야커피",
+    lat: 37.66507, lng: 127.22206, merchantType: "브랜드",
+    title: "이디야커피 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
+    discount: "30% OFF", period: "2026.07.20 - 2026.08.05", channel: "매장 방문 또는 앱 주문",
+    dday: "D-7",
+    desc: "이디야커피의 이디야커피 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["푸드","시즌메뉴","포장가능"],
+    image: "https://picsum.photos/seed/-food-106/600/600",
+    domain: "brand-food.com",
+    link: "https://www.brand-food.com/"
+  },
+  {
+    id: "e106", category: "tech", brand: "삼성전자",
+    lat: 37.66548, lng: 127.22307, merchantType: "브랜드",
+    title: "삼성전자 신제품 런칭 할인", subtitle: "최신 기술을 더 합리적으로 만나보세요",
+    discount: "방문 인증 시 사은품", period: "2026.08.05 - 2026.08.20", channel: "온라인 & 가전 매장",
+    dday: "D-10",
+    desc: "삼성전자의 삼성전자 신제품 런칭 할인. 최신 기술을 더 합리적으로 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["전자기기","신제품","온라인특가"],
+    image: "https://picsum.photos/seed/-tech-107/600/600",
+    domain: "brand-tech.com",
+    link: "https://www.brand-tech.com/"
+  },
+  {
+    id: "e107", category: "tech", brand: "LG전자",
+    lat: 37.66589, lng: 127.22408, merchantType: "소상공인",
+    title: "LG전자 신제품 런칭 할인", subtitle: "최신 기술을 더 합리적으로 만나보세요",
+    discount: "35% OFF", period: "2026.07.10 - 2026.07.20", channel: "온라인 & 가전 매장",
+    dday: "D-14",
+    desc: "LG전자의 LG전자 신제품 런칭 할인. 최신 기술을 더 합리적으로 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["전자기기","신제품","온라인특가"],
+    image: "https://picsum.photos/seed/lg-tech-108/600/600",
+    domain: "brand-tech.com",
+    link: "https://www.brand-tech.com/"
+  },
+  {
+    id: "e108", category: "tech", brand: "브라운",
+    lat: 37.6663, lng: 127.2251, merchantType: "브랜드",
+    title: "브라운 신제품 런칭 할인", subtitle: "최신 기술을 더 합리적으로 만나보세요",
+    discount: "60% OFF", period: "2026.07.15 - 2026.07.31", channel: "온라인 & 가전 매장",
+    dday: "D-20",
+    desc: "브라운의 브라운 신제품 런칭 할인. 최신 기술을 더 합리적으로 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["전자기기","신제품","온라인특가"],
+    image: "https://picsum.photos/seed/-tech-109/600/600",
+    domain: "brand-tech.com",
+    link: "https://www.brand-tech.com/"
+  },
+  {
+    id: "e109", category: "tech", brand: "필립스",
+    lat: 37.66671, lng: 127.22611, merchantType: "브랜드",
+    title: "필립스 신제품 런칭 할인", subtitle: "최신 기술을 더 합리적으로 만나보세요",
+    discount: "20% OFF", period: "2026.08.01 - 2026.08.15", channel: "온라인 & 가전 매장",
+    dday: "D-3",
+    desc: "필립스의 필립스 신제품 런칭 할인. 최신 기술을 더 합리적으로 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["전자기기","신제품","온라인특가"],
+    image: "https://picsum.photos/seed/-tech-110/600/600",
+    domain: "brand-tech.com",
+    link: "https://www.brand-tech.com/"
+  },
+  {
+    id: "e110", category: "tech", brand: "JBL",
+    lat: 37.6757, lng: 127.24839, merchantType: "브랜드",
+    title: "JBL 신제품 런칭 할인", subtitle: "최신 기술을 더 합리적으로 만나보세요",
+    discount: "45% OFF", period: "2026.08.05 - 2026.08.20", channel: "온라인 & 가전 매장",
+    dday: "D-10",
+    desc: "JBL의 JBL 신제품 런칭 할인. 최신 기술을 더 합리적으로 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["전자기기","신제품","온라인특가"],
+    image: "https://picsum.photos/seed/jbl-tech-111/600/600",
+    domain: "brand-tech.com",
+    link: "https://www.brand-tech.com/"
+  },
+  {
+    id: "e111", category: "tech", brand: "소니",
+    lat: 37.67611, lng: 127.2494, merchantType: "브랜드",
+    title: "소니 신제품 런칭 할인", subtitle: "최신 기술을 더 합리적으로 만나보세요",
+    discount: "방문 인증 시 사은품", period: "2026.07.10 - 2026.07.20", channel: "온라인 & 가전 매장",
+    dday: "D-14",
+    desc: "소니의 소니 신제품 런칭 할인. 최신 기술을 더 합리적으로 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["전자기기","신제품","온라인특가"],
+    image: "https://picsum.photos/seed/-tech-112/600/600",
+    domain: "brand-tech.com",
+    link: "https://www.brand-tech.com/"
+  },
+  {
+    id: "e112", category: "tech", brand: "보스",
+    lat: 37.67652, lng: 127.25041, merchantType: "브랜드",
+    title: "보스 신제품 런칭 할인", subtitle: "최신 기술을 더 합리적으로 만나보세요",
+    discount: "30% OFF", period: "2026.07.15 - 2026.07.31", channel: "온라인 & 가전 매장",
+    dday: "D-20",
+    desc: "보스의 보스 신제품 런칭 할인. 최신 기술을 더 합리적으로 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["전자기기","신제품","온라인특가"],
+    image: "https://picsum.photos/seed/-tech-113/600/600",
+    domain: "brand-tech.com",
+    link: "https://www.brand-tech.com/"
+  },
+  {
+    id: "e113", category: "tech", brand: "로지텍",
+    lat: 37.67693, lng: 127.25143, merchantType: "브랜드",
+    title: "로지텍 신제품 런칭 할인", subtitle: "최신 기술을 더 합리적으로 만나보세요",
+    discount: "방문 인증 시 사은품", period: "2026.08.01 - 2026.08.15", channel: "온라인 & 가전 매장",
+    dday: "D-3",
+    desc: "로지텍의 로지텍 신제품 런칭 할인. 최신 기술을 더 합리적으로 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["전자기기","신제품","온라인특가"],
+    image: "https://picsum.photos/seed/-tech-114/600/600",
+    domain: "brand-tech.com",
+    link: "https://www.brand-tech.com/"
+  },
+  {
+    id: "e114", category: "tech", brand: "레이저",
+    lat: 37.67734, lng: 127.25244, merchantType: "소상공인",
+    title: "레이저 신제품 런칭 할인", subtitle: "최신 기술을 더 합리적으로 만나보세요",
+    discount: "45% OFF", period: "2026.07.20 - 2026.08.05", channel: "온라인 & 가전 매장",
+    dday: "D-7",
+    desc: "레이저의 레이저 신제품 런칭 할인. 최신 기술을 더 합리적으로 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["전자기기","신제품","온라인특가"],
+    image: "https://picsum.photos/seed/-tech-115/600/600",
+    domain: "brand-tech.com",
+    link: "https://www.brand-tech.com/"
+  },
+  {
+    id: "e115", category: "tech", brand: "벤큐",
+    lat: 37.67775, lng: 127.25345, merchantType: "브랜드",
+    title: "벤큐 신제품 런칭 할인", subtitle: "최신 기술을 더 합리적으로 만나보세요",
+    discount: "45% OFF", period: "2026.08.05 - 2026.08.20", channel: "온라인 & 가전 매장",
+    dday: "D-10",
+    desc: "벤큐의 벤큐 신제품 런칭 할인. 최신 기술을 더 합리적으로 만나보세요. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["전자기기","신제품","온라인특가"],
+    image: "https://picsum.photos/seed/-tech-116/600/600",
+    domain: "brand-tech.com",
+    link: "https://www.brand-tech.com/"
+  },
+  {
+    id: "e116", category: "delivery", brand: "요기요",
+    lat: 37.67816, lng: 127.25447, merchantType: "브랜드",
+    title: "요기요 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
+    discount: "40% OFF", period: "2026.07.10 - 2026.07.20", channel: "배달앱 주문",
+    dday: "D-14",
+    desc: "요기요의 요기요 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["배달","첫주문","쿠폰"],
+    image: "https://picsum.photos/seed/-delivery-117/600/600",
+    domain: "brand-delivery.com",
+    link: "https://www.brand-delivery.com/"
+  },
+  {
+    id: "e117", category: "delivery", brand: "쿠팡이츠",
+    lat: 37.67857, lng: 127.25548, merchantType: "브랜드",
+    title: "쿠팡이츠 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
+    discount: "10% OFF", period: "2026.07.15 - 2026.07.31", channel: "배달앱 주문",
+    dday: "D-20",
+    desc: "쿠팡이츠의 쿠팡이츠 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["배달","첫주문","쿠폰"],
+    image: "https://picsum.photos/seed/-delivery-118/600/600",
+    domain: "brand-delivery.com",
+    link: "https://www.brand-delivery.com/"
+  },
+  {
+    id: "e118", category: "delivery", brand: "땡겨요",
+    lat: 37.67898, lng: 127.25649, merchantType: "브랜드",
+    title: "땡겨요 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
+    discount: "최대 70% OFF", period: "2026.08.01 - 2026.08.15", channel: "배달앱 주문",
+    dday: "D-3",
+    desc: "땡겨요의 땡겨요 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["배달","첫주문","쿠폰"],
+    image: "https://picsum.photos/seed/-delivery-119/600/600",
+    domain: "brand-delivery.com",
+    link: "https://www.brand-delivery.com/"
+  },
+  {
+    id: "e119", category: "delivery", brand: "위메프오",
+    lat: 37.67938, lng: 127.2575, merchantType: "브랜드",
+    title: "위메프오 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
+    discount: "최대 70% OFF", period: "2026.07.20 - 2026.08.05", channel: "배달앱 주문",
+    dday: "D-7",
+    desc: "위메프오의 위메프오 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["배달","첫주문","쿠폰"],
+    image: "https://picsum.photos/seed/-delivery-120/600/600",
+    domain: "brand-delivery.com",
+    link: "https://www.brand-delivery.com/"
+  },
+  {
+    id: "e120", category: "delivery", brand: "먹깨비",
+    lat: 37.68838, lng: 127.27978, merchantType: "브랜드",
+    title: "먹깨비 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
+    discount: "15% OFF", period: "2026.07.10 - 2026.07.20", channel: "배달앱 주문",
+    dday: "D-14",
+    desc: "먹깨비의 먹깨비 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["배달","첫주문","쿠폰"],
+    image: "https://picsum.photos/seed/-delivery-121/600/600",
+    domain: "brand-delivery.com",
+    link: "https://www.brand-delivery.com/"
+  },
+  {
+    id: "e121", category: "delivery", brand: "배달특급",
+    lat: 37.68879, lng: 127.2808, merchantType: "소상공인",
+    title: "배달특급 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
+    discount: "60% OFF", period: "2026.07.15 - 2026.07.31", channel: "배달앱 주문",
+    dday: "D-20",
+    desc: "배달특급의 배달특급 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["배달","첫주문","쿠폰"],
+    image: "https://picsum.photos/seed/-delivery-122/600/600",
+    domain: "brand-delivery.com",
+    link: "https://www.brand-delivery.com/"
+  },
+  {
+    id: "e122", category: "delivery", brand: "각지역 소상공인 배달",
+    lat: 37.6892, lng: 127.28181, merchantType: "브랜드",
+    title: "각지역 소상공인 배달 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
+    discount: "2+1", period: "2026.08.01 - 2026.08.15", channel: "배달앱 주문",
+    dday: "D-3",
+    desc: "각지역 소상공인 배달의 각지역 소상공인 배달 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["배달","첫주문","쿠폰"],
+    image: "https://picsum.photos/seed/-delivery-123/600/600",
+    domain: "brand-delivery.com",
+    link: "https://www.brand-delivery.com/"
+  },
+  {
+    id: "e123", category: "delivery", brand: "동네줌",
+    lat: 37.68961, lng: 127.28282, merchantType: "브랜드",
+    title: "동네줌 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
+    discount: "20% OFF", period: "2026.07.20 - 2026.08.05", channel: "배달앱 주문",
+    dday: "D-7",
+    desc: "동네줌의 동네줌 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["배달","첫주문","쿠폰"],
+    image: "https://picsum.photos/seed/-delivery-124/600/600",
+    domain: "brand-delivery.com",
+    link: "https://www.brand-delivery.com/"
+  },
+  {
+    id: "e124", category: "delivery", brand: "경기배달특급",
+    lat: 37.69002, lng: 127.28383, merchantType: "브랜드",
+    title: "경기배달특급 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
+    discount: "40% OFF", period: "2026.08.05 - 2026.08.20", channel: "배달앱 주문",
+    dday: "D-10",
+    desc: "경기배달특급의 경기배달특급 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["배달","첫주문","쿠폰"],
+    image: "https://picsum.photos/seed/-delivery-125/600/600",
+    domain: "brand-delivery.com",
+    link: "https://www.brand-delivery.com/"
+  },
+  {
+    id: "e125", category: "delivery", brand: "전주맛배달",
+    lat: 37.69043, lng: 127.28485, merchantType: "브랜드",
+    title: "전주맛배달 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
+    discount: "40% OFF", period: "2026.07.10 - 2026.07.20", channel: "배달앱 주문",
+    dday: "D-14",
+    desc: "전주맛배달의 전주맛배달 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["배달","첫주문","쿠폰"],
+    image: "https://picsum.photos/seed/-delivery-126/600/600",
+    domain: "brand-delivery.com",
+    link: "https://www.brand-delivery.com/"
+  },
+  {
+    id: "e126", category: "stay", brand: "아고다",
+    lat: 37.69084, lng: 127.28586, merchantType: "브랜드",
+    title: "아고다 얼리버드 예약 할인", subtitle: "미리 예약하면 더 저렴하게",
+    discount: "60% OFF", period: "2026.07.15 - 2026.07.31", channel: "온라인 예약",
+    dday: "D-20",
+    desc: "아고다의 아고다 얼리버드 예약 할인. 미리 예약하면 더 저렴하게. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["숙박","얼리버드","여름휴가"],
+    image: "https://picsum.photos/seed/-stay-127/600/600",
+    domain: "brand-stay.com",
+    link: "https://www.brand-stay.com/"
+  },
+  {
+    id: "e127", category: "stay", brand: "부킹닷컴",
+    lat: 37.69125, lng: 127.28687, merchantType: "브랜드",
+    title: "부킹닷컴 얼리버드 예약 할인", subtitle: "미리 예약하면 더 저렴하게",
+    discount: "최대 70% OFF", period: "2026.08.01 - 2026.08.15", channel: "온라인 예약",
+    dday: "D-3",
+    desc: "부킹닷컴의 부킹닷컴 얼리버드 예약 할인. 미리 예약하면 더 저렴하게. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["숙박","얼리버드","여름휴가"],
+    image: "https://picsum.photos/seed/-stay-128/600/600",
+    domain: "brand-stay.com",
+    link: "https://www.brand-stay.com/"
+  },
+  {
+    id: "e128", category: "stay", brand: "호텔스컴바인",
+    lat: 37.69165, lng: 127.28788, merchantType: "소상공인",
+    title: "호텔스컴바인 얼리버드 예약 할인", subtitle: "미리 예약하면 더 저렴하게",
+    discount: "50% OFF", period: "2026.07.20 - 2026.08.05", channel: "온라인 예약",
+    dday: "D-7",
+    desc: "호텔스컴바인의 호텔스컴바인 얼리버드 예약 할인. 미리 예약하면 더 저렴하게. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["숙박","얼리버드","여름휴가"],
+    image: "https://picsum.photos/seed/-stay-129/600/600",
+    domain: "brand-stay.com",
+    link: "https://www.brand-stay.com/"
+  },
+  {
+    id: "e129", category: "stay", brand: "메리어트",
+    lat: 37.69206, lng: 127.2889, merchantType: "브랜드",
+    title: "메리어트 얼리버드 예약 할인", subtitle: "미리 예약하면 더 저렴하게",
+    discount: "50% OFF", period: "2026.08.05 - 2026.08.20", channel: "온라인 예약",
+    dday: "D-10",
+    desc: "메리어트의 메리어트 얼리버드 예약 할인. 미리 예약하면 더 저렴하게. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["숙박","얼리버드","여름휴가"],
+    image: "https://picsum.photos/seed/-stay-130/600/600",
+    domain: "brand-stay.com",
+    link: "https://www.brand-stay.com/"
+  },
+  {
+    id: "e130", category: "stay", brand: "롯데호텔",
+    lat: 37.57018, lng: 126.98711, merchantType: "브랜드",
+    title: "롯데호텔 얼리버드 예약 할인", subtitle: "미리 예약하면 더 저렴하게",
+    discount: "40% OFF", period: "2026.07.15 - 2026.07.31", channel: "온라인 예약",
+    dday: "D-20",
+    desc: "롯데호텔의 롯데호텔 얼리버드 예약 할인. 미리 예약하면 더 저렴하게. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["숙박","얼리버드","여름휴가"],
+    image: "https://picsum.photos/seed/-stay-131/600/600",
+    domain: "brand-stay.com",
+    link: "https://www.brand-stay.com/"
+  },
+  {
+    id: "e131", category: "stay", brand: "신라스테이",
+    lat: 37.57059, lng: 126.98813, merchantType: "브랜드",
+    title: "신라스테이 얼리버드 예약 할인", subtitle: "미리 예약하면 더 저렴하게",
+    discount: "40% OFF", period: "2026.08.01 - 2026.08.15", channel: "온라인 예약",
+    dday: "D-3",
+    desc: "신라스테이의 신라스테이 얼리버드 예약 할인. 미리 예약하면 더 저렴하게. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["숙박","얼리버드","여름휴가"],
+    image: "https://picsum.photos/seed/-stay-132/600/600",
+    domain: "brand-stay.com",
+    link: "https://www.brand-stay.com/"
+  },
+  {
+    id: "e132", category: "stay", brand: "조선호텔",
+    lat: 37.571, lng: 126.98914, merchantType: "브랜드",
+    title: "조선호텔 얼리버드 예약 할인", subtitle: "미리 예약하면 더 저렴하게",
+    discount: "30% OFF", period: "2026.07.20 - 2026.08.05", channel: "온라인 예약",
+    dday: "D-7",
+    desc: "조선호텔의 조선호텔 얼리버드 예약 할인. 미리 예약하면 더 저렴하게. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["숙박","얼리버드","여름휴가"],
+    image: "https://picsum.photos/seed/-stay-133/600/600",
+    domain: "brand-stay.com",
+    link: "https://www.brand-stay.com/"
+  },
+  {
+    id: "e133", category: "stay", brand: "한화리조트",
+    lat: 37.57141, lng: 126.99015, merchantType: "브랜드",
+    title: "한화리조트 얼리버드 예약 할인", subtitle: "미리 예약하면 더 저렴하게",
+    discount: "35% OFF", period: "2026.08.05 - 2026.08.20", channel: "온라인 예약",
+    dday: "D-10",
+    desc: "한화리조트의 한화리조트 얼리버드 예약 할인. 미리 예약하면 더 저렴하게. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["숙박","얼리버드","여름휴가"],
+    image: "https://picsum.photos/seed/-stay-134/600/600",
+    domain: "brand-stay.com",
+    link: "https://www.brand-stay.com/"
+  },
+  {
+    id: "e134", category: "stay", brand: "소노벨",
+    lat: 37.57182, lng: 126.99117, merchantType: "브랜드",
+    title: "소노벨 얼리버드 예약 할인", subtitle: "미리 예약하면 더 저렴하게",
+    discount: "25% OFF", period: "2026.07.10 - 2026.07.20", channel: "온라인 예약",
+    dday: "D-14",
+    desc: "소노벨의 소노벨 얼리버드 예약 할인. 미리 예약하면 더 저렴하게. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["숙박","얼리버드","여름휴가"],
+    image: "https://picsum.photos/seed/-stay-135/600/600",
+    domain: "brand-stay.com",
+    link: "https://www.brand-stay.com/"
+  },
+  {
+    id: "e135", category: "stay", brand: "대명리조트",
+    lat: 37.57223, lng: 126.99218, merchantType: "소상공인",
+    title: "대명리조트 얼리버드 예약 할인", subtitle: "미리 예약하면 더 저렴하게",
+    discount: "55% OFF", period: "2026.07.15 - 2026.07.31", channel: "온라인 예약",
+    dday: "D-20",
+    desc: "대명리조트의 대명리조트 얼리버드 예약 할인. 미리 예약하면 더 저렴하게. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["숙박","얼리버드","여름휴가"],
+    image: "https://picsum.photos/seed/-stay-136/600/600",
+    domain: "brand-stay.com",
+    link: "https://www.brand-stay.com/"
+  },
+  {
+    id: "e136", category: "living", brand: "일룸",
+    lat: 37.57264, lng: 126.99319, merchantType: "브랜드",
+    title: "일룸 홈리뉴얼 할인전", subtitle: "집을 새롭게 꾸미는 특별한 기회",
+    discount: "35% OFF", period: "2026.08.01 - 2026.08.15", channel: "온라인 & 리빙 매장",
+    dday: "D-3",
+    desc: "일룸의 일룸 홈리뉴얼 할인전. 집을 새롭게 꾸미는 특별한 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["리빙","홈인테리어","가구"],
+    image: "https://picsum.photos/seed/-living-137/600/600",
+    domain: "brand-living.com",
+    link: "https://www.brand-living.com/"
+  },
+  {
+    id: "e137", category: "living", brand: "리바트",
+    lat: 37.57304, lng: 126.9942, merchantType: "브랜드",
+    title: "리바트 홈리뉴얼 할인전", subtitle: "집을 새롭게 꾸미는 특별한 기회",
+    discount: "55% OFF", period: "2026.07.20 - 2026.08.05", channel: "온라인 & 리빙 매장",
+    dday: "D-7",
+    desc: "리바트의 리바트 홈리뉴얼 할인전. 집을 새롭게 꾸미는 특별한 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["리빙","홈인테리어","가구"],
+    image: "https://picsum.photos/seed/-living-138/600/600",
+    domain: "brand-living.com",
+    link: "https://www.brand-living.com/"
+  },
+  {
+    id: "e138", category: "living", brand: "에이스침대",
+    lat: 37.57345, lng: 126.99522, merchantType: "브랜드",
+    title: "에이스침대 홈리뉴얼 할인전", subtitle: "집을 새롭게 꾸미는 특별한 기회",
+    discount: "20% OFF", period: "2026.08.05 - 2026.08.20", channel: "온라인 & 리빙 매장",
+    dday: "D-10",
+    desc: "에이스침대의 에이스침대 홈리뉴얼 할인전. 집을 새롭게 꾸미는 특별한 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["리빙","홈인테리어","가구"],
+    image: "https://picsum.photos/seed/-living-139/600/600",
+    domain: "brand-living.com",
+    link: "https://www.brand-living.com/"
+  },
+  {
+    id: "e139", category: "living", brand: "시몬스",
+    lat: 37.57386, lng: 126.99623, merchantType: "브랜드",
+    title: "시몬스 홈리뉴얼 할인전", subtitle: "집을 새롭게 꾸미는 특별한 기회",
+    discount: "20% OFF", period: "2026.07.10 - 2026.07.20", channel: "온라인 & 리빙 매장",
+    dday: "D-14",
+    desc: "시몬스의 시몬스 홈리뉴얼 할인전. 집을 새롭게 꾸미는 특별한 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["리빙","홈인테리어","가구"],
+    image: "https://picsum.photos/seed/-living-140/600/600",
+    domain: "brand-living.com",
+    link: "https://www.brand-living.com/"
+  },
+  {
+    id: "e140", category: "living", brand: "이케아",
+    lat: 37.58286, lng: 127.01851, merchantType: "브랜드",
+    title: "이케아 홈리뉴얼 할인전", subtitle: "집을 새롭게 꾸미는 특별한 기회",
+    discount: "1+1", period: "2026.08.01 - 2026.08.15", channel: "온라인 & 리빙 매장",
+    dday: "D-3",
+    desc: "이케아의 이케아 홈리뉴얼 할인전. 집을 새롭게 꾸미는 특별한 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["리빙","홈인테리어","가구"],
+    image: "https://picsum.photos/seed/-living-141/600/600",
+    domain: "brand-living.com",
+    link: "https://www.brand-living.com/"
+  },
+  {
+    id: "e141", category: "living", brand: "무인양품",
+    lat: 37.58327, lng: 127.01952, merchantType: "브랜드",
+    title: "무인양품 홈리뉴얼 할인전", subtitle: "집을 새롭게 꾸미는 특별한 기회",
+    discount: "20% OFF", period: "2026.07.20 - 2026.08.05", channel: "온라인 & 리빙 매장",
+    dday: "D-7",
+    desc: "무인양품의 무인양품 홈리뉴얼 할인전. 집을 새롭게 꾸미는 특별한 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["리빙","홈인테리어","가구"],
+    image: "https://picsum.photos/seed/-living-142/600/600",
+    domain: "brand-living.com",
+    link: "https://www.brand-living.com/"
+  },
+  {
+    id: "e142", category: "living", brand: "자주",
+    lat: 37.58368, lng: 127.02053, merchantType: "소상공인",
+    title: "자주 홈리뉴얼 할인전", subtitle: "집을 새롭게 꾸미는 특별한 기회",
+    discount: "2+1", period: "2026.08.05 - 2026.08.20", channel: "온라인 & 리빙 매장",
+    dday: "D-10",
+    desc: "자주의 자주 홈리뉴얼 할인전. 집을 새롭게 꾸미는 특별한 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["리빙","홈인테리어","가구"],
+    image: "https://picsum.photos/seed/-living-143/600/600",
+    domain: "brand-living.com",
+    link: "https://www.brand-living.com/"
+  },
+  {
+    id: "e143", category: "living", brand: "이마트리빙",
+    lat: 37.58409, lng: 127.02155, merchantType: "브랜드",
+    title: "이마트리빙 홈리뉴얼 할인전", subtitle: "집을 새롭게 꾸미는 특별한 기회",
+    discount: "1+1", period: "2026.07.10 - 2026.07.20", channel: "온라인 & 리빙 매장",
+    dday: "D-14",
+    desc: "이마트리빙의 이마트리빙 홈리뉴얼 할인전. 집을 새롭게 꾸미는 특별한 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["리빙","홈인테리어","가구"],
+    image: "https://picsum.photos/seed/-living-144/600/600",
+    domain: "brand-living.com",
+    link: "https://www.brand-living.com/"
+  },
+  {
+    id: "e144", category: "living", brand: "롯데하이마트",
+    lat: 37.5845, lng: 127.02256, merchantType: "브랜드",
+    title: "롯데하이마트 홈리뉴얼 할인전", subtitle: "집을 새롭게 꾸미는 특별한 기회",
+    discount: "60% OFF", period: "2026.07.15 - 2026.07.31", channel: "온라인 & 리빙 매장",
+    dday: "D-20",
+    desc: "롯데하이마트의 롯데하이마트 홈리뉴얼 할인전. 집을 새롭게 꾸미는 특별한 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["리빙","홈인테리어","가구"],
+    image: "https://picsum.photos/seed/-living-145/600/600",
+    domain: "brand-living.com",
+    link: "https://www.brand-living.com/"
+  },
+  {
+    id: "e145", category: "living", brand: "까사미아",
+    lat: 37.58491, lng: 127.02357, merchantType: "브랜드",
+    title: "까사미아 홈리뉴얼 할인전", subtitle: "집을 새롭게 꾸미는 특별한 기회",
+    discount: "2+1", period: "2026.08.01 - 2026.08.15", channel: "온라인 & 리빙 매장",
+    dday: "D-3",
+    desc: "까사미아의 까사미아 홈리뉴얼 할인전. 집을 새롭게 꾸미는 특별한 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["리빙","홈인테리어","가구"],
+    image: "https://picsum.photos/seed/-living-146/600/600",
+    domain: "brand-living.com",
+    link: "https://www.brand-living.com/"
+  },
+  {
+    id: "e146", category: "popup", brand: "아디다스 오리지널스",
+    lat: 37.58531, lng: 127.02458, merchantType: "브랜드",
+    title: "아디다스 오리지널스 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "60% OFF", period: "2026.07.20 - 2026.08.05", channel: "팝업스토어 방문",
+    dday: "D-7",
+    desc: "아디다스 오리지널스의 아디다스 오리지널스 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-147/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e147", category: "popup", brand: "젠틀몬스터",
+    lat: 37.58572, lng: 127.0256, merchantType: "브랜드",
+    title: "젠틀몬스터 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "2+1", period: "2026.08.05 - 2026.08.20", channel: "팝업스토어 방문",
+    dday: "D-10",
+    desc: "젠틀몬스터의 젠틀몬스터 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-148/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e148", category: "popup", brand: "탬버린즈",
+    lat: 37.58613, lng: 127.02661, merchantType: "브랜드",
+    title: "탬버린즈 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "최대 70% OFF", period: "2026.07.10 - 2026.07.20", channel: "팝업스토어 방문",
+    dday: "D-14",
+    desc: "탬버린즈의 탬버린즈 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-149/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e149", category: "popup", brand: "마뗑킴",
+    lat: 37.58654, lng: 127.02762, merchantType: "소상공인",
+    title: "마뗑킴 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "40% OFF", period: "2026.07.15 - 2026.07.31", channel: "팝업스토어 방문",
+    dday: "D-20",
+    desc: "마뗑킴의 마뗑킴 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-150/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e150", category: "popup", brand: "앤더슨벨",
+    lat: 37.59454, lng: 127.05053, merchantType: "브랜드",
+    title: "앤더슨벨 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "20% OFF", period: "2026.07.20 - 2026.08.05", channel: "팝업스토어 방문",
+    dday: "D-7",
+    desc: "앤더슨벨의 앤더슨벨 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-151/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e151", category: "popup", brand: "성수 로컬 소품샵",
+    lat: 37.59493, lng: 127.05155, merchantType: "브랜드",
+    title: "성수 로컬 소품샵 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "55% OFF", period: "2026.08.05 - 2026.08.20", channel: "팝업스토어 방문",
+    dday: "D-10",
+    desc: "성수 로컬 소품샵의 성수 로컬 소품샵 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-152/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e152", category: "popup", brand: "을지로 인쇄골목 팝업",
+    lat: 37.59533, lng: 127.05257, merchantType: "브랜드",
+    title: "을지로 인쇄골목 팝업 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "10% OFF", period: "2026.07.10 - 2026.07.20", channel: "팝업스토어 방문",
+    dday: "D-14",
+    desc: "을지로 인쇄골목 팝업의 을지로 인쇄골목 팝업 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-153/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e153", category: "popup", brand: "연남동 독립서점",
+    lat: 37.59572, lng: 127.05359, merchantType: "브랜드",
+    title: "연남동 독립서점 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "20% OFF", period: "2026.07.15 - 2026.07.31", channel: "팝업스토어 방문",
+    dday: "D-20",
+    desc: "연남동 독립서점의 연남동 독립서점 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-154/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e154", category: "popup", brand: "망원동 수제청 공방",
+    lat: 37.59612, lng: 127.05462, merchantType: "브랜드",
+    title: "망원동 수제청 공방 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "1+1", period: "2026.08.01 - 2026.08.15", channel: "팝업스토어 방문",
+    dday: "D-3",
+    desc: "망원동 수제청 공방의 망원동 수제청 공방 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-155/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e155", category: "popup", brand: "한남 아트팝업",
+    lat: 37.59651, lng: 127.05564, merchantType: "브랜드",
+    title: "한남 아트팝업 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "50% OFF", period: "2026.07.20 - 2026.08.05", channel: "팝업스토어 방문",
+    dday: "D-7",
+    desc: "한남 아트팝업의 한남 아트팝업 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-156/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e156", category: "popup", brand: "합정 빈티지숍",
+    lat: 37.59691, lng: 127.05666, merchantType: "소상공인",
+    title: "합정 빈티지숍 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "30% OFF", period: "2026.08.05 - 2026.08.20", channel: "팝업스토어 방문",
+    dday: "D-10",
+    desc: "합정 빈티지숍의 합정 빈티지숍 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-157/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e157", category: "popup", brand: "여의도 러닝 팝업",
+    lat: 37.5973, lng: 127.05768, merchantType: "브랜드",
+    title: "여의도 러닝 팝업 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "방문 인증 시 사은품", period: "2026.07.10 - 2026.07.20", channel: "팝업스토어 방문",
+    dday: "D-14",
+    desc: "여의도 러닝 팝업의 여의도 러닝 팝업 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-158/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e158", category: "popup", brand: "잠실 스포츠 체험존",
+    lat: 37.5977, lng: 127.0587, merchantType: "브랜드",
+    title: "잠실 스포츠 체험존 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "50% OFF", period: "2026.07.15 - 2026.07.31", channel: "팝업스토어 방문",
+    dday: "D-20",
+    desc: "잠실 스포츠 체험존의 잠실 스포츠 체험존 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-159/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e159", category: "popup", brand: "이태원 글로벌 푸드팝업",
+    lat: 37.59809, lng: 127.05972, merchantType: "브랜드",
+    title: "이태원 글로벌 푸드팝업 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "25% OFF", period: "2026.08.01 - 2026.08.15", channel: "팝업스토어 방문",
+    dday: "D-3",
+    desc: "이태원 글로벌 푸드팝업의 이태원 글로벌 푸드팝업 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-160/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
+  {
+    id: "e160", category: "popup", brand: "선릉 오피스 간식팝업",
+    lat: 37.60678, lng: 127.0822, merchantType: "브랜드",
+    title: "선릉 오피스 간식팝업 팝업스토어", subtitle: "한정 기간, 한정 공간에서만 만나는 특별한 경험",
+    discount: "35% OFF", period: "2026.08.05 - 2026.08.20", channel: "팝업스토어 방문",
+    dday: "D-10",
+    desc: "선릉 오피스 간식팝업의 선릉 오피스 간식팝업 팝업스토어. 한정 기간, 한정 공간에서만 만나는 특별한 경험. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
+    tags: ["팝업스토어","포토스팟","한정기간"],
+    image: "https://picsum.photos/seed/-popup-161/600/600",
+    domain: "instagram.com",
+    link: "https://www.instagram.com/"
+  },
 ];
 
 /* ---------- State ---------- */
@@ -1289,6 +2383,9 @@ function openSheet(eventId) {
   document.getElementById("sheetTags").innerHTML = ev.tags.map(t => `<span class="sheet-tag">#${t}</span>`).join("");
   document.getElementById("visitBtn").href = ev.link;
 
+  document.getElementById("kakaoRouteBtn").href = getKakaoRouteLink(ev);
+  renderEventMap(ev);
+
   updateLikeButton();
 
   // 조회수 집계 (백그라운드로 전송, 화면 동작 차단 안 함)
@@ -1424,23 +2521,36 @@ document.getElementById("aiRecommendBtn").addEventListener("click", async () => 
   btn.textContent = "분석 중...";
 
   try {
+    // 실제 등록된 이벤트 목록(요약)을 함께 전송 → AI는 이 목록 안에서만 골라야 함
+    const eventsSummary = EVENTS.map(ev => ({
+      id: ev.id, brand: ev.brand, category: ev.category,
+      title: ev.title, tags: ev.tags, discount: ev.discount
+    }));
+
     const response = await fetch("/api/recommend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ interest: input })
+      body: JSON.stringify({ interest: input, events: eventsSummary })
     });
 
     const data = await response.json();
 
     // ── 예외처리 2: 서버 에러 / AI가 이해 못한 모호한 입력 ──
-    if (!response.ok || data.error || !Array.isArray(data.results) || data.results.length === 0) {
+    if (!response.ok || data.error || !Array.isArray(data.ids) || data.ids.length === 0) {
       showAiError(data.error || "다른 검색어로 입력해 주세요.");
       return;
     }
 
-    // ── 성공: 카드 3개 렌더링 ───────────────────────────
-    renderAiCards(input, data.results);
-    saveHistory(input, data.results.map(r => r.title).join(", "));
+    // AI가 고른 id를 실제 이벤트 데이터에서 조회 (환각 데이터 대신 진짜 등록된 이벤트만 노출)
+    const matchedEvents = data.ids.map(id => EVENTS.find(ev => ev.id === id)).filter(Boolean);
+    if (matchedEvents.length === 0) {
+      showAiError("조건에 맞는 이벤트를 찾지 못했어요. 다른 검색어로 입력해 주세요.");
+      return;
+    }
+
+    // ── 성공: 카드 렌더링 ───────────────────────────
+    renderAiCards(input, matchedEvents);
+    saveHistory(input, matchedEvents.map(r => r.title).join(", "));
     renderHistory();
 
     renderRanking();
@@ -1477,23 +2587,25 @@ function showAiError(message) {
   });
 }
 
-const CATEGORY_ICON_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c.emoji]));
-
-function renderAiCards(query, results) {
+function renderAiCards(query, matchedEvents) {
   const cardsEl = document.getElementById("aiResultCards");
   cardsEl.hidden = false;
   cardsEl.innerHTML = `
-    <p class="ai-result-heading">✨ "${query}" 추천 결과</p>
+    <p class="ai-result-heading">✨ "${query}"에 맞는 이벤트 ${matchedEvents.length}개를 찾았어요</p>
     <div class="ai-card-row">
-      ${results.slice(0, 3).map(r => `
-        <div class="ai-result-card">
-          <span class="ai-result-card-emoji">${CATEGORY_ICON_MAP[r.category] || "🎁"}</span>
-          <p class="ai-result-card-title">${r.title}</p>
-          <p class="ai-result-card-desc">${r.description}</p>
+      ${matchedEvents.map(ev => `
+        <div class="ai-result-card" data-id="${ev.id}">
+          <img class="ai-result-card-img" src="${ev.image}" alt="${ev.title}" loading="lazy">
+          <span class="ai-result-card-discount">${ev.discount}</span>
+          <p class="ai-result-card-brand">${ev.brand}</p>
+          <p class="ai-result-card-title">${ev.title}</p>
         </div>
       `).join("")}
     </div>
   `;
+  cardsEl.querySelectorAll(".ai-result-card").forEach(card => {
+    card.addEventListener("click", () => openSheet(card.dataset.id));
+  });
 }
 
 // ── localStorage 히스토리 함수들 ──────────────────────────────────────────
@@ -1731,11 +2843,19 @@ if (inquiryForm) {
     try {
       // 주의: Content-Type을 text/plain으로 보내야 Apps Script와의
       // CORS 프리플라이트(OPTIONS) 문제를 피할 수 있습니다.
-      await fetch(APPS_SCRIPT_URL, {
+      const res = await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ name, email, message }),
       });
+
+      const result = await res.json();
+
+      // ── 이전 버전의 버그: 응답을 확인하지 않고 항상 "성공"으로 표시했음.
+      //    백엔드가 에러를 반환해도 화면에는 성공 메시지가 떠서 문제를 알아챌 수 없었습니다.
+      if (!res.ok || result.error) {
+        throw new Error(result.error || `서버 오류 (${res.status})`);
+      }
 
       showInquiryStatus("문의가 정상적으로 접수되었습니다. 감사합니다!", false);
       inquiryForm.reset();
@@ -1744,7 +2864,7 @@ if (inquiryForm) {
     } catch (err) {
       // ── 예외처리 3: 네트워크/서버 오류
       console.error("문의 등록 오류:", err);
-      showInquiryStatus("잠시 후 다시 시도해주세요.", true);
+      showInquiryStatus(err.message || "잠시 후 다시 시도해주세요.", true);
 
     } finally {
       inquirySubmitBtn.disabled = false;

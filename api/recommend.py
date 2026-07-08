@@ -21,15 +21,18 @@ class handler(BaseHTTPRequestHandler):
         # 2. JSON 파싱
         try:
             data = json.loads(body)
-            interest = data.get("interest", "") or data.get("query", "")
+            interest = (data.get("interest", "") or data.get("query", "")).strip()
+            events = data.get("events", [])  # 프론트에서 보내주는 실제 등록 이벤트 요약 목록
         except Exception:
             self._send_json(400, {"error": "잘못된 요청 형식입니다."})
             return
 
-        # 3. interest 값 확인 (모호하거나 빈 입력 방어)
-        interest = interest.strip()
-        if not interest or len(interest) < 1:
+        # 3. 입력값 확인
+        if not interest:
             self._send_json(400, {"error": "다른 검색어로 입력해 주세요."})
+            return
+        if not isinstance(events, list) or len(events) == 0:
+            self._send_json(400, {"error": "추천할 이벤트 데이터가 없습니다."})
             return
 
         # 4. API 키 확인
@@ -38,19 +41,27 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": "API 키가 설정되지 않았습니다."})
             return
 
-        # 5. Gemini API 호출 — 카드 UI로 바로 렌더링할 수 있도록 JSON 스키마 강제
+        # 5. Gemini API 호출 — 새로 만들지 말고, 전달받은 이벤트 목록 안에서만 고르도록 강제
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
             f"gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
         )
 
+        # 이벤트 요약본을 프롬프트에 그대로 포함 (id를 반드시 반환하도록 지시)
+        events_text = "\n".join(
+            f"- id:{e.get('id')} | 브랜드:{e.get('brand')} | 카테고리:{e.get('category')} | "
+            f"제목:{e.get('title')} | 태그:{','.join(e.get('tags', []))} | 혜택:{e.get('discount')}"
+            for e in events
+        )
+
         prompt = (
+            f"아래는 EventHub 서비스에 실제로 등록되어 있는 이벤트 목록이야.\n\n"
+            f"{events_text}\n\n"
             f"사용자의 관심사: \"{interest}\"\n\n"
-            "이 관심사에 맞는 할인 이벤트/행사를 정확히 3개 추천해줘. "
-            "각 항목은 title(15자 내외의 짧은 이벤트 제목), "
-            "description(40자 내외의 간단한 설명), "
-            "category(fashion/beauty/food/tech/delivery/stay/living/popup 중 하나) "
-            "3개 필드를 가진 JSON 배열로만 응답해. 다른 설명 문장은 절대 붙이지 마."
+            "위 목록에 있는 이벤트 중에서만 사용자 관심사에 가장 잘 맞는 것을 정확히 3개 골라줘. "
+            "절대로 목록에 없는 새로운 이벤트를 만들어내지 마. "
+            "반드시 목록에 있는 id 값 그대로, 정확히 3개의 문자열 배열(JSON)로만 응답해. "
+            "다른 설명 문장은 절대 붙이지 마."
         )
 
         payload = json.dumps({
@@ -59,15 +70,7 @@ class handler(BaseHTTPRequestHandler):
                 "responseMimeType": "application/json",
                 "responseSchema": {
                     "type": "ARRAY",
-                    "items": {
-                        "type": "OBJECT",
-                        "properties": {
-                            "title": {"type": "STRING"},
-                            "description": {"type": "STRING"},
-                            "category": {"type": "STRING"},
-                        },
-                        "required": ["title", "description", "category"],
-                    },
+                    "items": {"type": "STRING"},
                     "minItems": 3,
                     "maxItems": 3,
                 },
@@ -86,17 +89,26 @@ class handler(BaseHTTPRequestHandler):
                 raw_text = result["candidates"][0]["content"]["parts"][0]["text"]
 
                 try:
-                    cards = json.loads(raw_text)
-                    if not isinstance(cards, list) or len(cards) == 0:
+                    picked_ids = json.loads(raw_text)
+                    if not isinstance(picked_ids, list) or len(picked_ids) == 0:
                         raise ValueError("empty result")
                 except Exception:
-                    # AI가 형식을 어긴 경우 → 프론트에서 "다른 검색어로 입력해주세요" 문구를 띄우도록 에러 처리
                     self._send_json(200, {
                         "error": "AI가 이 검색어를 이해하지 못했어요. 다른 검색어로 입력해 주세요."
                     })
                     return
 
-                self._send_json(200, {"results": cards})
+                # ── 환각 방지: AI가 목록에 없는 id를 반환했으면 걸러낸다 ──
+                valid_ids = {e.get("id") for e in events}
+                picked_ids = [pid for pid in picked_ids if pid in valid_ids][:3]
+
+                if not picked_ids:
+                    self._send_json(200, {
+                        "error": "조건에 맞는 이벤트를 찾지 못했어요. 다른 검색어로 입력해 주세요."
+                    })
+                    return
+
+                self._send_json(200, {"ids": picked_ids})
 
         except urllib.error.HTTPError as e:
             error_body = e.read().decode()
