@@ -4,7 +4,7 @@
 
 /* Google Apps Script 웹앱 URL — 문의하기 + 이벤트 통계(조회수/좋아요)에 공용으로 사용됩니다.
    배포한 웹앱 URL로 교체하세요. (.../exec 로 끝나는 형태) */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/krasia45/exec";
+const APPS_SCRIPT_URL = "여기에_배포한_Apps_Script_웹앱_URL을_붙여넣으세요";
 
 /* 카카오맵 JavaScript 키 — Kakao Developers에서 발급, 배포 도메인 등록 필요 */
 const KAKAO_JS_KEY = "2a4211503ca5201a29e348b22957fba4";
@@ -2335,6 +2335,9 @@ function renderFeed() {
     <div class="event-card" data-id="${ev.id}">
       <div class="card-media">
         <img class="card-photo" src="${ev.image}" alt="${ev.title}" loading="lazy">
+        <button class="card-like-btn ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
+          <span class="card-like-icon">${likedEvents.has(ev.id) ? "❤️" : "🤍"}</span>
+        </button>
         <span class="card-logo-badge">
           <img data-domain="${ev.domain}" data-brand="${ev.brand}" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고">
         </span>
@@ -2354,6 +2357,13 @@ function renderFeed() {
 
   grid.querySelectorAll(".event-card").forEach(card => {
     card.addEventListener("click", () => openSheet(card.dataset.id));
+  });
+
+  grid.querySelectorAll(".card-like-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation(); // 카드 클릭(상세 열기)으로 전파되지 않도록 방지
+      toggleLike(btn.dataset.id);
+    });
   });
 
   grid.querySelectorAll(".card-logo-badge img").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
@@ -2406,12 +2416,19 @@ function closeSheet() {
 function updateLikeButton() {
   const likeBtn = document.getElementById("likeBtn");
   const likeIcon = document.getElementById("likeIcon");
-  const likeText = document.getElementById("likeText");
   const isLiked = likedEvents.has(activeEventId);
 
   likeBtn.classList.toggle("liked", isLiked);
-  likeIcon.textContent = isLiked ? "♥" : "♡";
-  likeText.textContent = isLiked ? "관심 이벤트로 등록됨" : "관심 이벤트로 등록하기";
+  likeBtn.setAttribute("aria-label", isLiked ? "관심 이벤트에서 삭제" : "관심 이벤트로 등록");
+  likeIcon.textContent = isLiked ? "❤️" : "🤍";
+
+  // 카드 그리드에 노출된 동일 이벤트의 하트 아이콘도 함께 동기화
+  document.querySelectorAll(`.card-like-btn[data-id="${activeEventId}"] .card-like-icon`).forEach(el => {
+    el.textContent = isLiked ? "❤️" : "🤍";
+  });
+  document.querySelectorAll(`.card-like-btn[data-id="${activeEventId}"]`).forEach(el => {
+    el.classList.toggle("liked", isLiked);
+  });
 }
 
 document.getElementById("sheetClose").addEventListener("click", closeSheet);
@@ -2419,24 +2436,39 @@ sheetOverlay.addEventListener("click", (e) => {
   if (e.target === sheetOverlay) closeSheet();
 });
 
-document.getElementById("likeBtn").addEventListener("click", () => {
-  if (!activeEventId) return;
-  eventStatsCache[activeEventId] = eventStatsCache[activeEventId] || { views: 0, likes: 0 };
+function toggleLike(eventId) {
+  eventStatsCache[eventId] = eventStatsCache[eventId] || { views: 0, likes: 0 };
 
-  if (likedEvents.has(activeEventId)) {
-    likedEvents.delete(activeEventId);
-    eventStatsCache[activeEventId].likes = Math.max(0, eventStatsCache[activeEventId].likes - 1);
-    sendEventStat("unlike", activeEventId);
+  if (likedEvents.has(eventId)) {
+    likedEvents.delete(eventId);
+    eventStatsCache[eventId].likes = Math.max(0, eventStatsCache[eventId].likes - 1);
+    sendEventStat("unlike", eventId);
     showToast("관심 이벤트에서 삭제되었습니다");
   } else {
-    likedEvents.add(activeEventId);
-    eventStatsCache[activeEventId].likes += 1;
-    sendEventStat("like", activeEventId);
+    likedEvents.add(eventId);
+    eventStatsCache[eventId].likes += 1;
+    sendEventStat("like", eventId);
     showToast("관심 이벤트로 등록되었습니다 ❤");
   }
+
   localStorage.setItem("eventhub-liked", JSON.stringify([...likedEvents]));
-  updateLikeButton();
+
+  // 카드 그리드의 하트 아이콘 동기화
+  document.querySelectorAll(`.card-like-btn[data-id="${eventId}"]`).forEach(btn => {
+    const isLiked = likedEvents.has(eventId);
+    btn.classList.toggle("liked", isLiked);
+    btn.querySelector(".card-like-icon").textContent = isLiked ? "❤️" : "🤍";
+  });
+
+  // 상세 시트가 같은 이벤트를 보고 있다면 그쪽 하트도 동기화
+  if (activeEventId === eventId) updateLikeButton();
+
   renderRanking(); // 좋아요 반영된 최신 랭킹으로 갱신
+}
+
+document.getElementById("likeBtn").addEventListener("click", () => {
+  if (!activeEventId) return;
+  toggleLike(activeEventId);
 });
 
 document.getElementById("downloadBtn").addEventListener("click", () => {
@@ -2703,6 +2735,8 @@ document.querySelectorAll(".nav-item").forEach(btn => {
 
     if (btn.dataset.nav === "saved") {
       openCouponWallet();
+    } else if (btn.dataset.nav === "search") {
+      openTravelPlanner();
     } else if (btn.dataset.nav !== "home") {
       showToast("준비 중인 기능이에요");
     }
@@ -2759,6 +2793,174 @@ document.getElementById("couponWalletClose").addEventListener("click", closeCoup
 couponWalletOverlay.addEventListener("click", (e) => {
   if (e.target === couponWalletOverlay) closeCouponWallet();
 });
+
+/* ---------- AI 여행 플래너 ---------- */
+const travelPlannerOverlay = document.getElementById("travelPlannerOverlay");
+
+function openTravelPlanner() {
+  travelPlannerOverlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+  // 오늘 날짜를 기본값으로 채워줌
+  const dateInput = document.getElementById("travelDate");
+  if (!dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+}
+
+function closeTravelPlanner() {
+  travelPlannerOverlay.classList.remove("open");
+  document.body.style.overflow = "";
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+  document.querySelector('.nav-item[data-nav="home"]').classList.add("active");
+}
+
+document.getElementById("travelPlannerClose").addEventListener("click", closeTravelPlanner);
+travelPlannerOverlay.addEventListener("click", (e) => {
+  if (e.target === travelPlannerOverlay) closeTravelPlanner();
+});
+
+document.getElementById("travelPlannerForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const date = document.getElementById("travelDate").value;
+  const region = document.getElementById("travelRegion").value.trim();
+  const spinnerWrap = document.getElementById("travelSpinnerWrap");
+  const errorEl = document.getElementById("travelError");
+  const resultEl = document.getElementById("travelResult");
+  const submitBtn = document.getElementById("travelPlannerSubmitBtn");
+
+  errorEl.hidden = true;
+  resultEl.hidden = true;
+
+  if (!date || !region) {
+    showTravelError("날짜와 지역을 모두 입력해 주세요.", null);
+    return;
+  }
+
+  spinnerWrap.hidden = false;
+  submitBtn.disabled = true;
+  submitBtn.textContent = "계획 짜는 중...";
+
+  try {
+    const res = await fetch("/api/travel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, region }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || `서버 오류 (${res.status})`);
+    }
+
+    renderTravelResult(data);
+
+  } catch (err) {
+    // ── 예외처리: AI/네이버 API 실패 시 안내 문구 + 폴백 데이터 표시 ──
+    console.error("여행 플래너 오류:", err);
+    showTravelError(
+      "AI 응답을 불러오지 못했습니다. 잠시 후 다시 시도해 주시거나, 하단의 백업(폴백) 데이터를 확인해 주세요.",
+      { destination: region, date }
+    );
+
+  } finally {
+    spinnerWrap.hidden = true;
+    submitBtn.disabled = false;
+    submitBtn.textContent = "여행 계획 짜기";
+  }
+});
+
+function showTravelError(message, fallbackContext) {
+  const errorEl = document.getElementById("travelError");
+  errorEl.hidden = false;
+  errorEl.innerHTML = `<p>${message}</p>`;
+
+  // 완전 실패 시에도 화면이 텅 비지 않도록 최소한의 안전 폴백 카드를 보여줌
+  if (fallbackContext) {
+    renderTravelResult({
+      destination: fallbackContext.destination,
+      date: fallbackContext.date,
+      weather_summary: "데이터 없음",
+      local_events: [],
+      recommendation_reason: "일시적인 오류로 추천 정보를 불러오지 못했습니다.",
+      restaurants: [],
+      lodgings: [],
+      route_tip: "",
+      errors: [{ step: "Client", type: "Fetch Error", message: "네트워크 또는 서버 응답 오류" }],
+    });
+  }
+}
+
+function renderTravelResult(data) {
+  const resultEl = document.getElementById("travelResult");
+  resultEl.hidden = false;
+
+  const eventsHtml = data.local_events.length
+    ? `<ul class="travel-list">${data.local_events.map(ev => `<li>${ev}</li>`).join("")}</ul>`
+    : `<p class="travel-empty">진행 예정인 주요 행사 정보가 없어요.</p>`;
+
+  const restaurantsHtml = data.restaurants.length
+    ? data.restaurants.map(r => `
+        <div class="travel-place-card">
+          <p class="travel-place-name">${r.name}</p>
+          <p class="travel-place-meta">${r.category || ""} ${r.address ? "· " + r.address : ""}</p>
+          ${r.url ? `<a href="${r.url}" target="_blank" rel="noopener noreferrer" class="travel-place-link">자세히 보기 ↗</a>` : ""}
+        </div>`).join("")
+    : `<p class="travel-empty">추천 맛집 정보를 불러오지 못했어요.</p>`;
+
+  const lodgingsHtml = data.lodgings.length
+    ? data.lodgings.map(l => `
+        <div class="travel-place-card">
+          <p class="travel-place-name">${l.name}</p>
+          <p class="travel-place-meta">${l.category || ""} ${l.address ? "· " + l.address : ""}</p>
+          ${l.url ? `<a href="${l.url}" target="_blank" rel="noopener noreferrer" class="travel-place-link">자세히 보기 ↗</a>` : ""}
+        </div>`).join("")
+    : `<p class="travel-empty">추천 숙박 정보를 불러오지 못했어요.</p>`;
+
+  const kakaoSearchLink = `https://map.kakao.com/link/search/${encodeURIComponent(data.destination)}`;
+
+  resultEl.innerHTML = `
+    <h3 class="travel-section-title">📍 ${data.destination} · ${data.date}</h3>
+
+    <div class="travel-block">
+      <p class="travel-block-label">🌤 날씨 요약</p>
+      <p class="travel-block-text">${data.weather_summary}</p>
+    </div>
+
+    <div class="travel-block">
+      <p class="travel-block-label">🎉 지역 행사/축제</p>
+      ${eventsHtml}
+    </div>
+
+    ${data.recommendation_reason ? `
+    <div class="travel-block">
+      <p class="travel-block-label">💡 추천 이유</p>
+      <p class="travel-block-text">${data.recommendation_reason}</p>
+    </div>` : ""}
+
+    <div class="travel-block">
+      <p class="travel-block-label">🍽 추천 맛집</p>
+      <div class="travel-place-grid">${restaurantsHtml}</div>
+    </div>
+
+    <div class="travel-block">
+      <p class="travel-block-label">🏨 추천 숙박</p>
+      <div class="travel-place-grid">${lodgingsHtml}</div>
+    </div>
+
+    <div class="travel-block">
+      <p class="travel-block-label">🗺 이동 경로 / 동선 팁</p>
+      <p class="travel-block-text">${data.route_tip || "각 장소 간 이동은 카카오맵/네이버맵에서 실제 경로를 확인해보세요."}</p>
+      <a class="kakao-route-btn" href="${kakaoSearchLink}" target="_blank" rel="noopener noreferrer">🗺 카카오맵에서 ${data.destination} 검색하기</a>
+    </div>
+
+    ${data.errors && data.errors.length ? `
+    <details class="travel-error-log">
+      <summary>⚠️ 일부 데이터는 백업 정보로 대체되었어요 (${data.errors.length}건)</summary>
+      <ul>
+        ${data.errors.map(e => `<li>[${e.step}] ${e.message}</li>`).join("")}
+      </ul>
+    </details>` : ""}
+  `;
+}
 
 /* ---------- Init ---------- */
 renderCategoryTabs();

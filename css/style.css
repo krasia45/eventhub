@@ -486,6 +486,68 @@ a { text-decoration: none; color: inherit; }
 .coupon-wallet-period { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 .coupon-wallet-discount { flex-shrink: 0; font-size: 12.5px; font-weight: 800; color: var(--accent); }
 
+/* ===================== AI 여행 플래너 ===================== */
+.travel-planner-sheet { max-width: 560px; }
+.travel-planner-body { padding: 8px 4px 4px; }
+.travel-planner-title { font-size: 18px; font-weight: 800; color: var(--text-1); }
+.travel-planner-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; margin-bottom: 16px; }
+
+.travel-planner-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+.travel-planner-form input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13.5px;
+  color: var(--text-1);
+  font-family: inherit;
+}
+.travel-planner-submit-btn {
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+}
+.travel-planner-submit-btn:active { transform: scale(0.98); }
+.travel-planner-submit-btn:disabled { opacity: 0.6; }
+
+.travel-result { margin-top: 16px; }
+.travel-section-title { font-size: 15px; font-weight: 800; color: var(--text-1); margin-bottom: 12px; }
+
+.travel-block {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.travel-block-label { font-size: 12px; font-weight: 700; color: var(--accent-dark); margin-bottom: 6px; }
+.travel-block-text { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+.travel-empty { font-size: 12px; color: var(--text-3); }
+
+.travel-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.travel-list li { font-size: 13px; color: var(--text-2); padding-left: 14px; position: relative; }
+.travel-list li::before { content: "•"; position: absolute; left: 0; color: var(--accent); }
+
+.travel-place-grid { display: flex; flex-direction: column; gap: 8px; }
+.travel-place-card { background: var(--card-bg); border-radius: 10px; padding: 10px 12px; border: 1px solid var(--border); }
+.travel-place-name { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.travel-place-meta { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+.travel-place-link { font-size: 11.5px; font-weight: 700; color: var(--accent); margin-top: 4px; display: inline-block; }
+
+.travel-error-log {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--text-3);
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.travel-error-log summary { cursor: pointer; font-weight: 600; }
+.travel-error-log ul { margin-top: 8px; padding-left: 16px; }
+.travel-error-log li { margin-bottom: 4px; }
+
 @media (min-width: 760px) {
   .ai-section { padding: 22px 26px; }
   .ai-input-row { max-width: 640px; }
@@ -1017,27 +1079,44 @@ a { text-decoration: none; color: inherit; }
   border-radius: 999px;
 }
 
-.like-btn {
-  width: 100%;
+/* ---------- 하트(관심) 아이콘 버튼 — 상세 시트 우측 상단 ---------- */
+.like-icon-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 13px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--text-2);
-  margin-bottom: 10px;
-  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  transition: transform 0.15s ease;
 }
-.like-btn.liked {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-light);
+.like-icon-btn:active { transform: scale(0.88); }
+.like-icon-btn .like-icon { font-size: 19px; line-height: 1; }
+
+/* ---------- 하트(관심) 아이콘 버튼 — 카드 그리드 우측 상단 ---------- */
+.card-like-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: transform 0.15s ease;
 }
-.like-icon { font-size: 17px; }
+.card-like-btn:active { transform: scale(0.85); }
+.card-like-icon { font-size: 14px; line-height: 1; }
 
 .download-btn {
   width: 100%;

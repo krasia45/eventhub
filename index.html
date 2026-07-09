@@ -144,7 +144,7 @@
     </button>
     <button class="nav-item" data-nav="search">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm10 2-5.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span>Search</span>
+      <span>여행플래너</span>
     </button>
     <button class="nav-item" data-nav="saved">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 21s-7.2-4.5-9.6-9C.8 8.4 2.6 5 6 5c2 0 3.4 1 6 3.5C14.6 6 16 5 18 5c3.4 0 5.2 3.4 3.6 7-2.4 4.5-9.6 9-9.6 9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
@@ -167,6 +167,9 @@
 
       <div class="sheet-hero">
         <img id="sheetImage" class="sheet-photo" src="" alt="">
+        <button class="like-icon-btn" id="likeBtn" aria-label="관심 이벤트로 등록">
+          <span class="like-icon" id="likeIcon">🤍</span>
+        </button>
         <div class="sheet-hero-overlay">
           <div class="sheet-brand-logo-wrap">
             <img id="sheetBrandLogo" src="" alt="">
@@ -208,11 +211,6 @@
           🗺 카카오맵에서 실제 길찾기
         </a>
 
-        <button class="like-btn" id="likeBtn">
-          <span class="like-icon" id="likeIcon">♡</span>
-          <span id="likeText">관심 이벤트로 등록하기</span>
-        </button>
-
         <button class="download-btn" id="downloadBtn">
           <span>⬇</span> 쿠폰 다운로드 받기
         </button>
@@ -237,6 +235,32 @@
         <h2 class="coupon-wallet-title">🎟 내 쿠폰함</h2>
         <p class="coupon-wallet-sub">관심 등록한 이벤트의 쿠폰을 한눈에 모아봤어요</p>
         <ul class="coupon-wallet-list" id="couponWalletList"></ul>
+      </div>
+    </div>
+  </div>
+  <!-- ===== AI 여행 플래너 ===== -->
+  <div class="sheet-overlay" id="travelPlannerOverlay">
+    <div class="bottom-sheet travel-planner-sheet" id="travelPlannerSheet">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" id="travelPlannerClose" aria-label="닫기">✕</button>
+      <div class="travel-planner-body">
+        <h2 class="travel-planner-title">✈️ AI 여행 플래너</h2>
+        <p class="travel-planner-sub">날짜와 지역을 입력하면 날씨, 행사, 맛집, 숙박까지 한 번에 계획해드려요</p>
+
+        <form class="travel-planner-form" id="travelPlannerForm">
+          <input type="date" id="travelDate" required>
+          <input type="text" id="travelRegion" placeholder="여행지 (예: 강릉, 부산, 제주)" required>
+          <button type="submit" class="travel-planner-submit-btn" id="travelPlannerSubmitBtn">여행 계획 짜기</button>
+        </form>
+
+        <div class="ai-spinner-wrap" id="travelSpinnerWrap" hidden>
+          <span class="ai-spinner"></span>
+          <p>AI가 여행 계획을 짜는 중입니다. 잠시만 기다려 주세요...</p>
+        </div>
+
+        <p class="ai-error" id="travelError" hidden></p>
+
+        <div class="travel-result" id="travelResult" hidden></div>
       </div>
     </div>
   </div>

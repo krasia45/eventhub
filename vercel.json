@@ -10,6 +10,10 @@
       "dest": "/api/weather.py"
     },
     {
+      "src": "/api/travel",
+      "dest": "/api/travel.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }
