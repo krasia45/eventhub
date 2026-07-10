@@ -2736,7 +2736,8 @@ document.querySelectorAll(".nav-item").forEach(btn => {
     if (btn.dataset.nav === "saved") {
       openCouponWallet();
     } else if (btn.dataset.nav === "search") {
-      openTravelPlanner();
+      switchAiMode("travel");
+      document.querySelector(".ai-section").scrollIntoView({ behavior: "smooth", block: "start" });
     } else if (btn.dataset.nav !== "home") {
       showToast("준비 중인 기능이에요");
     }
@@ -2794,27 +2795,33 @@ couponWalletOverlay.addEventListener("click", (e) => {
   if (e.target === couponWalletOverlay) closeCouponWallet();
 });
 
-/* ---------- AI 여행 플래너 ---------- */
-const travelPlannerOverlay = document.getElementById("travelPlannerOverlay");
+/* ---------- AI 섹션 모드 전환 (맞춤 이벤트 추천 ↔ 여행 플래너) ---------- */
+function switchAiMode(mode) {
+  const titleEl = document.getElementById("aiSectionTitle");
+  const subEl = document.getElementById("aiSectionSub");
+  const recommendPanel = document.getElementById("aiRecommendPanel");
+  const travelPanel = document.getElementById("travelPlannerPanel");
 
-function openTravelPlanner() {
-  travelPlannerOverlay.classList.add("open");
-  document.body.style.overflow = "hidden";
-  // 오늘 날짜를 기본값으로 채워줌
-  const dateInput = document.getElementById("travelDate");
-  if (!dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+  document.querySelectorAll(".ai-mode-tab").forEach(t => t.classList.toggle("active", t.dataset.mode === mode));
+
+  if (mode === "travel") {
+    recommendPanel.hidden = true;
+    travelPanel.hidden = false;
+    titleEl.textContent = "AI 여행 플래너";
+    subEl.textContent = "날짜와 지역을 입력하면 날씨·행사·맛집·숙박까지 한 번에 계획해드려요";
+
+    const dateInput = document.getElementById("travelDate");
+    if (!dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+  } else {
+    recommendPanel.hidden = false;
+    travelPanel.hidden = true;
+    titleEl.textContent = "나만의 맞춤 혜택 찾기";
+    subEl.textContent = "관심사를 입력하면 AI가 딱 맞는 이벤트를 골라드려요";
+  }
 }
 
-function closeTravelPlanner() {
-  travelPlannerOverlay.classList.remove("open");
-  document.body.style.overflow = "";
-  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
-  document.querySelector('.nav-item[data-nav="home"]').classList.add("active");
-}
-
-document.getElementById("travelPlannerClose").addEventListener("click", closeTravelPlanner);
-travelPlannerOverlay.addEventListener("click", (e) => {
-  if (e.target === travelPlannerOverlay) closeTravelPlanner();
+document.querySelectorAll(".ai-mode-tab").forEach(tab => {
+  tab.addEventListener("click", () => switchAiMode(tab.dataset.mode));
 });
 
 document.getElementById("travelPlannerForm").addEventListener("submit", async (e) => {

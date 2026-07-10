@@ -66,28 +66,55 @@
       </div>
     </section>
 
-    <!-- ===== AI Recommendation ===== -->
+    <!-- ===== AI Recommendation / Travel Planner (tabbed) ===== -->
     <section class="ai-section">
       <div class="ai-section-head">
         <span class="ai-badge">AI</span>
         <div>
-          <p class="ai-title">나만의 맞춤 혜택 찾기</p>
-          <p class="ai-sub">관심사를 입력하면 AI가 딱 맞는 이벤트를 골라드려요</p>
+          <p class="ai-title" id="aiSectionTitle">나만의 맞춤 혜택 찾기</p>
+          <p class="ai-sub" id="aiSectionSub">관심사를 입력하면 AI가 딱 맞는 이벤트를 골라드려요</p>
         </div>
       </div>
-      <div class="ai-input-row">
-        <input type="text" id="aiInput" placeholder="예: 여름 원피스, 카페 할인, 캠핑용품...">
-        <button class="ai-btn" id="aiRecommendBtn">추천받기</button>
+
+      <div class="ai-mode-tabs">
+        <button class="ai-mode-tab active" data-mode="recommend">🎯 맞춤 이벤트 추천</button>
+        <button class="ai-mode-tab" data-mode="travel">✈️ 여행 플래너</button>
       </div>
 
-      <div class="ai-spinner-wrap" id="aiSpinnerWrap" hidden>
-        <span class="ai-spinner"></span>
-        <p>잠시만 기다려 주세요...</p>
+      <!-- 모드 1: 맞춤 이벤트 추천 -->
+      <div class="ai-mode-panel" id="aiRecommendPanel">
+        <div class="ai-input-row">
+          <input type="text" id="aiInput" placeholder="예: 여름 원피스, 카페 할인, 캠핑용품...">
+          <button class="ai-btn" id="aiRecommendBtn">추천받기</button>
+        </div>
+
+        <div class="ai-spinner-wrap" id="aiSpinnerWrap" hidden>
+          <span class="ai-spinner"></span>
+          <p>잠시만 기다려 주세요...</p>
+        </div>
+
+        <p class="ai-error" id="aiError" hidden></p>
+
+        <div class="ai-result-cards" id="aiResultCards" hidden></div>
       </div>
 
-      <p class="ai-error" id="aiError" hidden></p>
+      <!-- 모드 2: AI 여행 플래너 -->
+      <div class="ai-mode-panel" id="travelPlannerPanel" hidden>
+        <form class="travel-planner-form" id="travelPlannerForm">
+          <input type="date" id="travelDate" required>
+          <input type="text" id="travelRegion" placeholder="여행지 (예: 강릉, 부산, 제주)" required>
+          <button type="submit" class="ai-btn" id="travelPlannerSubmitBtn">여행 계획 짜기</button>
+        </form>
 
-      <div class="ai-result-cards" id="aiResultCards" hidden></div>
+        <div class="ai-spinner-wrap" id="travelSpinnerWrap" hidden>
+          <span class="ai-spinner"></span>
+          <p>AI가 여행 계획을 짜는 중입니다. 잠시만 기다려 주세요...</p>
+        </div>
+
+        <p class="ai-error" id="travelError" hidden></p>
+
+        <div class="travel-result" id="travelResult" hidden></div>
+      </div>
     </section>
 
     <!-- ===== Realtime Ranking ===== -->
@@ -235,32 +262,6 @@
         <h2 class="coupon-wallet-title">🎟 내 쿠폰함</h2>
         <p class="coupon-wallet-sub">관심 등록한 이벤트의 쿠폰을 한눈에 모아봤어요</p>
         <ul class="coupon-wallet-list" id="couponWalletList"></ul>
-      </div>
-    </div>
-  </div>
-  <!-- ===== AI 여행 플래너 ===== -->
-  <div class="sheet-overlay" id="travelPlannerOverlay">
-    <div class="bottom-sheet travel-planner-sheet" id="travelPlannerSheet">
-      <div class="sheet-handle"></div>
-      <button class="sheet-close" id="travelPlannerClose" aria-label="닫기">✕</button>
-      <div class="travel-planner-body">
-        <h2 class="travel-planner-title">✈️ AI 여행 플래너</h2>
-        <p class="travel-planner-sub">날짜와 지역을 입력하면 날씨, 행사, 맛집, 숙박까지 한 번에 계획해드려요</p>
-
-        <form class="travel-planner-form" id="travelPlannerForm">
-          <input type="date" id="travelDate" required>
-          <input type="text" id="travelRegion" placeholder="여행지 (예: 강릉, 부산, 제주)" required>
-          <button type="submit" class="travel-planner-submit-btn" id="travelPlannerSubmitBtn">여행 계획 짜기</button>
-        </form>
-
-        <div class="ai-spinner-wrap" id="travelSpinnerWrap" hidden>
-          <span class="ai-spinner"></span>
-          <p>AI가 여행 계획을 짜는 중입니다. 잠시만 기다려 주세요...</p>
-        </div>
-
-        <p class="ai-error" id="travelError" hidden></p>
-
-        <div class="travel-result" id="travelResult" hidden></div>
       </div>
     </div>
   </div>
