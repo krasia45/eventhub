@@ -17,7 +17,7 @@ import urllib.request
 import urllib.error
 
 sys.path.insert(0, os.path.dirname(__file__))
-from _supabase_client import sb_insert
+from api._supabase_client import sb_insert
 
 CATEGORIES = ["fashion", "beauty", "food", "tech", "delivery", "stay", "living", "popup"]
 CATEGORY_LABEL = {

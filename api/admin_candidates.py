@@ -14,7 +14,7 @@ import uuid
 from urllib.parse import urlparse, parse_qs
 
 sys.path.insert(0, os.path.dirname(__file__))
-from _supabase_client import sb_select, sb_insert, sb_update
+from api._supabase_client import sb_select, sb_insert, sb_update
 
 
 def check_admin_key(provided_key):
