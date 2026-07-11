@@ -14,7 +14,7 @@ import sys
 from email.mime.text import MIMEText
 
 sys.path.insert(0, os.path.dirname(__file__))
-from _supabase_client import sb_select, sb_insert
+from api._supabase_client import sb_select, sb_insert
 
 
 def is_valid_email(email):
