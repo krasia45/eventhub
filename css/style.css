@@ -486,6 +486,28 @@ a { text-decoration: none; color: inherit; }
   margin-left: 4px;
   vertical-align: middle;
 }
+.card-verified-badge {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #E1F6EA;
+  color: #1E8A4C;
+  margin-bottom: 3px;
+}
+html[data-theme="dark"] .card-verified-badge { background: #163826; color: #4ADE80; }
+
+.sheet-verified-note {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #1E8A4C;
+  background: #E1F6EA;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+html[data-theme="dark"] .sheet-verified-note { background: #163826; color: #4ADE80; }
 
 /* ===================== 통합 쿠폰함 ===================== */
 .coupon-wallet-sheet { max-width: 520px; }
@@ -562,6 +584,51 @@ a { text-decoration: none; color: inherit; }
 .travel-error-log summary { cursor: pointer; font-weight: 600; }
 .travel-error-log ul { margin-top: 8px; padding-left: 16px; }
 .travel-error-log li { margin-bottom: 4px; }
+
+.travel-form-hint { font-size: 11px; color: var(--text-3); margin-top: -4px; margin-bottom: 10px; }
+
+.travel-disclaimer {
+  font-size: 11.5px;
+  color: #9A6B00;
+  background: #FFF6E0;
+  border: 1px solid #FCE3A0;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.travel-day-card {
+  background: #fff;
+  border: 1px solid #FFE1C0;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.travel-day-title { font-size: 14px; font-weight: 800; color: var(--text-1); margin-bottom: 10px; }
+
+.travel-slot { padding: 8px 0; border-top: 1px dashed var(--border); }
+.travel-slot:first-of-type { border-top: none; padding-top: 0; }
+.travel-slot-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+.travel-activity-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+}
+.travel-slot-name { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.travel-slot-desc { font-size: 11.5px; color: var(--text-2); margin-top: 2px; line-height: 1.5; }
+.travel-day-route { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); font-style: italic; }
 
 @media (min-width: 760px) {
   .ai-section { padding: 22px 26px; }
@@ -1098,11 +1165,11 @@ a { text-decoration: none; color: inherit; }
 .like-icon-btn {
   position: absolute;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  right: 16px;
+  transform: translateY(-50%);
   z-index: 2;
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: rgba(255,255,255,0.92);
   backdrop-filter: blur(4px);
@@ -1112,18 +1179,18 @@ a { text-decoration: none; color: inherit; }
   box-shadow: 0 4px 14px rgba(0,0,0,0.25);
   transition: transform 0.15s ease;
 }
-.like-icon-btn:active { transform: translate(-50%, -50%) scale(0.85); }
-.like-icon-btn .like-icon { font-size: 24px; line-height: 1; }
+.like-icon-btn:active { transform: translateY(-50%) scale(0.85); }
+.like-icon-btn .like-icon { font-size: 22px; line-height: 1; }
 
 /* ---------- 하트(관심) 아이콘 버튼 — 카드 그리드 우측 상단 ---------- */
 .card-like-btn {
   position: absolute;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  right: 10px;
+  transform: translateY(-50%);
   z-index: 2;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: rgba(255,255,255,0.85);
   display: flex;
@@ -1137,7 +1204,7 @@ a { text-decoration: none; color: inherit; }
 .card-like-btn:hover {
   opacity: 1;
 }
-.card-like-btn:active { transform: translate(-50%, -50%) scale(0.85); }
+.card-like-btn:active { transform: translateY(-50%) scale(0.85); }
 .card-like-icon { font-size: 16px; line-height: 1; }
 
 .download-btn {

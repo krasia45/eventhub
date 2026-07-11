@@ -14,8 +14,38 @@
       "dest": "/api/travel.py"
     },
     {
+      "src": "/api/itinerary",
+      "dest": "/api/itinerary.py"
+    },
+    {
+      "src": "/api/events",
+      "dest": "/api/events.py"
+    },
+    {
+      "src": "/api/stats",
+      "dest": "/api/stats.py"
+    },
+    {
+      "src": "/api/inquiries",
+      "dest": "/api/inquiries.py"
+    },
+    {
+      "src": "/api/admin_candidates",
+      "dest": "/api/admin_candidates.py"
+    },
+    {
+      "src": "/api/candidates_scan",
+      "dest": "/api/candidates_scan.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/candidates_scan",
+      "schedule": "0 3 * * 1"
     }
   ]
 }

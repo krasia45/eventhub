@@ -101,10 +101,12 @@
       <!-- 모드 2: AI 여행 플래너 -->
       <div class="ai-mode-panel" id="travelPlannerPanel" hidden>
         <form class="travel-planner-form" id="travelPlannerForm">
-          <input type="date" id="travelDate" required>
+          <input type="date" id="travelDate" required title="여행 시작일">
+          <input type="date" id="travelEndDate" required title="여행 종료일 (최대 5일)">
           <input type="text" id="travelRegion" placeholder="여행지 (예: 강릉, 부산, 제주)" required>
           <button type="submit" class="ai-btn" id="travelPlannerSubmitBtn">여행 계획 짜기</button>
         </form>
+        <p class="travel-form-hint">하루만 여행하신다면 시작일과 종료일을 동일하게 입력하세요 (최대 5일)</p>
 
         <div class="ai-spinner-wrap" id="travelSpinnerWrap" hidden>
           <span class="ai-spinner"></span>
@@ -227,6 +229,7 @@
 
         <h3 class="sheet-h3">이벤트 상세</h3>
         <p class="sheet-desc" id="sheetDesc"></p>
+        <p class="sheet-verified-note" id="sheetVerifiedNote" hidden>✓ 실제 확인된 진행 중인 프로모션입니다. 상세 조건은 공식 채널에서 다시 확인해주세요.</p>
 
         <div class="sheet-tags" id="sheetTags"></div>
 

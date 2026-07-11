@@ -1116,28 +1116,28 @@ const EVENTS = [
     link: "https://www.brand-fashion.com/"
   },
   {
-    id: "e086", category: "beauty", brand: "입생로랑뷰티",
-    lat: 37.64263, lng: 127.14435, merchantType: "소상공인",
-    title: "입생로랑뷰티 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
-    discount: "25% OFF", period: "2026.07.15 - 2026.07.31", channel: "온라인 & 백화점 매장",
+    id: "e086", category: "beauty", brand: "올리브영",
+    lat: 37.64263, lng: 127.14435, merchantType: "브랜드", isVerifiedReal: true,
+    title: "올리브멤버스 전용 혜택 OPEN", subtitle: "멤버십 등급별 전용 쿠폰 및 할인",
+    discount: "멤버십 등급별 쿠폰", period: "2026.07.01 - 2026.07.31", channel: "올리브영 온라인몰 & 앱",
     dday: "D-20",
-    desc: "입생로랑뷰티의 입생로랑뷰티 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
-    tags: ["뷰티","스킨케어","메이크업"],
-    image: "https://picsum.photos/seed/-beauty-87/600/600",
-    domain: "brand-beauty.com",
-    link: "https://www.brand-beauty.com/"
+    desc: "올리브영이 7월 한 달간 진행하는 올리브멤버스 전용 혜택 이벤트입니다. 멤버십 등급에 따라 차등 쿠폰이 제공돼요. 정확한 등급별 혜택은 올리브영 앱에서 확인하세요.",
+    tags: ["뷰티", "멤버십", "쿠폰"],
+    image: "https://picsum.photos/seed/oliveyoung-beauty-real-1/600/600",
+    domain: "oliveyoung.co.kr",
+    link: "https://m.oliveyoung.co.kr/m/mtn?menu=event"
   },
   {
-    id: "e087", category: "beauty", brand: "에뛰드",
-    lat: 37.64308, lng: 127.14533, merchantType: "브랜드",
-    title: "에뛰드 뷰티 위크", subtitle: "베스트 아이템을 특가에 만나는 기회",
-    discount: "1+1", period: "2026.08.01 - 2026.08.15", channel: "온라인 & 백화점 매장",
+    id: "e087", category: "beauty", brand: "올리브영",
+    lat: 37.64308, lng: 127.14533, merchantType: "브랜드", isVerifiedReal: true,
+    title: "최대 5만원 시크릿 할인 쿠폰", subtitle: "올리브영 온라인몰 전용 시크릿 쿠폰 이벤트",
+    discount: "최대 50,000원 할인", period: "2026.07.01 - 2026.07.31", channel: "올리브영 온라인몰",
     dday: "D-3",
-    desc: "에뛰드의 에뛰드 뷰티 위크. 베스트 아이템을 특가에 만나는 기회. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
-    tags: ["뷰티","스킨케어","메이크업"],
-    image: "https://picsum.photos/seed/-beauty-88/600/600",
-    domain: "brand-beauty.com",
-    link: "https://www.brand-beauty.com/"
+    desc: "올리브영이 7월 한 달간 진행하는 시크릿 할인 쿠폰 이벤트입니다. 구매 금액대별로 최대 5만원까지 할인받을 수 있어요. 쿠폰 발급 조건은 이벤트 페이지에서 확인하세요.",
+    tags: ["뷰티", "시크릿쿠폰", "온라인전용"],
+    image: "https://picsum.photos/seed/oliveyoung-beauty-real-2/600/600",
+    domain: "oliveyoung.co.kr",
+    link: "https://m.oliveyoung.co.kr/m/mtn?menu=event"
   },
   {
     id: "e088", category: "beauty", brand: "미샤",
@@ -1236,76 +1236,76 @@ const EVENTS = [
     link: "https://www.brand-beauty.com/"
   },
   {
-    id: "e096", category: "food", brand: "파리바게뜨",
-    lat: 37.65659, lng: 127.17486, merchantType: "브랜드",
-    title: "파리바게뜨 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
-    discount: "35% OFF", period: "2026.08.01 - 2026.08.15", channel: "매장 방문 또는 앱 주문",
+    id: "e096", category: "food", brand: "CU",
+    lat: 37.65659, lng: 127.17486, merchantType: "브랜드", isVerifiedReal: true,
+    title: "CU 치트키 데이", subtitle: "매주 일요일, 라면 최대 77% 할인",
+    discount: "최대 77% OFF", period: "2026.07.01 - 2026.07.31 (매주 일요일)", channel: "전국 CU 매장",
     dday: "D-3",
-    desc: "파리바게뜨의 파리바게뜨 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
-    tags: ["푸드","시즌메뉴","포장가능"],
-    image: "https://picsum.photos/seed/-food-97/600/600",
-    domain: "brand-food.com",
-    link: "https://www.brand-food.com/"
+    desc: "CU가 매주 일요일마다 진행하는 '치트키 데이' 라면 할인 행사입니다. 참여 라면 상품에 한해 최대 77%까지 할인돼요. 정확한 대상 상품은 매장 내 POP 및 CU 공식 채널에서 확인하세요.",
+    tags: ["편의점", "라면할인", "매주일요일"],
+    image: "https://picsum.photos/seed/cu-food-real-1/600/600",
+    domain: "cu.bgfretail.com",
+    link: "https://cu.bgfretail.com/event/plan.do"
   },
   {
-    id: "e097", category: "food", brand: "뚜레쥬르",
-    lat: 37.65704, lng: 127.17584, merchantType: "브랜드",
-    title: "뚜레쥬르 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
-    discount: "55% OFF", period: "2026.07.20 - 2026.08.05", channel: "매장 방문 또는 앱 주문",
+    id: "e097", category: "food", brand: "GS25",
+    lat: 37.65704, lng: 127.17584, merchantType: "브랜드", isVerifiedReal: true,
+    title: "GS25 카페25 올데이 프로모션", subtitle: "하루 종일 카페25 원두커피 할인",
+    discount: "할인가 판매", period: "2026.07.01 - 2026.07.31", channel: "전국 GS25 매장",
     dday: "D-7",
-    desc: "뚜레쥬르의 뚜레쥬르 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
-    tags: ["푸드","시즌메뉴","포장가능"],
-    image: "https://picsum.photos/seed/-food-98/600/600",
-    domain: "brand-food.com",
-    link: "https://www.brand-food.com/"
+    desc: "GS25 전 매장에서 진행 중인 자체 원두커피 브랜드 '카페25' 종일 할인 프로모션입니다. 결제 수단별 추가 혜택은 GS25 공식 앱에서 확인 가능해요.",
+    tags: ["편의점", "카페25", "커피할인"],
+    image: "https://picsum.photos/seed/gs25-food-real-2/600/600",
+    domain: "gs25.gsretail.com",
+    link: "https://gs25.gsretail.com/gscvs/ko/products/event-goods"
   },
   {
-    id: "e098", category: "food", brand: "맘스터치",
-    lat: 37.65749, lng: 127.17683, merchantType: "브랜드",
-    title: "맘스터치 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
-    discount: "10% OFF", period: "2026.08.05 - 2026.08.20", channel: "매장 방문 또는 앱 주문",
+    id: "e098", category: "food", brand: "세븐일레븐",
+    lat: 37.65749, lng: 127.17683, merchantType: "브랜드", isVerifiedReal: true,
+    title: "711데이", subtitle: "560여 종 특가, 음료 174종 교차 1+1",
+    discount: "1+1", period: "2026.07.11 (711데이)", channel: "전국 세븐일레븐 매장",
     dday: "D-10",
-    desc: "맘스터치의 맘스터치 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
-    tags: ["푸드","시즌메뉴","포장가능"],
-    image: "https://picsum.photos/seed/-food-99/600/600",
-    domain: "brand-food.com",
-    link: "https://www.brand-food.com/"
+    desc: "세븐일레븐이 매년 7월 11일 진행하는 '711데이' 행사입니다. 560여 종 상품이 특가로 판매되며, 음료 174종은 교차 1+1, 맥주는 최대 51% 할인돼요.",
+    tags: ["편의점", "711데이", "교차1+1"],
+    image: "https://picsum.photos/seed/seven11-food-real-3/600/600",
+    domain: "7-eleven.co.kr",
+    link: "https://www.7-eleven.co.kr/product/eventNewList.asp"
   },
   {
-    id: "e099", category: "food", brand: "버거킹",
-    lat: 37.65794, lng: 127.17781, merchantType: "브랜드",
-    title: "버거킹 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
-    discount: "55% OFF", period: "2026.07.10 - 2026.07.20", channel: "매장 방문 또는 앱 주문",
+    id: "e099", category: "food", brand: "이마트24",
+    lat: 37.65794, lng: 127.17781, merchantType: "브랜드", isVerifiedReal: true,
+    title: "7월 QR 할인 이벤트", subtitle: "앱 QR 코드 제시하고 즉시 할인",
+    discount: "QR 제시 시 할인", period: "2026.07.01 - 2026.07.31", channel: "전국 이마트24 매장",
     dday: "D-14",
-    desc: "버거킹의 버거킹 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
-    tags: ["푸드","시즌메뉴","포장가능"],
-    image: "https://picsum.photos/seed/-food-100/600/600",
-    domain: "brand-food.com",
-    link: "https://www.brand-food.com/"
+    desc: "이마트24 앱의 QR 코드를 매장에서 제시하면 즉시 할인 혜택을 받을 수 있는 7월 상시 이벤트입니다.",
+    tags: ["편의점", "QR할인", "앱연동"],
+    image: "https://picsum.photos/seed/emart24-food-real-4/600/600",
+    domain: "emart24.co.kr",
+    link: "https://emart24.co.kr/event/ing"
   },
   {
-    id: "e100", category: "food", brand: "롯데리아",
-    lat: 37.66302, lng: 127.217, merchantType: "소상공인",
-    title: "롯데리아 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
-    discount: "20% OFF", period: "2026.07.20 - 2026.08.05", channel: "매장 방문 또는 앱 주문",
+    id: "e100", category: "food", brand: "이마트24",
+    lat: 37.66302, lng: 127.217, merchantType: "브랜드", isVerifiedReal: true,
+    title: "7월 신규가입 100원딜 이벤트", subtitle: "이마트24 앱 신규 가입 시 100원 특가",
+    discount: "100원 특가", period: "2026.07.01 - 2026.07.31", channel: "이마트24 앱 신규가입자",
     dday: "D-7",
-    desc: "롯데리아의 롯데리아 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
-    tags: ["푸드","시즌메뉴","포장가능"],
-    image: "https://picsum.photos/seed/-food-101/600/600",
-    domain: "brand-food.com",
-    link: "https://www.brand-food.com/"
+    desc: "이마트24 앱에 신규 가입하면 지정 상품을 100원에 구매할 수 있는 7월 상시 이벤트입니다.",
+    tags: ["편의점", "신규가입", "100원딜"],
+    image: "https://picsum.photos/seed/emart24-food-real-5/600/600",
+    domain: "emart24.co.kr",
+    link: "https://emart24.co.kr/event/ing"
   },
   {
-    id: "e101", category: "food", brand: "서브웨이",
-    lat: 37.66343, lng: 127.21801, merchantType: "브랜드",
-    title: "서브웨이 시즌 메뉴 프로모션", subtitle: "지금 방문하면 더 특별한 혜택",
-    discount: "50% OFF", period: "2026.08.05 - 2026.08.20", channel: "매장 방문 또는 앱 주문",
-    dday: "D-10",
-    desc: "서브웨이의 서브웨이 시즌 메뉴 프로모션. 지금 방문하면 더 특별한 혜택. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
-    tags: ["푸드","시즌메뉴","포장가능"],
-    image: "https://picsum.photos/seed/-food-102/600/600",
-    domain: "brand-food.com",
-    link: "https://www.brand-food.com/"
+    id: "e101", category: "food", brand: "이마트에브리데이",
+    lat: 37.66343, lng: 127.21801, merchantType: "브랜드", isVerifiedReal: true,
+    title: "갈수록 고래잇 주간 특가전", subtitle: "한우 등심 반값, 견과류 50% 등 주간 특가",
+    discount: "최대 50% OFF", period: "2026.07.02 - 2026.07.08", channel: "전국 이마트에브리데이 매장 (일부 점포 제외)",
+    dday: "D-3",
+    desc: "이마트에브리데이의 7월 첫째 주 특가전입니다. 행사카드로 한우 등심 1등급 결제 시 반값, 견과류 2개 이상 구매 시 50% 할인 등 신선/생필품 특가가 진행돼요. 점포별로 취급 상품이 다를 수 있습니다.",
+    tags: ["마트특가", "신선식품", "주간할인"],
+    image: "https://picsum.photos/seed/emarteveryday-food-real-6/600/600",
+    domain: "emarteveryday.co.kr",
+    link: "https://emile.emarteveryday.co.kr/exhibition/ExhibitionView?uid=bKjFpmF2vyaVSccZdlrK"
   },
   {
     id: "e102", category: "food", brand: "배스킨라빈스",
@@ -1476,16 +1476,16 @@ const EVENTS = [
     link: "https://www.brand-tech.com/"
   },
   {
-    id: "e116", category: "delivery", brand: "요기요",
-    lat: 37.67816, lng: 127.25447, merchantType: "브랜드",
-    title: "요기요 첫 주문 할인 쿠폰", subtitle: "지금 앱에서 주문하면 즉시 할인",
-    discount: "40% OFF", period: "2026.07.10 - 2026.07.20", channel: "배달앱 주문",
-    dday: "D-14",
-    desc: "요기요의 요기요 첫 주문 할인 쿠폰. 지금 앱에서 주문하면 즉시 할인. 자세한 조건은 브랜드 공식 채널에서 확인해보세요.",
-    tags: ["배달","첫주문","쿠폰"],
-    image: "https://picsum.photos/seed/-delivery-117/600/600",
-    domain: "brand-delivery.com",
-    link: "https://www.brand-delivery.com/"
+    id: "e116", category: "delivery", brand: "자담치킨",
+    lat: 37.67816, lng: 127.25447, merchantType: "브랜드", isVerifiedReal: true,
+    title: "먹을복페스타", subtitle: "선착순 최대 5,000원 할인 + 소진 시 추가 쿠폰",
+    discount: "최대 5,000원 할인", period: "2026.07.06 - 2026.07.12", channel: "자담치킨 앱 · 배달의민족 · 쿠팡이츠 · 요기요",
+    dday: "D-2",
+    desc: "자담치킨이 여름 휴가철을 맞아 진행하는 '먹을복페스타' 프로모션입니다. 행사 기간 매일 선착순 고객에게 할인 쿠폰이 지급되며, 소진 시 추가 쿠폰도 지급돼요.",
+    tags: ["배달", "치킨", "선착순쿠폰"],
+    image: "https://picsum.photos/seed/jadam-delivery-real-1/600/600",
+    domain: "jadamchicken.com",
+    link: "https://www.jadamchicken.com/"
   },
   {
     id: "e117", category: "delivery", brand: "쿠팡이츠",
@@ -2331,6 +2331,9 @@ function renderFeed() {
     const merchantBadge = ev.merchantType === "소상공인"
       ? `<span class="card-merchant-badge">소상공인</span>`
       : "";
+    const verifiedBadge = ev.isVerifiedReal
+      ? `<span class="card-verified-badge">✓ 실제 진행중</span>`
+      : "";
     return `
     <div class="event-card" data-id="${ev.id}">
       <div class="card-media">
@@ -2347,6 +2350,7 @@ function renderFeed() {
       </div>
       <div class="card-body">
         <p class="card-brand-name">${ev.brand} ${merchantBadge}</p>
+        ${verifiedBadge}
         <p class="card-title">${ev.title}</p>
         <p class="card-sub">${ev.subtitle}</p>
         <p class="card-meta">📍 ${ev.channel}</p>
@@ -2390,6 +2394,9 @@ function openSheet(eventId) {
   document.getElementById("sheetPeriod").textContent = ev.period;
   document.getElementById("sheetChannel").textContent = ev.channel;
   document.getElementById("sheetDesc").textContent = ev.desc;
+
+  const verifiedNote = document.getElementById("sheetVerifiedNote");
+  if (verifiedNote) verifiedNote.hidden = !ev.isVerifiedReal;
   document.getElementById("sheetTags").innerHTML = ev.tags.map(t => `<span class="sheet-tag">#${t}</span>`).join("");
   document.getElementById("visitBtn").href = ev.link;
 
@@ -2811,7 +2818,10 @@ function switchAiMode(mode) {
     subEl.textContent = "날짜와 지역을 입력하면 날씨·행사·맛집·숙박까지 한 번에 계획해드려요";
 
     const dateInput = document.getElementById("travelDate");
-    if (!dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+    const endDateInput = document.getElementById("travelEndDate");
+    const today = new Date().toISOString().slice(0, 10);
+    if (!dateInput.value) dateInput.value = today;
+    if (!endDateInput.value) endDateInput.value = today;
   } else {
     recommendPanel.hidden = false;
     travelPanel.hidden = true;
@@ -2827,7 +2837,8 @@ document.querySelectorAll(".ai-mode-tab").forEach(tab => {
 document.getElementById("travelPlannerForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const date = document.getElementById("travelDate").value;
+  const startDate = document.getElementById("travelDate").value;
+  const endDate = document.getElementById("travelEndDate").value;
   const region = document.getElementById("travelRegion").value.trim();
   const spinnerWrap = document.getElementById("travelSpinnerWrap");
   const errorEl = document.getElementById("travelError");
@@ -2837,8 +2848,12 @@ document.getElementById("travelPlannerForm").addEventListener("submit", async (e
   errorEl.hidden = true;
   resultEl.hidden = true;
 
-  if (!date || !region) {
+  if (!startDate || !endDate || !region) {
     showTravelError("날짜와 지역을 모두 입력해 주세요.", null);
+    return;
+  }
+  if (endDate < startDate) {
+    showTravelError("종료일은 시작일보다 빠를 수 없어요.", null);
     return;
   }
 
@@ -2847,10 +2862,10 @@ document.getElementById("travelPlannerForm").addEventListener("submit", async (e
   submitBtn.textContent = "계획 짜는 중...";
 
   try {
-    const res = await fetch("/api/travel", {
+    const res = await fetch("/api/itinerary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date, region }),
+      body: JSON.stringify({ region, start_date: startDate, end_date: endDate }),
     });
     const data = await res.json();
 
@@ -2865,7 +2880,7 @@ document.getElementById("travelPlannerForm").addEventListener("submit", async (e
     console.error("여행 플래너 오류:", err);
     showTravelError(
       "AI 응답을 불러오지 못했습니다. 잠시 후 다시 시도해 주시거나, 하단의 백업(폴백) 데이터를 확인해 주세요.",
-      { destination: region, date }
+      { destination: region, start_date: startDate, end_date: endDate }
     );
 
   } finally {
@@ -2884,13 +2899,11 @@ function showTravelError(message, fallbackContext) {
   if (fallbackContext) {
     renderTravelResult({
       destination: fallbackContext.destination,
-      date: fallbackContext.date,
-      weather_summary: "데이터 없음",
-      local_events: [],
-      recommendation_reason: "일시적인 오류로 추천 정보를 불러오지 못했습니다.",
-      restaurants: [],
+      start_date: fallbackContext.start_date,
+      end_date: fallbackContext.end_date,
+      num_days: 1,
+      days: [],
       lodgings: [],
-      route_tip: "",
       errors: [{ step: "Client", type: "Fetch Error", message: "네트워크 또는 서버 응답 오류" }],
     });
   }
@@ -2900,20 +2913,7 @@ function renderTravelResult(data) {
   const resultEl = document.getElementById("travelResult");
   resultEl.hidden = false;
 
-  const eventsHtml = data.local_events.length
-    ? `<ul class="travel-list">${data.local_events.map(ev => `<li>${ev}</li>`).join("")}</ul>`
-    : `<p class="travel-empty">진행 예정인 주요 행사 정보가 없어요.</p>`;
-
-  const restaurantsHtml = data.restaurants.length
-    ? data.restaurants.map(r => `
-        <div class="travel-place-card">
-          <p class="travel-place-name">${r.name}</p>
-          <p class="travel-place-meta">${r.category || ""} ${r.address ? "· " + r.address : ""}</p>
-          ${r.url ? `<a href="${r.url}" target="_blank" rel="noopener noreferrer" class="travel-place-link">자세히 보기 ↗</a>` : ""}
-        </div>`).join("")
-    : `<p class="travel-empty">추천 맛집 정보를 불러오지 못했어요.</p>`;
-
-  const lodgingsHtml = data.lodgings.length
+  const lodgingsHtml = (data.lodgings || []).length
     ? data.lodgings.map(l => `
         <div class="travel-place-card">
           <p class="travel-place-name">${l.name}</p>
@@ -2922,42 +2922,58 @@ function renderTravelResult(data) {
         </div>`).join("")
     : `<p class="travel-empty">추천 숙박 정보를 불러오지 못했어요.</p>`;
 
+  const activityBlock = (label, slot) => {
+    if (!slot || !slot.name) return "";
+    const badge = slot.activity_type ? `<span class="travel-activity-badge">${slot.activity_type}</span>` : "";
+    return `
+      <div class="travel-slot">
+        <p class="travel-slot-label">${label} ${badge}</p>
+        <p class="travel-slot-name">${slot.name}</p>
+        <p class="travel-slot-desc">${slot.description || ""}</p>
+      </div>`;
+  };
+
+  const mealBlock = (label, place) => {
+    if (!place || !place.name) return `<div class="travel-slot"><p class="travel-slot-label">${label}</p><p class="travel-empty">추천 정보를 불러오지 못했어요.</p></div>`;
+    return `
+      <div class="travel-slot">
+        <p class="travel-slot-label">${label}</p>
+        <p class="travel-slot-name">${place.name}</p>
+        <p class="travel-slot-desc">${place.category || ""} ${place.address ? "· " + place.address : ""}</p>
+        ${place.url ? `<a href="${place.url}" target="_blank" rel="noopener noreferrer" class="travel-place-link">자세히 보기 ↗</a>` : ""}
+      </div>`;
+  };
+
+  const daysHtml = (data.days || []).map(day => `
+    <div class="travel-day-card">
+      <p class="travel-day-title">Day ${day.day_number} · ${day.date}</p>
+      ${activityBlock("🌅 오전", day.morning)}
+      ${mealBlock("🍚 점심", day.lunch)}
+      ${activityBlock("☀️ 오후", day.afternoon)}
+      ${mealBlock("🍽 저녁", day.dinner)}
+      ${activityBlock("🌙 저녁 활동", day.evening)}
+      ${day.route_tip ? `<p class="travel-slot-desc travel-day-route">🗺 ${day.route_tip}</p>` : ""}
+    </div>
+  `).join("");
+
   const kakaoSearchLink = `https://map.kakao.com/link/search/${encodeURIComponent(data.destination)}`;
+  const dateRangeLabel = data.start_date === data.end_date
+    ? data.start_date
+    : `${data.start_date} ~ ${data.end_date}`;
 
   resultEl.innerHTML = `
-    <h3 class="travel-section-title">📍 ${data.destination} · ${data.date}</h3>
+    <h3 class="travel-section-title">📍 ${data.destination} · ${dateRangeLabel} (${data.num_days || (data.days || []).length}일)</h3>
 
-    <div class="travel-block">
-      <p class="travel-block-label">🌤 날씨 요약</p>
-      <p class="travel-block-text">${data.weather_summary}</p>
-    </div>
+    <p class="travel-disclaimer">⚠️ 명소·행사 정보는 AI가 생성한 참고용 추천입니다. 실제 운영 여부·정확한 일정은 방문 전 꼭 확인해주세요. 맛집·숙박 정보는 네이버 실시간 검색 결과입니다.</p>
 
-    <div class="travel-block">
-      <p class="travel-block-label">🎉 지역 행사/축제</p>
-      ${eventsHtml}
-    </div>
-
-    ${data.recommendation_reason ? `
-    <div class="travel-block">
-      <p class="travel-block-label">💡 추천 이유</p>
-      <p class="travel-block-text">${data.recommendation_reason}</p>
-    </div>` : ""}
-
-    <div class="travel-block">
-      <p class="travel-block-label">🍽 추천 맛집</p>
-      <div class="travel-place-grid">${restaurantsHtml}</div>
-    </div>
+    ${daysHtml || `<p class="travel-empty">일정을 불러오지 못했어요.</p>`}
 
     <div class="travel-block">
       <p class="travel-block-label">🏨 추천 숙박</p>
       <div class="travel-place-grid">${lodgingsHtml}</div>
     </div>
 
-    <div class="travel-block">
-      <p class="travel-block-label">🗺 이동 경로 / 동선 팁</p>
-      <p class="travel-block-text">${data.route_tip || "각 장소 간 이동은 카카오맵/네이버맵에서 실제 경로를 확인해보세요."}</p>
-      <a class="kakao-route-btn" href="${kakaoSearchLink}" target="_blank" rel="noopener noreferrer">🗺 카카오맵에서 ${data.destination} 검색하기</a>
-    </div>
+    <a class="kakao-route-btn" href="${kakaoSearchLink}" target="_blank" rel="noopener noreferrer">🗺 카카오맵에서 ${data.destination} 검색하기</a>
 
     ${data.errors && data.errors.length ? `
     <details class="travel-error-log">
