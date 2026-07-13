@@ -10,7 +10,7 @@ const KAKAO_JS_KEY = "2a4211503ca5201a29e348b22957fba4";
 /* Supabase 클라이언트 (로그인/회원 데이터용) — anon key는 공개용 키라 노출돼도 안전합니다.
    실제 데이터 보호는 서버가 아니라 RLS(Row Level Security) 정책이 담당합니다.
    ⚠️ 아래 두 값을 실제 Supabase 프로젝트 값으로 바꿔주세요. */
-const SUPABASE_URL = "czcpjgjyvxymhqziizgq.supabase.co";
+const SUPABASE_URL = "https://czcpjgjyvxymhqziizgq.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_44ho1osigeeuv_yq6zsTjg_pSlMexzl";
 
 // ── 안전장치: 이 초기화가 실패해도(값을 아직 안 채웠거나 SDK 로드 실패 등)
