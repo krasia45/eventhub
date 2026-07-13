@@ -1,0 +1,24 @@
+{
+  "name": "EventHub — 트렌드 이벤트 발견 플랫폼",
+  "short_name": "EventHub",
+  "description": "패션·뷰티·카페디저트·팝업 할인/이벤트를 한눈에",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FF6F00",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
