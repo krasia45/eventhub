@@ -531,6 +531,112 @@ html[data-theme="dark"] .sheet-verified-note { background: #163826; color: #4ADE
 .coupon-wallet-period { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 .coupon-wallet-discount { flex-shrink: 0; font-size: 12.5px; font-weight: 800; color: var(--accent); }
 
+/* ===================== 로그인 / 회원가입 ===================== */
+.auth-sheet { max-width: 420px; }
+.auth-body { padding: 8px 4px 4px; }
+.auth-title { font-size: 19px; font-weight: 800; color: var(--text-1); }
+.auth-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; margin-bottom: 18px; line-height: 1.5; }
+
+.auth-form { display: flex; flex-direction: column; gap: 10px; }
+.auth-form input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  font-size: 13.5px;
+  color: var(--text-1);
+  font-family: inherit;
+}
+
+.auth-error {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #C53030;
+  background: #FEF2F2;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.auth-toggle { margin-top: 16px; font-size: 12.5px; color: var(--text-3); text-align: center; }
+.auth-toggle button { color: var(--accent); font-weight: 700; text-decoration: underline; }
+
+.auth-logout-btn { background: #F1F1F1; color: #333; margin-top: 6px; }
+html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
+
+.social-login-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  transition: transform 0.12s ease;
+}
+.social-btn:active { transform: scale(0.98); }
+.social-btn-google { background: #fff; color: #333; }
+.social-btn-kakao { background: #FEE500; color: #191919; border-color: #FEE500; }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 14px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.auth-divider::before, .auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ===================== 온보딩 (관심 키워드 선택) ===================== */
+.onboarding-sheet { max-width: 480px; }
+.onboarding-body { padding: 12px 4px 4px; }
+.onboarding-title { font-size: 20px; font-weight: 800; color: var(--text-1); line-height: 1.4; }
+.onboarding-sub { font-size: 12.5px; color: var(--text-3); margin-top: 8px; margin-bottom: 20px; }
+
+.keyword-group { margin-bottom: 18px; }
+.keyword-group-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-bottom: 8px; }
+.keyword-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.keyword-chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+.keyword-chip.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.onboarding-email-step { margin: 18px 0; }
+.onboarding-email-step input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  font-size: 13.5px;
+  color: var(--text-1);
+  font-family: inherit;
+  margin-top: 4px;
+}
+
+.onboarding-count { font-size: 12px; color: var(--text-3); text-align: center; margin: 6px 0 12px; }
+.onboarding-submit-btn:disabled { opacity: 0.4; }
+
 /* ===================== AI 여행 플래너 (AI 섹션 내 인라인) ===================== */
 .travel-planner-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
 .travel-planner-form input {

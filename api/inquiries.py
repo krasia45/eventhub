@@ -1,6 +1,6 @@
 """
-GET  /api/inquiries        → 최근 문의 10건 조회 (상태 배지 포함)
-POST /api/inquiries        → 문의 등록 + Gmail 알림 발송
+GET  /api/inquiries?key=ADMIN_SECRET   → 문의 목록 조회 (관리자 전용, 공개 노출 안 함)
+POST /api/inquiries                    → 문의 등록 + Gmail 알림 발송 (누구나 가능)
 
 Google Sheets/Apps Script를 대체합니다.
 """
@@ -12,17 +12,23 @@ import re
 import smtplib
 import sys
 from email.mime.text import MIMEText
+from urllib.parse import urlparse, parse_qs
 
 sys.path.insert(0, os.path.dirname(__file__))
-from api._supabase_client import sb_select, sb_insert
+from _supabase_client import sb_select, sb_insert
 
 
 def is_valid_email(email):
     return bool(re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email))
 
 
+def check_admin_key(provided_key):
+    real_key = os.environ.get("ADMIN_SECRET", "")
+    return bool(real_key) and provided_key == real_key
+
+
 def send_gmail_notification(name, email, message):
-    """Gmail SMTP + 앱 비밀번호로 알림 발송 (Google Apps Script 대신)."""
+    """Gmail SMTP + 앱 비밀번호로 알림 발송 (Google Apps Script 대신).​"""
     gmail_user = os.environ.get("GMAIL_USER", "")
     gmail_app_password = os.environ.get("GMAIL_APP_PASSWORD", "")
     notify_to = os.environ.get("NOTIFY_EMAIL", gmail_user)
@@ -51,14 +57,23 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        # ── 개인정보 보호: 문의 목록은 더 이상 공개 노출하지 않고 관리자만 조회 가능 ──
+        query = parse_qs(urlparse(self.path).query)
+        key = query.get("key", [""])[0]
+
+        if not check_admin_key(key):
+            self._send_json(401, {"error": "관리자 인증이 필요합니다."})
+            return
+
         try:
             rows = sb_select("inquiries", {
-                "select": "name,message,status,created_at",
+                "select": "name,email,message,status,created_at",
                 "order": "created_at.desc",
-                "limit": "10",
+                "limit": "50",
             })
             result = [{
                 "name": r.get("name") or "익명",
+                "email": r.get("email", ""),
                 "message": r["message"],
                 "status": r.get("status", "답변대기"),
                 "time": r["created_at"][:16].replace("T", " "),

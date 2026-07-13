@@ -7,6 +7,14 @@
 /* 카카오맵 JavaScript 키 — Kakao Developers에서 발급, 배포 도메인 등록 필요 */
 const KAKAO_JS_KEY = "2a4211503ca5201a29e348b22957fba4";
 
+/* Supabase 클라이언트 (로그인/회원 데이터용) — anon key는 공개용 키라 노출돼도 안전합니다.
+   실제 데이터 보호는 서버가 아니라 RLS(Row Level Security) 정책이 담당합니다. */
+const SUPABASE_URL = "czcpjgjyvxymhqziizgq.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_44ho1osigeeuv_yq6zsTjg_pSlMexzl";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null; // 로그인한 사용자 (없으면 null)
+
 let kakaoMapSdkPromise = null;
 function loadKakaoMapSdk() {
   if (kakaoMapSdkPromise) return kakaoMapSdkPromise;
@@ -557,8 +565,9 @@ sheetOverlay.addEventListener("click", (e) => {
 
 function toggleLike(eventId) {
   eventStatsCache[eventId] = eventStatsCache[eventId] || { views: 0, likes: 0 };
+  const nowLiked = !likedEvents.has(eventId);
 
-  if (likedEvents.has(eventId)) {
+  if (!nowLiked) {
     likedEvents.delete(eventId);
     eventStatsCache[eventId].likes = Math.max(0, eventStatsCache[eventId].likes - 1);
     sendEventStat("unlike", eventId);
@@ -571,6 +580,14 @@ function toggleLike(eventId) {
   }
 
   localStorage.setItem("eventhub-liked", JSON.stringify([...likedEvents]));
+
+  // 로그인 상태라면 기기와 무관하게 유지되도록 user_saves 테이블에도 반영
+  if (currentUser) {
+    const query = nowLiked
+      ? supabaseClient.from("user_saves").upsert({ user_id: currentUser.id, event_id: eventId }, { onConflict: "user_id,event_id" })
+      : supabaseClient.from("user_saves").delete().eq("user_id", currentUser.id).eq("event_id", eventId);
+    query.then(({ error }) => { if (error) console.error("찜 동기화 오류:", error); });
+  }
 
   // 카드 그리드의 하트 아이콘 동기화
   document.querySelectorAll(`.card-like-btn[data-id="${eventId}"]`).forEach(btn => {
@@ -914,6 +931,218 @@ couponWalletOverlay.addEventListener("click", (e) => {
   if (e.target === couponWalletOverlay) closeCouponWallet();
 });
 
+/* =========================================================
+   로그인 / 회원가입 / 온보딩
+   ========================================================= */
+const authOverlay = document.getElementById("authOverlay");
+const onboardingOverlay = document.getElementById("onboardingOverlay");
+let authMode = "login"; // "login" | "signup"
+
+const KEYWORD_POOL = {
+  region: ["#성수동", "#홍대·연남", "#더현대서울", "#압구정로데오", "#한남동", "#강남역"],
+  style: ["#포토존맛집", "#비건뷰티", "#리미티드에디션", "#신상디저트", "#코덕필수템", "#스트릿패션", "#미니멀룩"],
+  benefit: ["#1+1", "#반값할인", "#무료체험·증정", "#선착순한정", "#타임세일", "#즉시쿠폰"],
+};
+let selectedKeywords = new Set();
+
+/* ---------- 모달 열기/닫기 ---------- */
+function openAuthModal() {
+  if (currentUser) {
+    document.getElementById("authFormBody").hidden = true;
+    document.getElementById("authAccountBody").hidden = false;
+    document.getElementById("authUserEmail").textContent =
+      currentUser.email || "카카오 계정으로 로그인됨";
+  } else {
+    document.getElementById("authFormBody").hidden = false;
+    document.getElementById("authAccountBody").hidden = true;
+  }
+  authOverlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function closeAuthModal() {
+  authOverlay.classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.getElementById("profileBtn").addEventListener("click", openAuthModal);
+document.getElementById("authClose").addEventListener("click", closeAuthModal);
+authOverlay.addEventListener("click", (e) => { if (e.target === authOverlay) closeAuthModal(); });
+
+/* ---------- 소셜 로그인 ---------- */
+document.getElementById("googleLoginBtn").addEventListener("click", async () => {
+  await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.origin },
+  });
+});
+document.getElementById("kakaoLoginBtn").addEventListener("click", async () => {
+  // 일반(개인) 카카오 앱 상태이므로 이메일이 안 넘어올 수 있음 — 로그인 자체는 문제없이 진행됨.
+  await supabaseClient.auth.signInWithOAuth({
+    provider: "kakao",
+    options: { redirectTo: window.location.origin },
+  });
+});
+
+/* ---------- 이메일/비밀번호 로그인 (보조 수단) ---------- */
+function setAuthMode(mode) {
+  authMode = mode;
+  document.getElementById("authFormTitle").textContent = mode === "login" ? "로그인" : "회원가입";
+  document.getElementById("authSubmitBtn").textContent = mode === "login" ? "로그인" : "회원가입";
+  document.getElementById("authToggleMode").innerHTML = mode === "login"
+    ? `계정이 없으신가요? <button type="button" id="authToggleBtn">회원가입</button>`
+    : `이미 계정이 있으신가요? <button type="button" id="authToggleBtn">로그인</button>`;
+}
+// 이벤트 위임: authToggleBtn이 매번 새로 그려져도(innerHTML 교체) 계속 동작하도록
+// 부모 요소(authFormBody)에 클릭 리스너를 한 번만 등록합니다.
+document.getElementById("authFormBody").addEventListener("click", (e) => {
+  if (e.target && e.target.id === "authToggleBtn") {
+    setAuthMode(authMode === "login" ? "signup" : "login");
+  }
+});
+
+document.getElementById("authForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const errorEl = document.getElementById("authError");
+  errorEl.hidden = true;
+
+  const { error } = authMode === "login"
+    ? await supabaseClient.auth.signInWithPassword({ email, password })
+    : await supabaseClient.auth.signUp({ email, password });
+
+  if (error) {
+    errorEl.hidden = false;
+    errorEl.textContent = error.message.includes("Invalid login")
+      ? "이메일 또는 비밀번호가 올바르지 않아요."
+      : error.message;
+    return;
+  }
+
+  if (authMode === "signup") {
+    errorEl.hidden = false;
+    errorEl.style.color = "#1E8A4C";
+    errorEl.textContent = "가입 완료! 바로 로그인됩니다.";
+  }
+});
+
+document.getElementById("authLogoutBtn").addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+  closeAuthModal();
+  showToast("로그아웃되었습니다");
+});
+
+/* ---------- 온보딩 (최초 로그인 시 키워드 3개 이상 + 알림 이메일) ---------- */
+function renderKeywordChips() {
+  Object.entries(KEYWORD_POOL).forEach(([group, keywords]) => {
+    const wrap = document.querySelector(`.keyword-chips[data-group="${group}"]`);
+    wrap.innerHTML = keywords.map(k => `<button type="button" class="keyword-chip" data-kw="${k}">${k}</button>`).join("");
+    wrap.querySelectorAll(".keyword-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const kw = chip.dataset.kw;
+        if (selectedKeywords.has(kw)) {
+          selectedKeywords.delete(kw);
+          chip.classList.remove("selected");
+        } else {
+          selectedKeywords.add(kw);
+          chip.classList.add("selected");
+        }
+        updateOnboardingState();
+      });
+    });
+  });
+}
+
+function updateOnboardingState() {
+  const count = selectedKeywords.size;
+  document.getElementById("onboardingCount").textContent = `${count}개 선택됨 (최소 3개)`;
+  const emailStep = document.getElementById("onboardingEmailStep");
+  const submitBtn = document.getElementById("onboardingSubmitBtn");
+
+  emailStep.hidden = count < 3;
+
+  const emailVal = document.getElementById("onboardingEmail").value.trim();
+  submitBtn.disabled = !(count >= 3 && emailVal.length > 3);
+}
+document.getElementById("onboardingEmail").addEventListener("input", updateOnboardingState);
+
+async function openOnboarding() {
+  selectedKeywords = new Set();
+  renderKeywordChips();
+  updateOnboardingState();
+  // 구글 로그인이면 이메일이 이미 있으니 미리 채워줌 (수정 가능)
+  document.getElementById("onboardingEmail").value = currentUser?.email || "";
+  onboardingOverlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+document.getElementById("onboardingSubmitBtn").addEventListener("click", async () => {
+  const contactEmail = document.getElementById("onboardingEmail").value.trim();
+  const { error } = await supabaseClient.from("user_preferences").upsert({
+    user_id: currentUser.id,
+    keywords: [...selectedKeywords],
+    contact_email: contactEmail,
+  });
+
+  if (error) {
+    showToast("저장 중 오류가 발생했어요. 다시 시도해주세요.");
+    console.error("온보딩 저장 오류:", error);
+    return;
+  }
+
+  onboardingOverlay.classList.remove("open");
+  document.body.style.overflow = "";
+  showToast("환영해요! 맞춤 추천이 준비됐어요 🎉");
+  await loadUserPreferencesAndSync();
+});
+
+/* ---------- 로그인 상태 변화 감지 + 좋아요 동기화 ---------- */
+async function loadUserPreferencesAndSync() {
+  if (!currentUser) return;
+
+  // 1) 온보딩 완료 여부 확인
+  const { data: pref } = await supabaseClient
+    .from("user_preferences")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+
+  if (!pref) {
+    openOnboarding(); // 최초 로그인 → 온보딩 강제 노출
+    return;
+  }
+
+  // 2) 로그인 전 localStorage에 쌓인 좋아요를 DB로 마이그레이션 (한 번만)
+  if (likedEvents.size > 0) {
+    const rows = [...likedEvents].map(eventId => ({ user_id: currentUser.id, event_id: eventId }));
+    await supabaseClient.from("user_saves").upsert(rows, { onConflict: "user_id,event_id" });
+  }
+
+  // 3) DB에 저장된 좋아요를 진짜 소스로 다시 불러옴
+  const { data: saves } = await supabaseClient
+    .from("user_saves")
+    .select("event_id")
+    .eq("user_id", currentUser.id);
+
+  if (saves) {
+    likedEvents = new Set(saves.map(s => s.event_id));
+    localStorage.setItem("eventhub-liked", JSON.stringify([...likedEvents]));
+    renderFeed();
+    renderRanking();
+  }
+}
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  currentUser = session?.user || null;
+
+  if (event === "SIGNED_IN") {
+    closeAuthModal();
+    loadUserPreferencesAndSync();
+  }
+  if (event === "SIGNED_OUT") {
+    // 로그아웃 시 좋아요는 localStorage 기준으로 되돌아감 (다음 로그인 시 다시 동기화)
+  }
+});
+
 /* ---------- AI 섹션 모드 전환 (맞춤 이벤트 추천 ↔ 여행 플래너) ---------- */
 function switchAiMode(mode) {
   const titleEl = document.getElementById("aiSectionTitle");
@@ -1191,7 +1420,6 @@ if (inquiryForm) {
 
       showInquiryStatus("문의가 정상적으로 접수되었습니다. 감사합니다!", false);
       inquiryForm.reset();
-      loadInquiries();
 
     } catch (err) {
       // ── 예외처리 3: 네트워크/서버 오류
@@ -1204,40 +1432,3 @@ if (inquiryForm) {
     }
   });
 }
-
-async function loadInquiries() {
-  const listEl = document.getElementById("inquiryList");
-  if (!listEl) return;
-
-  try {
-    const res = await fetch("/api/inquiries");
-    const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {
-      listEl.innerHTML = `<li class="empty-state">아직 등록된 문의가 없어요.</li>`;
-      return;
-    }
-
-    listEl.innerHTML = data.map(item => {
-      const answered = item.status === "답변완료";
-      return `
-      <li class="inquiry-item">
-        <div class="inquiry-item-head">
-          <p class="inquiry-item-name">${item.name || "익명"}</p>
-          <span class="inquiry-status-badge ${answered ? "answered" : "pending"}">
-            ${answered ? "답변완료" : "답변대기"}
-          </span>
-        </div>
-        <p class="inquiry-item-message">${item.message}</p>
-        <p class="inquiry-item-time">${item.time}</p>
-      </li>
-    `;
-    }).join("");
-
-  } catch (err) {
-    console.error("문의 목록 조회 오류:", err);
-    listEl.innerHTML = `<li class="empty-state">문의 목록을 불러오지 못했어요.</li>`;
-  }
-}
-
-loadInquiries();
