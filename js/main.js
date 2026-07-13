@@ -102,16 +102,16 @@ function getKakaoRouteLink(ev) {
 
 /* ---------- Category Definitions ---------- */
 const CATEGORIES = [
-  { id: "all",       label: "전체",       emoji: "🏠" },
-  { id: "fashion",   label: "패션",       emoji: "👗" },
-  { id: "beauty",    label: "뷰티",       emoji: "💄" },
-  { id: "food",      label: "푸드",       emoji: "🍔" },
-  { id: "tech",      label: "전자기기",   emoji: "📱" },
-  { id: "delivery",  label: "배달",       emoji: "🛵" },
-  { id: "stay",      label: "숙박",       emoji: "🏨" },
-  { id: "living",    label: "리빙",       emoji: "🛋️" },
-  { id: "popup",     label: "팝업스토어", emoji: "🎪" },
+  { id: "all",     label: "전체",       emoji: "🏠" },
+  { id: "fashion", label: "패션",       emoji: "👗" },
+  { id: "beauty",  label: "뷰티",       emoji: "💄" },
+  { id: "food",    label: "카페·디저트", emoji: "🍰" },
+  { id: "popup",   label: "팝업·컬처",   emoji: "🎪" },
 ];
+
+// BRD 확정 사항: 구매 주기가 긴 전자기기/숙박/배달/리빙은 이번 개편에서 제외
+// (DB에는 그대로 남아있고, 프론트에서만 숨김 처리 — 나중에 필요하면 되살리기 쉽도록)
+const ACTIVE_CATEGORY_IDS = CATEGORIES.filter(c => c.id !== "all").map(c => c.id);
 
 /* ---------- Event Dataset — Supabase(/api/events)에서 비동기로 로드 ---------- */
 let EVENTS = [];
@@ -138,10 +138,9 @@ async function loadEventsFromApi() {
     const data = await res.json();
     if (!Array.isArray(data)) throw new Error("잘못된 응답 형식입니다.");
 
-    EVENTS = data.map(ev => ({
-      ...ev,
-      dday: computeDday(ev.periodEnd),
-    }));
+    EVENTS = data
+      .map(ev => ({ ...ev, dday: computeDday(ev.periodEnd) }))
+      .filter(ev => ACTIVE_CATEGORY_IDS.includes(ev.category));
 
     // /api/events에 이미 조회수/좋아요가 포함되어 오므로, 이걸로 캐시를 초기화합니다.
     EVENTS.forEach(ev => {
@@ -167,6 +166,7 @@ async function loadEventsFromApi() {
 /* ---------- State ---------- */
 let currentCategory = "all";
 let currentDiscountFilter = "all"; // "all" | "1+1" | "50plus"
+let selectedBrands = new Set(); // 카테고리 탭에서만 사용되는 브랜드 로고 다중 필터
 let gpsFilterActive = false;
 let userLocation = null; // { lat, lng }
 let likedEvents = new Set(JSON.parse(localStorage.getItem("eventhub-liked") || "[]"));
@@ -255,6 +255,10 @@ function getFilteredEvents() {
   let list = currentCategory === "all"
     ? EVENTS
     : EVENTS.filter(ev => ev.category === currentCategory);
+
+  if (selectedBrands.size > 0) {
+    list = list.filter(ev => selectedBrands.has(ev.brand));
+  }
 
   list = list.filter(ev => matchesDiscountFilter(ev, currentDiscountFilter));
 
@@ -376,11 +380,67 @@ function renderCategoryTabs() {
   nav.querySelectorAll(".tab-pill").forEach(btn => {
     btn.addEventListener("click", () => {
       currentCategory = btn.dataset.cat;
+      selectedBrands.clear(); // 카테고리 바뀌면 이전 카테고리의 브랜드 선택은 초기화
       renderCategoryTabs();
+      renderBrandFilter();
       renderFeed();
       renderRanking();
     });
   });
+
+  renderBrandFilter();
+}
+
+/* ---------- Render: 브랜드 로고 필터 (전체 탭에서는 숨김, 카테고리 탭에서만 노출) ---------- */
+function renderBrandFilter() {
+  const wrap = document.getElementById("brandFilterRow");
+
+  if (currentCategory === "all") {
+    wrap.hidden = true;
+    wrap.innerHTML = "";
+    return;
+  }
+
+  // 현재 카테고리에 실제로 존재하는 브랜드만 중복 없이 추출
+  const brandsInCategory = [];
+  const seen = new Set();
+  EVENTS.filter(ev => ev.category === currentCategory).forEach(ev => {
+    if (!seen.has(ev.brand)) {
+      seen.add(ev.brand);
+      brandsInCategory.push(ev);
+    }
+  });
+
+  if (brandsInCategory.length === 0) {
+    wrap.hidden = true;
+    wrap.innerHTML = "";
+    return;
+  }
+
+  wrap.hidden = false;
+  wrap.innerHTML = brandsInCategory.map(ev => `
+    <button class="brand-filter-chip ${selectedBrands.has(ev.brand) ? "selected" : ""}" data-brand="${ev.brand}">
+      <img class="brand-filter-logo" src="${getLogoUrl(ev.domain)}" data-domain="${ev.domain}" data-brand="${ev.brand}" alt="${ev.brand}">
+      <span>${ev.brand}</span>
+    </button>
+  `).join("");
+
+  wrap.querySelectorAll(".brand-filter-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const brand = chip.dataset.brand;
+      if (selectedBrands.has(brand)) {
+        selectedBrands.delete(brand);
+        chip.classList.remove("selected");
+      } else {
+        selectedBrands.add(brand);
+        chip.classList.add("selected");
+      }
+      renderFeed();
+      renderRanking();
+    });
+  });
+
+  wrap.querySelectorAll(".brand-filter-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 }
 
 /* ---------- Discount Quick Filters (1+1 / 50%+) ---------- */
@@ -872,6 +932,7 @@ document.getElementById("globalSearch").addEventListener("keydown", (e) => {
 /* ---------- Hero Button ---------- */
 document.getElementById("heroShopBtn").addEventListener("click", () => {
   currentCategory = "all";
+  selectedBrands.clear();
   renderCategoryTabs();
   renderFeed();
   document.querySelector(".feed-section").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -960,6 +1021,21 @@ const KEYWORD_POOL = {
 let selectedKeywords = new Set();
 
 /* ---------- 모달 열기/닫기 ---------- */
+function updateProfileButton() {
+  const btn = document.getElementById("profileBtn");
+  const label = document.getElementById("profileBtnLabel");
+  if (currentUser) {
+    btn.classList.add("logged-in");
+    btn.setAttribute("aria-label", "내 계정");
+    const shortName = (currentUser.email || currentUser.user_metadata?.name || "내 계정").split("@")[0];
+    label.textContent = shortName;
+  } else {
+    btn.classList.remove("logged-in");
+    btn.setAttribute("aria-label", "로그인");
+    label.textContent = "로그인";
+  }
+}
+
 function openAuthModal() {
   if (currentUser) {
     document.getElementById("authFormBody").hidden = true;
@@ -1166,6 +1242,7 @@ async function loadUserPreferencesAndSync() {
 if (supabaseClient) {
   supabaseClient.auth.onAuthStateChange((event, session) => {
     currentUser = session?.user || null;
+    updateProfileButton();
 
     if (event === "SIGNED_IN") {
       closeAuthModal();

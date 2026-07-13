@@ -137,6 +137,35 @@ a { text-decoration: none; color: inherit; }
   flex-shrink: 0;
 }
 
+.profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px 0 12px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(255,111,0,0.3);
+  flex-shrink: 0;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+.profile-btn:active { transform: scale(0.96); }
+.profile-btn.logged-in {
+  background: var(--card-bg);
+  color: var(--text-1);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--accent);
+}
+.profile-btn-label {
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .search-bar {
   display: flex;
   align-items: center;
@@ -411,6 +440,48 @@ a { text-decoration: none; color: inherit; }
   scrollbar-width: none;
 }
 .filter-row::-webkit-scrollbar { display: none; }
+
+/* ===================== 브랜드 로고 필터 (카테고리 탭 전용) ===================== */
+.brand-filter-row {
+  display: flex;
+  gap: 8px;
+  padding: 0 clamp(16px, 4vw, 48px) 10px;
+  max-width: var(--max-page);
+  margin: 0 auto;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.brand-filter-row::-webkit-scrollbar { display: none; }
+
+.brand-filter-chip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 6px;
+  border-radius: 999px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.brand-filter-chip.selected {
+  background: var(--text-1);
+  border-color: var(--text-1);
+  color: #fff;
+}
+.brand-filter-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: #fff;
+  flex-shrink: 0;
+}
 
 .discount-tabs { display: flex; gap: 6px; flex-shrink: 0; }
 .discount-pill {
