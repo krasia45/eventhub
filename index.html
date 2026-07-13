@@ -15,6 +15,8 @@
   })();
 </script>
 <link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FF6F00">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -38,9 +40,12 @@
         </div>
       </div>
       <div class="search-bar-row">
-        <div class="search-bar">
-          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" class="search-icon"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm10 2-5.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <input type="text" id="globalSearch" placeholder="이벤트, 브랜드, 카테고리 검색...">
+        <div class="search-bar-wrap">
+          <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18" class="search-icon"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm10 2-5.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input type="text" id="globalSearch" placeholder="이벤트, 브랜드, 카테고리 검색..." autocomplete="off">
+          </div>
+          <div class="search-suggestions" id="searchSuggestions" hidden></div>
         </div>
         <button class="icon-btn" id="calendarNavBtn" aria-label="캘린더">
           <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><rect x="3" y="4.5" width="18" height="16" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M3 9.5h18M8 3v3M16 3v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -50,6 +55,7 @@
         </button>
       </div>
     </div>
+    
   </header>
 
   <!-- ===== Category Tabs ===== -->
@@ -78,59 +84,6 @@
       </div>
     </section>
 
-    <!-- ===== AI Recommendation / Travel Planner (tabbed) ===== -->
-    <section class="ai-section">
-      <div class="ai-section-head">
-        <span class="ai-badge">AI</span>
-        <div>
-          <p class="ai-title" id="aiSectionTitle">나만의 맞춤 혜택 찾기</p>
-          <p class="ai-sub" id="aiSectionSub">관심사를 입력하면 AI가 딱 맞는 이벤트를 골라드려요</p>
-        </div>
-      </div>
-
-      <div class="ai-mode-tabs">
-        <button class="ai-mode-tab active" data-mode="recommend">🎯 맞춤 이벤트 추천</button>
-        <button class="ai-mode-tab" data-mode="travel">✈️ 여행 플래너</button>
-      </div>
-
-      <!-- 모드 1: 맞춤 이벤트 추천 -->
-      <div class="ai-mode-panel" id="aiRecommendPanel">
-        <div class="ai-input-row">
-          <input type="text" id="aiInput" placeholder="예: 여름 원피스, 카페 할인, 캠핑용품...">
-          <button class="ai-btn" id="aiRecommendBtn">추천받기</button>
-        </div>
-
-        <div class="ai-spinner-wrap" id="aiSpinnerWrap" hidden>
-          <span class="ai-spinner"></span>
-          <p>잠시만 기다려 주세요...</p>
-        </div>
-
-        <p class="ai-error" id="aiError" hidden></p>
-
-        <div class="ai-result-cards" id="aiResultCards" hidden></div>
-      </div>
-
-      <!-- 모드 2: AI 여행 플래너 -->
-      <div class="ai-mode-panel" id="travelPlannerPanel" hidden>
-        <form class="travel-planner-form" id="travelPlannerForm">
-          <input type="date" id="travelDate" required title="여행 시작일">
-          <input type="date" id="travelEndDate" required title="여행 종료일 (최대 5일)">
-          <input type="text" id="travelRegion" placeholder="여행지 (예: 강릉, 부산, 제주)" required>
-          <button type="submit" class="ai-btn" id="travelPlannerSubmitBtn">여행 계획 짜기</button>
-        </form>
-        <p class="travel-form-hint">하루만 여행하신다면 시작일과 종료일을 동일하게 입력하세요 (최대 5일)</p>
-
-        <div class="ai-spinner-wrap" id="travelSpinnerWrap" hidden>
-          <span class="ai-spinner"></span>
-          <p>AI가 여행 계획을 짜는 중입니다. 잠시만 기다려 주세요...</p>
-        </div>
-
-        <p class="ai-error" id="travelError" hidden></p>
-
-        <div class="travel-result" id="travelResult" hidden></div>
-      </div>
-    </section>
-
     <!-- ===== Realtime Ranking ===== -->
     <section class="ranking-section">
       <div class="section-head">
@@ -138,6 +91,61 @@
         <span class="live-dot">LIVE</span>
       </div>
       <ul class="ranking-list" id="rankingList"></ul>
+    </section>
+
+    <!-- ===== AI Recommendation / Travel Planner (기본은 접힌 배너, 탭하면 펼쳐짐) ===== -->
+    <section class="ai-section collapsed" id="aiSection">
+      <button class="ai-section-banner" id="aiSectionBanner">
+        <span class="ai-badge">AI</span>
+        <span class="ai-banner-text" id="aiSectionTitle">AI야, 나한테 딱 맞는 이벤트 찾아줘 ✨</span>
+        <span class="ai-banner-arrow" id="aiBannerArrow">▾</span>
+      </button>
+
+      <div class="ai-section-expanded" id="aiSectionExpanded" hidden>
+        <p class="ai-sub" id="aiSectionSub">관심사를 입력하면 AI가 딱 맞는 이벤트를 골라드려요</p>
+
+        <div class="ai-mode-tabs">
+          <button class="ai-mode-tab active" data-mode="recommend">🎯 맞춤 이벤트 추천</button>
+          <button class="ai-mode-tab" data-mode="travel">✈️ 여행 플래너</button>
+        </div>
+
+        <!-- 모드 1: 맞춤 이벤트 추천 -->
+        <div class="ai-mode-panel" id="aiRecommendPanel">
+          <div class="ai-input-row">
+            <input type="text" id="aiInput" placeholder="예: 여름 원피스, 카페 할인, 캠핑용품...">
+            <button class="ai-btn" id="aiRecommendBtn">추천받기</button>
+          </div>
+
+          <div class="ai-spinner-wrap" id="aiSpinnerWrap" hidden>
+            <span class="ai-spinner"></span>
+            <p>잠시만 기다려 주세요...</p>
+          </div>
+
+          <p class="ai-error" id="aiError" hidden></p>
+
+          <div class="ai-result-cards" id="aiResultCards" hidden></div>
+        </div>
+
+        <!-- 모드 2: AI 여행 플래너 -->
+        <div class="ai-mode-panel" id="travelPlannerPanel" hidden>
+          <form class="travel-planner-form" id="travelPlannerForm">
+            <input type="date" id="travelDate" required title="여행 시작일">
+            <input type="date" id="travelEndDate" required title="여행 종료일 (최대 5일)">
+            <input type="text" id="travelRegion" placeholder="여행지 (예: 강릉, 부산, 제주)" required>
+            <button type="submit" class="ai-btn" id="travelPlannerSubmitBtn">여행 계획 짜기</button>
+          </form>
+          <p class="travel-form-hint">하루만 여행하신다면 시작일과 종료일을 동일하게 입력하세요 (최대 5일)</p>
+
+          <div class="ai-spinner-wrap" id="travelSpinnerWrap" hidden>
+            <span class="ai-spinner"></span>
+            <p>AI가 여행 계획을 짜는 중입니다. 잠시만 기다려 주세요...</p>
+          </div>
+
+          <p class="ai-error" id="travelError" hidden></p>
+
+          <div class="travel-result" id="travelResult" hidden></div>
+        </div>
+      </div>
     </section>
 
     <!-- ===== Hero Banner ===== -->
@@ -252,6 +260,14 @@
 
         <div class="sheet-tags" id="sheetTags"></div>
 
+        <h3 class="sheet-h3">👀 다녀온 사람들의 한줄평 <span id="visitCount"></span></h3>
+        <div class="visit-form" id="visitForm">
+          <input type="text" id="visitComment" placeholder="다녀오셨다면 한줄평을 남겨주세요 (선택)" maxlength="80">
+          <button class="visit-submit-btn" id="visitSubmitBtn">✓ 다녀왔어요</button>
+        </div>
+        <p class="visit-login-notice" id="visitLoginNotice" hidden>로그인하시면 방문 인증과 한줄평을 남길 수 있어요.</p>
+        <ul class="visit-comment-list" id="visitCommentList"></ul>
+
         <h3 class="sheet-h3">오시는 길</h3>
         <div class="kakao-map-wrap" id="kakaoMapWrap">
           <div class="kakao-map" id="kakaoMap"></div>
@@ -272,9 +288,27 @@
           <span>💬</span> 카카오톡으로 공유하기
         </button>
 
+        <div class="sheet-icon-actions">
+          <a class="sheet-icon-action" id="kakaoRouteBtn" href="#" target="_blank" rel="noopener noreferrer">
+            <span class="sheet-icon-action-emoji">🗺</span><span>길찾기</span>
+          </a>
+          <button class="sheet-icon-action" id="calendarBtn">
+            <span class="sheet-icon-action-emoji">📅</span><span>캘린더</span>
+          </button>
+          <button class="sheet-icon-action" id="kakaoShareBtn">
+            <span class="sheet-icon-action-emoji">💬</span><span>공유</span>
+          </button>
+        </div>
+
         <a class="visit-btn" id="visitBtn" href="#" target="_blank" rel="noopener noreferrer">
           브랜드 공식 이벤트 화면으로 이동하기 ↗
         </a>
+      </div>
+
+      <div class="sheet-sticky-cta">
+        <button class="download-btn" id="downloadBtn">
+          <span>⬇</span> 쿠폰 다운로드 받기
+        </button>
       </div>
     </div>
   </div>
@@ -330,6 +364,13 @@
       <div class="auth-body" id="authAccountBody" hidden>
         <h2 class="auth-title">👋 안녕하세요!</h2>
         <p class="auth-sub" id="authUserEmail"></p>
+
+        <div class="invite-box">
+          <p class="invite-box-label">🎁 친구 초대하고 같이 써요</p>
+          <p class="invite-box-code" id="inviteCode">코드 생성 중...</p>
+          <button class="ai-btn invite-share-btn" id="inviteShareBtn">💬 카카오톡으로 초대 링크 보내기</button>
+        </div>
+
         <button class="ai-btn auth-logout-btn" id="authLogoutBtn">로그아웃</button>
       </div>
     </div>
