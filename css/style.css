@@ -825,66 +825,78 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
 
 .ranking-list {
   list-style: none;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.ranking-list::-webkit-scrollbar { display: none; }
+
+.rank-card {
+  position: relative;
+  flex: 0 0 150px;
+  scroll-snap-align: start;
   background: var(--card-bg);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   overflow: hidden;
-  display: grid;
-  grid-template-columns: 1fr;
+  cursor: pointer;
+  transition: transform 0.12s ease;
 }
+.rank-card:active { transform: scale(0.97); }
 
-/* On wider screens, ranking becomes a fluid multi-column grid instead of a tall list */
-@media (min-width: 640px) {
-  .ranking-list {
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  }
-  .rank-item {
-    border-bottom: none !important;
-    border-right: 1px solid var(--border);
-  }
-  .rank-item:nth-last-child(-n+1) { border-right: none; }
-}
-
-.rank-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 13px 16px;
-  border-bottom: 1px solid var(--border);
-  transition: background 0.15s ease;
-  min-width: 0;
-}
-.rank-item:last-child { border-bottom: none; }
-.rank-item:active { background: #FAFAFA; }
-
-.rank-num {
-  flex-shrink: 0;
-  width: 26px;
-  font-size: 17px;
+.rank-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  font-size: 12.5px;
   font-weight: 800;
   font-style: italic;
-  color: var(--text-3);
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.rank-item:nth-child(1) .rank-num { color: var(--accent); }
-.rank-item:nth-child(2) .rank-num { color: #FF9640; }
-.rank-item:nth-child(3) .rank-num { color: #FFB56B; }
+.rank-card:nth-child(1) .rank-badge { background: var(--accent); }
+.rank-card:nth-child(2) .rank-badge { background: #FF9640; }
+.rank-card:nth-child(3) .rank-badge { background: #FFB56B; }
 
-.rank-logo {
+.rank-card-media { position: relative; width: 100%; aspect-ratio: 1 / 1; background: #f0f0f2; }
+.rank-card-photo { width: 100%; height: 100%; object-fit: cover; }
+.rank-card-discount {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.rank-card-body { display: flex; align-items: center; gap: 8px; padding: 10px; }
+.rank-card-logo {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   object-fit: contain;
   background: #fff;
   border: 1px solid var(--border);
-  padding: 5px;
+  padding: 2px;
 }
-
-.rank-info { flex: 1; min-width: 0; }
-.rank-brand { font-size: 12px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
-.rank-title {
-  font-size: 13.5px;
+.rank-card-info { min-width: 0; }
+.rank-card-brand { font-size: 10.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+.rank-card-title {
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-1);
   white-space: nowrap;
@@ -892,11 +904,8 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
   text-overflow: ellipsis;
 }
 
-.rank-discount {
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--accent);
+@media (min-width: 640px) {
+  .rank-card { flex: 0 0 180px; }
 }
 
 /* ===================== Hero Banner ===================== */

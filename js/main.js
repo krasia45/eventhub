@@ -183,7 +183,10 @@ function sendEventStat(action, eventId) {
 
 function getEventScore(eventId) {
   const s = eventStatsCache[eventId] || { views: 0, likes: 0 };
-  return s.likes * 3 + s.views; // 좋아요에 더 큰 가중치
+  // BRD 확정 공식: 조회수×0.6 + 저장수(좋아요)×0.4
+  // ⚠️ "최근 3시간 상승률" 같은 시간 감쇠는 시계열 스냅샷 테이블이 있어야 계산 가능해서
+  //    이번 단계에는 포함 안 함 (다음 단계로 별도 예정)
+  return s.views * 0.6 + s.likes * 0.4;
 }
 
 /* ---------- 날씨 위젯 ---------- */
@@ -484,22 +487,27 @@ function renderRanking() {
   const rankedEvents = sorted.slice(0, 5);
 
   list.innerHTML = rankedEvents.map((ev, idx) => `
-    <li class="rank-item" data-id="${ev.id}">
-      <span class="rank-num">${idx + 1}</span>
-      <img class="rank-logo" data-domain="${ev.domain}" data-brand="${ev.brand}" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고">
-      <div class="rank-info">
-        <p class="rank-brand">${ev.brand}</p>
-        <p class="rank-title">${ev.title}</p>
+    <li class="rank-card" data-id="${ev.id}">
+      <span class="rank-badge">${idx + 1}</span>
+      <div class="rank-card-media">
+        <img class="rank-card-photo" src="${ev.image}" alt="${ev.title}" loading="lazy">
+        <span class="rank-card-discount">${ev.discount}</span>
       </div>
-      <span class="rank-discount">${ev.discount}</span>
+      <div class="rank-card-body">
+        <img class="rank-card-logo" data-domain="${ev.domain}" data-brand="${ev.brand}" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고">
+        <div class="rank-card-info">
+          <p class="rank-card-brand">${ev.brand}</p>
+          <p class="rank-card-title">${ev.title}</p>
+        </div>
+      </div>
     </li>
   `).join("");
 
-  list.querySelectorAll(".rank-item").forEach(item => {
+  list.querySelectorAll(".rank-card").forEach(item => {
     item.addEventListener("click", () => openSheet(item.dataset.id));
   });
 
-  list.querySelectorAll(".rank-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  list.querySelectorAll(".rank-card-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 }
 
 /* ---------- Render: Feed Grid ---------- */
