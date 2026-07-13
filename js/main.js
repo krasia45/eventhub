@@ -10,7 +10,7 @@ const KAKAO_JS_KEY = "2a4211503ca5201a29e348b22957fba4";
 /* Supabase 클라이언트 (로그인/회원 데이터용) — anon key는 공개용 키라 노출돼도 안전합니다.
    실제 데이터 보호는 서버가 아니라 RLS(Row Level Security) 정책이 담당합니다.
    ⚠️ 아래 두 값을 실제 Supabase 프로젝트 값으로 바꿔주세요. */
-const SUPABASE_URL = "https://czcpjgjyvxymhqziizgq.supabase.co";
+const SUPABASE_URL = "czcpjgjyvxymhqziizgq.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_44ho1osigeeuv_yq6zsTjg_pSlMexzl";
 
 // ── 안전장치: 이 초기화가 실패해도(값을 아직 안 채웠거나 SDK 로드 실패 등)
@@ -991,10 +991,14 @@ document.getElementById("googleLoginBtn").addEventListener("click", async () => 
 });
 document.getElementById("kakaoLoginBtn").addEventListener("click", async () => {
   if (!supabaseClient) { showToast("로그인 기능을 일시적으로 사용할 수 없어요."); return; }
-  // 일반(개인) 카카오 앱 상태이므로 이메일이 안 넘어올 수 있음 — 로그인 자체는 문제없이 진행됨.
+  // Supabase 기본 요청 스코프(account_email 포함)는 일반(개인) 카카오 앱에 없는 동의항목이라
+  // KOE205 에러가 남 → 실제로 설정된 동의항목(닉네임)만 명시적으로 요청하도록 제한
   await supabaseClient.auth.signInWithOAuth({
     provider: "kakao",
-    options: { redirectTo: window.location.origin },
+    options: {
+      redirectTo: window.location.origin,
+      scopes: "profile_nickname",
+    },
   });
 });
 
