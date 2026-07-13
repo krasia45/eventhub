@@ -8,10 +8,24 @@
 const KAKAO_JS_KEY = "2a4211503ca5201a29e348b22957fba4";
 
 /* Supabase 클라이언트 (로그인/회원 데이터용) — anon key는 공개용 키라 노출돼도 안전합니다.
-   실제 데이터 보호는 서버가 아니라 RLS(Row Level Security) 정책이 담당합니다. */
+   실제 데이터 보호는 서버가 아니라 RLS(Row Level Security) 정책이 담당합니다.
+   ⚠️ 아래 두 값을 실제 Supabase 프로젝트 값으로 바꿔주세요. */
 const SUPABASE_URL = "czcpjgjyvxymhqziizgq.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_44ho1osigeeuv_yq6zsTjg_pSlMexzl";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── 안전장치: 이 초기화가 실패해도(값을 아직 안 채웠거나 SDK 로드 실패 등)
+//    사이트의 나머지 기능(탭, 이벤트 목록 등)은 절대 멈추지 않도록 try/catch로 감쌉니다.
+//    로그인 관련 기능만 비활성화되고, 나머지는 정상 작동합니다.
+let supabaseClient = null;
+try {
+  if (SUPABASE_URL.startsWith("http") && window.supabase) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } else {
+    console.warn("Supabase 설정이 비어있어 로그인 기능이 비활성화됩니다. SUPABASE_URL/SUPABASE_ANON_KEY를 확인하세요.");
+  }
+} catch (err) {
+  console.error("Supabase 클라이언트 초기화 실패:", err);
+}
 
 let currentUser = null; // 로그인한 사용자 (없으면 null)
 
@@ -969,12 +983,14 @@ authOverlay.addEventListener("click", (e) => { if (e.target === authOverlay) clo
 
 /* ---------- 소셜 로그인 ---------- */
 document.getElementById("googleLoginBtn").addEventListener("click", async () => {
+  if (!supabaseClient) { showToast("로그인 기능을 일시적으로 사용할 수 없어요."); return; }
   await supabaseClient.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: window.location.origin },
   });
 });
 document.getElementById("kakaoLoginBtn").addEventListener("click", async () => {
+  if (!supabaseClient) { showToast("로그인 기능을 일시적으로 사용할 수 없어요."); return; }
   // 일반(개인) 카카오 앱 상태이므로 이메일이 안 넘어올 수 있음 — 로그인 자체는 문제없이 진행됨.
   await supabaseClient.auth.signInWithOAuth({
     provider: "kakao",
@@ -1006,6 +1022,12 @@ document.getElementById("authForm").addEventListener("submit", async (e) => {
   const errorEl = document.getElementById("authError");
   errorEl.hidden = true;
 
+  if (!supabaseClient) {
+    errorEl.hidden = false;
+    errorEl.textContent = "로그인 기능을 일시적으로 사용할 수 없어요.";
+    return;
+  }
+
   const { error } = authMode === "login"
     ? await supabaseClient.auth.signInWithPassword({ email, password })
     : await supabaseClient.auth.signUp({ email, password });
@@ -1026,6 +1048,7 @@ document.getElementById("authForm").addEventListener("submit", async (e) => {
 });
 
 document.getElementById("authLogoutBtn").addEventListener("click", async () => {
+  if (!supabaseClient) { closeAuthModal(); return; }
   await supabaseClient.auth.signOut();
   closeAuthModal();
   showToast("로그아웃되었습니다");
@@ -1076,6 +1099,7 @@ async function openOnboarding() {
 }
 
 document.getElementById("onboardingSubmitBtn").addEventListener("click", async () => {
+  if (!supabaseClient || !currentUser) { showToast("로그인 상태를 확인해주세요."); return; }
   const contactEmail = document.getElementById("onboardingEmail").value.trim();
   const { error } = await supabaseClient.from("user_preferences").upsert({
     user_id: currentUser.id,
@@ -1131,17 +1155,23 @@ async function loadUserPreferencesAndSync() {
   }
 }
 
-supabaseClient.auth.onAuthStateChange((event, session) => {
-  currentUser = session?.user || null;
+// ⚠️ 이 등록이 최상위(top-level) 코드에서 바로 실행되기 때문에, supabaseClient가 null이면
+//    (설정값이 비어있거나 SDK 로드 실패) 여기서 에러가 나서 이 아래에 있는 모든 코드
+//    (카테고리 탭, 이벤트 로딩 등 Init 블록 전체)가 실행이 안 되는 심각한 문제가 있었습니다.
+//    반드시 null 체크로 감싸서, 로그인 설정이 잘못돼도 사이트 나머지 기능은 정상 작동하게 합니다.
+if (supabaseClient) {
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    currentUser = session?.user || null;
 
-  if (event === "SIGNED_IN") {
-    closeAuthModal();
-    loadUserPreferencesAndSync();
-  }
-  if (event === "SIGNED_OUT") {
-    // 로그아웃 시 좋아요는 localStorage 기준으로 되돌아감 (다음 로그인 시 다시 동기화)
-  }
-});
+    if (event === "SIGNED_IN") {
+      closeAuthModal();
+      loadUserPreferencesAndSync();
+    }
+    if (event === "SIGNED_OUT") {
+      // 로그아웃 시 좋아요는 localStorage 기준으로 되돌아감 (다음 로그인 시 다시 동기화)
+    }
+  });
+}
 
 /* ---------- AI 섹션 모드 전환 (맞춤 이벤트 추천 ↔ 여행 플래너) ---------- */
 function switchAiMode(mode) {
