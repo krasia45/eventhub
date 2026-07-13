@@ -11,7 +11,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(__file__))
-from api._supabase_client import sb_select
+from _supabase_client import sb_select
 
 
 class handler(BaseHTTPRequestHandler):
@@ -27,6 +27,7 @@ class handler(BaseHTTPRequestHandler):
         try:
             rows = sb_select("events", {
                 "select": "*,event_stats(views,likes)",
+                "is_active": "eq.true",
                 "order": "created_at.desc",
             })
 
@@ -47,6 +48,7 @@ class handler(BaseHTTPRequestHandler):
                     "discount": r["discount"],
                     "period": r["period"],
                     "periodEnd": r.get("period_end"),  # 프론트에서 D-day를 매일 새로 계산하기 위한 원본 날짜
+                    "periodStart": r.get("period_start"),  # 캘린더에 기간 전체를 표시하기 위한 원본 날짜
                     "channel": r.get("channel", ""),
                     "desc": r.get("desc", ""),
                     "tags": r.get("tags", []),

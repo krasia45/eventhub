@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>개인정보처리방침 | EventHub</title>
+<style>
+  body { font-family: -apple-system, "Pretendard", sans-serif; max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; color: #1a1a1a; line-height: 1.7; }
+  h1 { font-size: 22px; margin-bottom: 6px; }
+  .updated { color: #888; font-size: 13px; margin-bottom: 32px; }
+  h2 { font-size: 16px; margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; }
+  p, li { font-size: 14px; color: #333; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th, td { border: 1px solid #e0e0e0; padding: 8px 10px; text-align: left; }
+  th { background: #f7f7f7; }
+  .notice { background: #FFF6E0; border: 1px solid #FCE3A0; border-radius: 8px; padding: 14px; font-size: 13px; color: #9A6B00; margin: 24px 0; }
+  a { color: #FF6F00; }
+</style>
+</head>
+<body>
+
+<h1>개인정보처리방침</h1>
+<p class="updated">시행일: 2026년 7월 13일</p>
+
+<div class="notice">
+  ⚠️ 본 문서는 EventHub 서비스 출시를 위한 <b>초안 템플릿</b>입니다. 실제 서비스 정식 운영 전에는
+  반드시 개인정보보호 전문 법률 자문을 통해 검토·보완해주세요. (개인정보보호법, 정보통신망법 등
+  관련 법령 준수 여부는 서비스 운영 형태에 따라 달라질 수 있습니다.)
+</div>
+
+<p>EventHub(이하 "회사")는 이용자의 개인정보를 중요시하며, 「개인정보보호법」 등 관련 법령을 준수하기 위해
+노력합니다. 본 개인정보처리방침을 통해 회사가 어떤 정보를 수집하고, 어떻게 이용하며, 이용자가 어떤
+권리를 행사할 수 있는지 안내합니다.</p>
+
+<h2>1. 수집하는 개인정보 항목</h2>
+<table>
+  <tr><th>구분</th><th>수집 항목</th><th>수집 방법</th></tr>
+  <tr><td>소셜 로그인</td><td>이메일(제공되는 경우), 소셜 계정 고유 식별자, 닉네임</td><td>구글/카카오 OAuth 로그인 시 자동 수집</td></tr>
+  <tr><td>회원 프로필</td><td>알림 수신용 이메일, 관심 키워드</td><td>온보딩 화면에서 이용자 직접 입력</td></tr>
+  <tr><td>위치 정보</td><td>GPS 좌표(위도/경도)</td><td>"내 주변 20km" 기능 이용 시 브라우저 위치 권한 동의 후 수집</td></tr>
+  <tr><td>서비스 이용 기록</td><td>찜(저장)한 이벤트, 캘린더 개인 일정, 검색어, 조회 로그</td><td>서비스 이용 과정에서 자동 생성</td></tr>
+  <tr><td>문의 정보</td><td>이름(선택), 이메일, 문의 내용</td><td>고객센터 문의 시 직접 입력</td></tr>
+  <tr><td>기기/브라우저 정보</td><td>쿠키, 로컬 스토리지(비로그인 시 임시 찜 목록 저장용)</td><td>자동 수집</td></tr>
+</table>
+
+<h2>2. 개인정보 수집 및 이용 목적</h2>
+<ul>
+  <li>회원 식별 및 로그인 세션 유지</li>
+  <li>관심 키워드·위치 기반 맞춤 이벤트 추천</li>
+  <li>찜한 이벤트 및 개인 일정 관리(캘린더 기능)</li>
+  <li>혜택 마감 임박 등 알림 발송(이메일)</li>
+  <li>고객 문의 응대</li>
+  <li>서비스 품질 개선 및 부정 이용 방지</li>
+</ul>
+
+<h2>3. 개인정보 보유 및 이용 기간</h2>
+<p>회원 탈퇴 시 지체 없이 파기합니다. 단, 관계 법령에 따라 보존이 필요한 경우 해당 법령에서 정한 기간 동안 보관합니다.
+비로그인 이용자의 브라우저 로컬 스토리지 데이터는 이용자가 직접 브라우저에서 삭제할 수 있습니다.</p>
+
+<h2>4. 개인정보 처리 위탁 및 제3자 제공</h2>
+<table>
+  <tr><th>수탁/제공 대상</th><th>목적</th><th>처리 항목</th></tr>
+  <tr><td>Supabase (해외 인프라)</td><td>회원 인증, 데이터베이스 운영</td><td>계정 정보, 서비스 이용 기록 전반</td></tr>
+  <tr><td>Google, Kakao</td><td>소셜 로그인 인증</td><td>이메일(제공 시), 프로필 식별 정보</td></tr>
+  <tr><td>Kakao Maps</td><td>이벤트 위치 지도 표시 및 길찾기 연동</td><td>이벤트 위치 좌표(이용자 개인정보 아님)</td></tr>
+  <tr><td>Google Gemini API</td><td>AI 맞춤 이벤트 추천, 여행 일정 생성</td><td>이용자가 입력한 검색어/키워드(비식별)</td></tr>
+  <tr><td>Vercel (해외 인프라)</td><td>웹사이트 호스팅</td><td>접속 로그</td></tr>
+</table>
+<p>회사는 법령에 근거하거나 이용자의 별도 동의가 있는 경우를 제외하고 개인정보를 제3자에게 제공하지 않습니다.</p>
+
+<h2>5. 이용자의 권리와 행사 방법</h2>
+<p>이용자는 언제든지 본인의 개인정보를 조회, 수정, 삭제하거나 처리 정지를 요청할 수 있습니다.
+로그인 후 계정 메뉴에서 로그아웃 및 데이터 관련 요청이 가능하며, 계정 삭제 등 추가 조치가 필요한 경우
+아래 문의처로 연락해주세요.</p>
+
+<h2>6. 만 14세 미만 아동의 개인정보</h2>
+<p>본 서비스는 만 3세 이상 이용 가능하도록 운영하고 있으나, 별도의 연령 확인 절차는 적용하고 있지 않습니다.
+만 14세 미만 아동의 법정대리인은 아동의 개인정보 열람, 정정, 삭제를 요청할 수 있으며, 회사는 요청 확인 시
+지체 없이 필요한 조치를 취합니다.</p>
+
+<h2>7. 개인정보의 안전성 확보 조치</h2>
+<ul>
+  <li>데이터베이스 접근 권한 관리 및 Row Level Security(RLS) 적용</li>
+  <li>전송 구간 암호화(HTTPS)</li>
+  <li>관리자 페이지 접근 시 별도 인증키 사용</li>
+</ul>
+
+<h2>8. 쿠키 및 로컬 스토리지</h2>
+<p>비로그인 상태에서 찜한 이벤트, 다크모드 설정 등을 브라우저에 임시 저장하기 위해 로컬 스토리지를 사용합니다.
+이는 이용자 개인을 식별하지 않으며, 브라우저 설정에서 언제든 삭제할 수 있습니다.</p>
+
+<h2>9. 개인정보 보호책임자</h2>
+<p>문의 사항은 서비스 내 "문의하기" 기능을 통해 접수해주세요.</p>
+
+<h2>10. 개정 이력</h2>
+<p>2026년 7월 13일: 최초 제정</p>
+
+<p style="margin-top:40px;"><a href="index.html">← EventHub로 돌아가기</a></p>
+
+</body>
+</html>

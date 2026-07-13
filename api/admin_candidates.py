@@ -14,7 +14,7 @@ import uuid
 from urllib.parse import urlparse, parse_qs
 
 sys.path.insert(0, os.path.dirname(__file__))
-from api._supabase_client import sb_select, sb_insert, sb_update
+from _supabase_client import sb_select, sb_insert, sb_update
 
 
 def check_admin_key(provided_key):
@@ -107,7 +107,7 @@ class handler(BaseHTTPRequestHandler):
                 "channel": c.get("channel", ""),
                 "desc": c.get("desc", ""),
                 "tags": c.get("tags", []),
-                "image": data.get("image", ""),
+                "image": data.get("image") or c.get("image", ""),
                 "domain": data.get("domain", ""),
                 "link": data.get("link") or c.get("source_url"),
                 "source_url": c.get("source_url"),
