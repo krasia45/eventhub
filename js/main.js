@@ -62,32 +62,99 @@ function loadKakaoShareSdk() {
   return kakaoShareSdkPromise;
 }
 
-async function shareEventToKakao(ev) {
-  try {
-    await loadKakaoShareSdk();
-    window.Kakao.Share.sendDefault({
-      objectType: "feed",
-      content: {
-        title: `${ev.brand} · ${ev.title}`,
-        description: `${ev.discount} · ${ev.period}`,
-        imageUrl: ev.image,
-        link: {
-          mobileWebUrl: window.location.href,
-          webUrl: window.location.href,
-        },
-      },
-      buttons: [
-        {
-          title: "이벤트 보러가기",
-          link: { mobileWebUrl: window.location.href, webUrl: window.location.href },
-        },
-      ],
-    });
-  } catch (err) {
-    console.error("카카오톡 공유 오류:", err);
-    showToast("공유 기능을 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
-  }
+async function shareToKakao(ev, shareUrl) {
+  await loadKakaoShareSdk();
+  window.Kakao.Share.sendDefault({
+    objectType: "feed",
+    content: {
+      title: `${ev.brand} · ${ev.title}`,
+      description: `${ev.discount} · ${ev.period}`,
+      imageUrl: ev.image,
+      link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
+    },
+    buttons: [{ title: "이벤트 보러가기", link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }],
+  });
 }
+
+/* ---------- 공유하기: 모바일은 OS 공유창(카톡·인스타·페북·문자 등 전부 포함), 데스크톱은 직접 만든 메뉴 ---------- */
+async function openShareFlow(ev) {
+  const shareUrl = window.location.href;
+  const shareText = `${ev.brand} · ${ev.title} — ${ev.discount}`;
+
+  // 1) Web Share API 지원 시(대부분의 모바일 브라우저) OS 기본 공유창을 그대로 사용.
+  //    이 방식이 카카오톡/인스타그램/페이스북/문자 등 설치된 모든 앱을 자동으로 보여주기 때문에,
+  //    무신사·배달의민족 등 대형 앱들도 모바일에서는 대부분 이 방식을 우선 사용합니다.
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: shareText, url: shareUrl });
+      return;
+    } catch (err) {
+      if (err.name === "AbortError") return; // 사용자가 공유창을 취소한 것 — 에러 아님
+      // 실패 시 아래 커스텀 메뉴로 폴백
+    }
+  }
+
+  openShareMenu(ev, shareUrl);
+}
+
+function openShareMenu(ev, shareUrl) {
+  const grid = document.getElementById("sharePlatformGrid");
+  const platforms = [
+    { id: "kakao", label: "카카오톡", emoji: "💬", bg: "#FEE500", color: "#191919" },
+    { id: "copy", label: "링크 복사", emoji: "🔗", bg: "#F1F1F1", color: "#333" },
+    { id: "facebook", label: "페이스북", emoji: "📘", bg: "#1877F2", color: "#fff" },
+    { id: "x", label: "X(트위터)", emoji: "𝕏", bg: "#000", color: "#fff" },
+    { id: "instagram", label: "인스타그램", emoji: "📸", bg: "linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)", color: "#fff" },
+  ];
+
+  grid.innerHTML = platforms.map(p => `
+    <button type="button" class="share-platform-btn" data-platform="${p.id}" style="background:${p.bg}; color:${p.color};">
+      <span class="share-platform-emoji">${p.emoji}</span>
+      <span>${p.label}</span>
+    </button>
+  `).join("");
+
+  grid.querySelectorAll(".share-platform-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const platform = btn.dataset.platform;
+      const text = encodeURIComponent(`${ev.brand} · ${ev.title} — ${ev.discount}`);
+      const url = encodeURIComponent(shareUrl);
+
+      if (platform === "kakao") {
+        try { await shareToKakao(ev, shareUrl); }
+        catch { showToast("카카오톡 공유를 불러오지 못했어요."); }
+      } else if (platform === "copy") {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast("링크가 복사됐어요!");
+        } catch { showToast(`링크: ${shareUrl}`); }
+      } else if (platform === "facebook") {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "noopener,noreferrer");
+      } else if (platform === "x") {
+        window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank", "noopener,noreferrer");
+      } else if (platform === "instagram") {
+        // 인스타그램은 피드/스토리에 외부 링크를 직접 공유하는 웹 API를 제공하지 않아
+        // (게시물 작성은 앱에서만 가능), 링크를 복사해서 스토리/DM에 직접 붙여넣도록 안내합니다.
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast("링크가 복사됐어요! 인스타그램 스토리·DM에 붙여넣어 공유해보세요 📸");
+        } catch { showToast(`링크: ${shareUrl}`); }
+      }
+
+      document.getElementById("shareMenuOverlay").classList.remove("open");
+    });
+  });
+
+  document.getElementById("shareMenuOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+document.getElementById("shareMenuClose").addEventListener("click", () => {
+  document.getElementById("shareMenuOverlay").classList.remove("open");
+});
+document.getElementById("shareMenuOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "shareMenuOverlay") document.getElementById("shareMenuOverlay").classList.remove("open");
+});
 
 async function renderEventMap(ev) {
   const mapEl = document.getElementById("kakaoMap");
@@ -689,7 +756,15 @@ function openSheet(eventId) {
   sheetOverlay.classList.add("open");
   document.body.style.overflow = "hidden";
 
-  loadEventVisits(eventId);
+  // "다녀왔어요" 후기는 실제로 방문하는 장소(팝업스토어)에만 의미가 있음.
+  // 단순 할인 정보성 이벤트(패션/뷰티/카페 쿠폰 등)는 "방문"이라는 행위 자체가 없어서 숨김.
+  const visitSection = document.getElementById("visitSection");
+  if (ev.category === "popup") {
+    visitSection.hidden = false;
+    loadEventVisits(eventId);
+  } else {
+    visitSection.hidden = true;
+  }
 }
 
 function closeSheet() {
@@ -888,10 +963,10 @@ document.getElementById("calendarBtn").addEventListener("click", () => {
   window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, "_blank", "noopener,noreferrer");
 });
 
-document.getElementById("kakaoShareBtn").addEventListener("click", () => {
+document.getElementById("shareBtn").addEventListener("click", () => {
   const ev = EVENTS.find(e => e.id === activeEventId);
   if (!ev) return;
-  shareEventToKakao(ev);
+  openShareFlow(ev);
 });
 
 /* ---------- AI Recommendation ---------- */

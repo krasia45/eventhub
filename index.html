@@ -260,33 +260,20 @@
 
         <div class="sheet-tags" id="sheetTags"></div>
 
-        <h3 class="sheet-h3">👀 다녀온 사람들의 한줄평 <span id="visitCount"></span></h3>
-        <div class="visit-form" id="visitForm">
-          <input type="text" id="visitComment" placeholder="다녀오셨다면 한줄평을 남겨주세요 (선택)" maxlength="80">
-          <button class="visit-submit-btn" id="visitSubmitBtn">✓ 다녀왔어요</button>
+        <div class="visit-section" id="visitSection">
+          <h3 class="sheet-h3">👀 다녀온 사람들의 한줄평 <span id="visitCount"></span></h3>
+          <div class="visit-form" id="visitForm">
+            <input type="text" id="visitComment" placeholder="다녀오셨다면 한줄평을 남겨주세요 (선택)" maxlength="80">
+            <button class="visit-submit-btn" id="visitSubmitBtn">✓ 다녀왔어요</button>
+          </div>
+          <p class="visit-login-notice" id="visitLoginNotice" hidden>로그인하시면 방문 인증과 한줄평을 남길 수 있어요.</p>
+          <ul class="visit-comment-list" id="visitCommentList"></ul>
         </div>
-        <p class="visit-login-notice" id="visitLoginNotice" hidden>로그인하시면 방문 인증과 한줄평을 남길 수 있어요.</p>
-        <ul class="visit-comment-list" id="visitCommentList"></ul>
 
         <h3 class="sheet-h3">오시는 길</h3>
         <div class="kakao-map-wrap" id="kakaoMapWrap">
           <div class="kakao-map" id="kakaoMap"></div>
         </div>
-        <a class="kakao-route-btn" id="kakaoRouteBtn" href="#" target="_blank" rel="noopener noreferrer">
-          🗺 카카오맵에서 실제 길찾기
-        </a>
-
-        <button class="download-btn" id="downloadBtn">
-          <span>⬇</span> 쿠폰 다운로드 받기
-        </button>
-
-        <button class="calendar-btn" id="calendarBtn">
-          <span>📅</span> 구글 캘린더에 일정 등록하기
-        </button>
-
-        <button class="kakao-share-btn" id="kakaoShareBtn">
-          <span>💬</span> 카카오톡으로 공유하기
-        </button>
 
         <div class="sheet-icon-actions">
           <a class="sheet-icon-action" id="kakaoRouteBtn" href="#" target="_blank" rel="noopener noreferrer">
@@ -295,8 +282,8 @@
           <button class="sheet-icon-action" id="calendarBtn">
             <span class="sheet-icon-action-emoji">📅</span><span>캘린더</span>
           </button>
-          <button class="sheet-icon-action" id="kakaoShareBtn">
-            <span class="sheet-icon-action-emoji">💬</span><span>공유</span>
+          <button class="sheet-icon-action" id="shareBtn">
+            <span class="sheet-icon-action-emoji">📤</span><span>공유</span>
           </button>
         </div>
 
@@ -309,6 +296,18 @@
         <button class="download-btn" id="downloadBtn">
           <span>⬇</span> 쿠폰 다운로드 받기
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 공유 메뉴 (여러 플랫폼) ===== -->
+  <div class="sheet-overlay" id="shareMenuOverlay">
+    <div class="bottom-sheet share-menu-sheet" id="shareMenuSheet">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" id="shareMenuClose" aria-label="닫기">✕</button>
+      <div class="share-menu-body">
+        <h2 class="auth-title">공유하기</h2>
+        <div class="share-platform-grid" id="sharePlatformGrid"></div>
       </div>
     </div>
   </div>
