@@ -8,7 +8,7 @@
    수정된 전략: "네트워크 우선(Network First)" — 온라인이면 항상 서버의 최신 파일을
    먼저 받아오고, 그 요청이 실패했을 때(오프라인 등)만 캐시된 화면을 보여줍니다. */
 
-const CACHE_NAME = "eventhub-shell-v3";
+const CACHE_NAME = "eventhub-shell-v4";
 const APP_SHELL = ["/", "/index.html", "/css/style.css", "/js/main.js"];
 
 self.addEventListener("install", (event) => {
@@ -43,10 +43,20 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        // 정상 응답(2xx)일 때만 캐시에 저장. 리다이렉트/오류 응답은 저장하지 않음
+        // (예: Vercel 배포 보호로 인한 로그인 리다이렉트 응답을 캐시하면 오히려 문제가 커짐)
+        if (response && response.ok) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone)).catch(() => {});
+        }
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(async () => {
+        // ⚠️ 이전 버전의 버그: 캐시에도 아무것도 없으면 undefined를 그대로 반환해서
+        //    "Failed to convert value to 'Response'" 에러가 계속 쌓였습니다.
+        //    반드시 유효한 Response 객체를 반환하도록 안전장치를 추가합니다.
+        const cached = await caches.match(event.request);
+        return cached || new Response("", { status: 504, statusText: "Network error and no cache available" });
+      })
   );
 });
