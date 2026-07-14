@@ -237,24 +237,30 @@
       </div>
 
       <div class="sheet-body">
-        <div class="sheet-meta">
-          <div class="meta-item">
-            <span class="meta-icon">📅</span>
-            <div>
-              <p class="meta-label">이벤트 기간</p>
-              <p class="meta-value" id="sheetPeriod"></p>
-            </div>
+        <div class="info-summary-card">
+          <div class="info-row">
+            <span class="info-row-icon">🏷</span>
+            <span class="info-row-label">혜택</span>
+            <span class="info-row-value info-row-value-accent" id="sheetDiscountRow"></span>
           </div>
-          <div class="meta-item">
-            <span class="meta-icon">📍</span>
-            <div>
-              <p class="meta-label">참여 방법</p>
-              <p class="meta-value" id="sheetChannel"></p>
-            </div>
+          <div class="info-row">
+            <span class="info-row-icon">📅</span>
+            <span class="info-row-label">기간</span>
+            <span class="info-row-value" id="sheetPeriod"></span>
+          </div>
+          <div class="info-row">
+            <span class="info-row-icon">📍</span>
+            <span class="info-row-label">참여방법</span>
+            <span class="info-row-value" id="sheetChannel"></span>
+          </div>
+          <div class="info-row" id="sheetConditionsRow" hidden>
+            <span class="info-row-icon">⚠️</span>
+            <span class="info-row-label">조건</span>
+            <span class="info-row-value" id="sheetConditions"></span>
           </div>
         </div>
 
-        <h3 class="sheet-h3">이벤트 상세</h3>
+        <h3 class="sheet-h3">📝 상세 설명</h3>
         <p class="sheet-desc" id="sheetDesc"></p>
         <p class="sheet-verified-note" id="sheetVerifiedNote" hidden>✓ 실제 확인된 진행 중인 프로모션입니다. 상세 조건은 공식 채널에서 다시 확인해주세요.</p>
 
@@ -270,12 +276,14 @@
           <ul class="visit-comment-list" id="visitCommentList"></ul>
         </div>
 
-        <h3 class="sheet-h3">오시는 길</h3>
-        <div class="kakao-map-wrap" id="kakaoMapWrap">
-          <div class="kakao-map" id="kakaoMap"></div>
+        <div class="map-section" id="mapSection">
+          <h3 class="sheet-h3">오시는 길</h3>
+          <div class="kakao-map-wrap" id="kakaoMapWrap">
+            <div class="kakao-map" id="kakaoMap"></div>
+          </div>
         </div>
 
-        <div class="sheet-icon-actions">
+        <div class="sheet-icon-actions" id="sheetIconActions">
           <a class="sheet-icon-action" id="kakaoRouteBtn" href="#" target="_blank" rel="noopener noreferrer">
             <span class="sheet-icon-action-emoji">🗺</span><span>길찾기</span>
           </a>

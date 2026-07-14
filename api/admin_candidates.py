@@ -105,6 +105,7 @@ class handler(BaseHTTPRequestHandler):
                 "period_start": c.get("period_start"),
                 "period_end": c.get("period_end"),
                 "channel": c.get("channel", ""),
+                "conditions": data.get("conditions") or c.get("conditions", ""),
                 "desc": c.get("desc", ""),
                 "tags": c.get("tags", []),
                 "image": data.get("image") or c.get("image", ""),

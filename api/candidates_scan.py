@@ -17,7 +17,7 @@ import urllib.request
 import urllib.error
 
 sys.path.insert(0, os.path.dirname(__file__))
-from api._supabase_client import sb_insert
+from _supabase_client import sb_insert
 
 CATEGORIES = ["fashion", "beauty", "food", "tech", "delivery", "stay", "living", "popup"]
 CATEGORY_LABEL = {
@@ -78,7 +78,7 @@ class handler(BaseHTTPRequestHandler):
 4. 확신이 서지 않는 할인율/기간은 "정확한 조건은 공식 채널 확인 필요"라고 명시해.
 
 각 항목을 아래 형식의 JSON 한 줄씩, 총 최대 3줄로만 응답해. 다른 설명은 쓰지 마:
-{{"brand": "브랜드명", "title": "프로모션 제목", "discount": "할인 내용", "period_start": "YYYY-MM-DD", "period_end": "YYYY-MM-DD", "channel": "이용 방법", "desc": "2문장 이내 설명", "source_url": "출처 URL", "confidence_note": "확신도나 주의사항"}}"""
+{{"brand": "브랜드명", "title": "프로모션 제목", "discount": "할인 내용", "conditions": "적용 조건이 있다면 (예: 네이버페이 결제 시에만 적용, 신규 가입자 한정 등, 없으면 빈 문자열)", "period_start": "YYYY-MM-DD", "period_end": "YYYY-MM-DD", "channel": "이용 방법", "desc": "2문장 이내 설명", "source_url": "출처 URL", "confidence_note": "확신도나 주의사항"}}"""
 
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -115,6 +115,7 @@ class handler(BaseHTTPRequestHandler):
                 "title": item.get("title", ""),
                 "subtitle": item.get("confidence_note", ""),
                 "discount": item.get("discount", ""),
+                "conditions": item.get("conditions", ""),
                 "period_start": item.get("period_start"),
                 "period_end": item.get("period_end"),
                 "period": f"{item.get('period_start', '')} - {item.get('period_end', '')}",

@@ -50,6 +50,7 @@ class handler(BaseHTTPRequestHandler):
                     "periodEnd": r.get("period_end"),  # 프론트에서 D-day를 매일 새로 계산하기 위한 원본 날짜
                     "periodStart": r.get("period_start"),  # 캘린더에 기간 전체를 표시하기 위한 원본 날짜
                     "channel": r.get("channel", ""),
+                    "conditions": r.get("conditions", ""),
                     "desc": r.get("desc", ""),
                     "tags": r.get("tags", []),
                     "image": r.get("image", ""),

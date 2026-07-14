@@ -1467,34 +1467,37 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
 
 .sheet-body { padding: 20px 20px 28px; }
 
-.sheet-meta {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 22px;
+.info-summary-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 4px 16px;
+  margin-bottom: 4px;
 }
-.meta-item {
-  flex: 1;
+.info-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
 }
-.meta-icon {
+.info-row:last-child { border-bottom: none; }
+.info-row-icon {
   flex-shrink: 0;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--accent-light);
+  background: var(--card-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
 }
-.meta-label { font-size: 10px; color: var(--text-3); font-weight: 600; margin-bottom: 2px; letter-spacing: 0.2px; }
-.meta-value { font-size: 12.5px; font-weight: 700; color: var(--text-1); line-height: 1.35; }
+.info-row-label { flex-shrink: 0; width: 64px; font-size: 12px; font-weight: 700; color: var(--text-3); }
+.info-row-value { flex: 1; font-size: 13px; font-weight: 700; color: var(--text-1); text-align: right; line-height: 1.4; }
+.info-row-value-accent { color: var(--accent); font-size: 14px; font-weight: 800; }
+#sheetConditionsRow .info-row-value { color: #C05621; }
+#sheetConditionsRow .info-row-icon { background: #FFF3E0; }
 
 .sheet-section-block { display: contents; }
 
@@ -1893,6 +1896,9 @@ html[data-theme="dark"] .inquiry-status-badge.answered {
 
 /* ===================== 다녀왔어요 / 한줄평 (소셜 증거) ===================== */
 .visit-section { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
+.map-section { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+.sheet-icon-actions.two-col { grid-template-columns: repeat(2, 1fr); }
 .visit-form { display: flex; gap: 8px; margin-bottom: 4px; }
 .visit-form input {
   flex: 1;

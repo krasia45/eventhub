@@ -130,6 +130,7 @@ async function loadCandidates() {
         <input type="text" placeholder="이미지 URL" class="f-image" style="grid-column: 1 / -1;" value="${c.image || ""}">
         <input type="text" placeholder="도메인 (예: oliveyoung.co.kr)" class="f-domain" value="${c.domain || ""}">
         <input type="text" placeholder="링크 (비우면 출처 URL 사용)" class="f-link" value="${c.link || ""}">
+        <input type="text" placeholder="조건 (예: 네이버페이 결제 시에만 적용)" class="f-conditions" style="grid-column: 1 / -1;" value="${c.conditions || ""}">
         <div class="btn-row">
           <button class="btn-approve" onclick="approve('${c.id}')">✓ 승인하고 게시</button>
           <button class="btn-reject" onclick="reject('${c.id}')">✕ 반려</button>
@@ -155,6 +156,7 @@ async function approve(id) {
       image: card.querySelector(".f-image").value,
       domain: card.querySelector(".f-domain").value,
       link: card.querySelector(".f-link").value,
+      conditions: card.querySelector(".f-conditions").value,
     }),
   });
   const data = await res.json();

@@ -76,35 +76,19 @@ async function shareToKakao(ev, shareUrl) {
   });
 }
 
-/* ---------- 공유하기: 모바일은 OS 공유창(카톡·인스타·페북·문자 등 전부 포함), 데스크톱은 직접 만든 메뉴 ---------- */
-async function openShareFlow(ev) {
+/* ---------- 공유하기: 인스타그램/페이스북/X(트위터)/카카오톡 4개만 선택지로 제공 ---------- */
+function openShareFlow(ev) {
   const shareUrl = window.location.href;
-  const shareText = `${ev.brand} · ${ev.title} — ${ev.discount}`;
-
-  // 1) Web Share API 지원 시(대부분의 모바일 브라우저) OS 기본 공유창을 그대로 사용.
-  //    이 방식이 카카오톡/인스타그램/페이스북/문자 등 설치된 모든 앱을 자동으로 보여주기 때문에,
-  //    무신사·배달의민족 등 대형 앱들도 모바일에서는 대부분 이 방식을 우선 사용합니다.
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: shareText, url: shareUrl });
-      return;
-    } catch (err) {
-      if (err.name === "AbortError") return; // 사용자가 공유창을 취소한 것 — 에러 아님
-      // 실패 시 아래 커스텀 메뉴로 폴백
-    }
-  }
-
   openShareMenu(ev, shareUrl);
 }
 
 function openShareMenu(ev, shareUrl) {
   const grid = document.getElementById("sharePlatformGrid");
   const platforms = [
-    { id: "kakao", label: "카카오톡", emoji: "💬", bg: "#FEE500", color: "#191919" },
-    { id: "copy", label: "링크 복사", emoji: "🔗", bg: "#F1F1F1", color: "#333" },
+    { id: "instagram", label: "인스타그램", emoji: "📸", bg: "linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)", color: "#fff" },
     { id: "facebook", label: "페이스북", emoji: "📘", bg: "#1877F2", color: "#fff" },
     { id: "x", label: "X(트위터)", emoji: "𝕏", bg: "#000", color: "#fff" },
-    { id: "instagram", label: "인스타그램", emoji: "📸", bg: "linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)", color: "#fff" },
+    { id: "kakao", label: "카카오톡", emoji: "💬", bg: "#FEE500", color: "#191919" },
   ];
 
   grid.innerHTML = platforms.map(p => `
@@ -123,11 +107,6 @@ function openShareMenu(ev, shareUrl) {
       if (platform === "kakao") {
         try { await shareToKakao(ev, shareUrl); }
         catch { showToast("카카오톡 공유를 불러오지 못했어요."); }
-      } else if (platform === "copy") {
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          showToast("링크가 복사됐어요!");
-        } catch { showToast(`링크: ${shareUrl}`); }
       } else if (platform === "facebook") {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "noopener,noreferrer");
       } else if (platform === "x") {
@@ -734,17 +713,40 @@ function openSheet(eventId) {
   document.getElementById("sheetSubtitle").textContent = `${ev.brand} · ${getCategoryLabel(ev.category)}`;
   document.getElementById("sheetTitle").textContent = ev.title;
   document.getElementById("sheetDiscount").textContent = ev.discount;
+  document.getElementById("sheetDiscountRow").textContent = ev.discount;
   document.getElementById("sheetPeriod").textContent = ev.period;
   document.getElementById("sheetChannel").textContent = ev.channel;
   document.getElementById("sheetDesc").textContent = ev.desc;
+
+  // 조건(예: "네이버페이 결제 시에만 적용") — 값이 있을 때만 노출
+  const conditionsRow = document.getElementById("sheetConditionsRow");
+  if (ev.conditions && ev.conditions.trim()) {
+    conditionsRow.hidden = false;
+    document.getElementById("sheetConditions").textContent = ev.conditions;
+  } else {
+    conditionsRow.hidden = true;
+  }
 
   const verifiedNote = document.getElementById("sheetVerifiedNote");
   if (verifiedNote) verifiedNote.hidden = !ev.isVerifiedReal;
   document.getElementById("sheetTags").innerHTML = ev.tags.map(t => `<span class="sheet-tag">#${t}</span>`).join("");
   document.getElementById("visitBtn").href = ev.link;
 
-  document.getElementById("kakaoRouteBtn").href = getKakaoRouteLink(ev);
-  renderEventMap(ev);
+  // 지도/길찾기는 "실제로 찾아가는 장소"인 팝업스토어에서만 의미가 있어 그 카테고리에서만 노출
+  const mapSection = document.getElementById("mapSection");
+  const iconActions = document.getElementById("sheetIconActions");
+  const routeBtn = document.getElementById("kakaoRouteBtn");
+  if (ev.category === "popup") {
+    mapSection.hidden = false;
+    routeBtn.hidden = false;
+    iconActions.classList.remove("two-col");
+    routeBtn.href = getKakaoRouteLink(ev);
+    renderEventMap(ev);
+  } else {
+    mapSection.hidden = true;
+    routeBtn.hidden = true;
+    iconActions.classList.add("two-col");
+  }
 
   updateLikeButton();
 
