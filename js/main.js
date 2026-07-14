@@ -340,6 +340,7 @@ async function loadWeather(loc) {
   const subEl = document.getElementById("weatherSub");
   const headerIconEl = document.getElementById("weatherHeaderIcon");
   const headerTempEl = document.getElementById("weatherHeaderTemp");
+  const forecastRow = document.getElementById("weatherForecastRow");
 
   const target = loc || await getQuietLocation();
 
@@ -355,6 +356,19 @@ async function loadWeather(loc) {
     headerIconEl.textContent = data.icon || "🌤";
     headerTempEl.textContent = `${data.tempC}°`;
 
+    // 향후 예보(네이버 날씨처럼 오늘/화/수/목/금 형태로) — API가 못 주면 조용히 생략
+    if (Array.isArray(data.forecast) && data.forecast.length > 0) {
+      forecastRow.innerHTML = data.forecast.map(d => `
+        <div class="weather-forecast-day">
+          <p class="weather-forecast-day-label">${d.label}</p>
+          <span class="weather-forecast-day-icon">${d.icon}</span>
+          <p class="weather-forecast-day-temp"><strong>${d.tempMax}°</strong> / ${d.tempMin}°</p>
+        </div>
+      `).join("");
+    } else {
+      forecastRow.innerHTML = `<p class="empty-state">예보 정보를 불러오지 못했어요.</p>`;
+    }
+
   } catch (err) {
     // ── 예외처리: 날씨 API 실패 시 Fallback UI ──────────
     console.error("날씨 조회 오류:", err);
@@ -363,17 +377,22 @@ async function loadWeather(loc) {
     subEl.textContent = "잠시 후 다시 시도해주세요.";
     headerIconEl.textContent = "⚠️";
     headerTempEl.textContent = "";
+    forecastRow.innerHTML = "";
   }
 }
 
 document.getElementById("weatherHeaderChip").addEventListener("click", () => {
-  const popover = document.getElementById("weatherPopover");
-  popover.hidden = !popover.hidden;
+  document.getElementById("weatherOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
 });
-document.addEventListener("click", (e) => {
-  const popover = document.getElementById("weatherPopover");
-  if (!popover.hidden && !e.target.closest(".weather-popover") && !e.target.closest("#weatherHeaderChip")) {
-    popover.hidden = true;
+document.getElementById("weatherClose").addEventListener("click", () => {
+  document.getElementById("weatherOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+});
+document.getElementById("weatherOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "weatherOverlay") {
+    document.getElementById("weatherOverlay").classList.remove("open");
+    document.body.style.overflow = "";
   }
 });
 
@@ -547,9 +566,53 @@ function renderCategoryTabs() {
 /* ---------- Render: 브랜드 로고 필터 (전체 탭에서는 숨김, 카테고리 탭에서만 노출) ---------- */
 function renderBrandFilter() {
   const wrap = document.getElementById("brandFilterRow");
-  // 요청에 따라 브랜드 로고 필터 줄 자체를 제거함 (참고 디자인이 더 깔끔한 필터만 쓰는 걸 선호)
-  wrap.hidden = true;
-  wrap.innerHTML = "";
+
+  if (currentCategory === "all") {
+    wrap.hidden = true;
+    wrap.innerHTML = "";
+    return;
+  }
+
+  // 현재 카테고리에 실제로 존재하는 브랜드만 중복 없이 추출
+  const brandsInCategory = [];
+  const seen = new Set();
+  EVENTS.filter(ev => ev.category === currentCategory).forEach(ev => {
+    if (!seen.has(ev.brand)) {
+      seen.add(ev.brand);
+      brandsInCategory.push(ev);
+    }
+  });
+
+  if (brandsInCategory.length === 0) {
+    wrap.hidden = true;
+    wrap.innerHTML = "";
+    return;
+  }
+
+  wrap.hidden = false;
+  wrap.innerHTML = brandsInCategory.map(ev => `
+    <button class="brand-filter-chip ${selectedBrands.has(ev.brand) ? "selected" : ""}" data-brand="${ev.brand}">
+      <img class="brand-filter-logo" src="${getLogoUrl(ev.domain)}" data-domain="${ev.domain}" data-brand="${ev.brand}" alt="${ev.brand}">
+      <span>${ev.brand}</span>
+    </button>
+  `).join("");
+
+  wrap.querySelectorAll(".brand-filter-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const brand = chip.dataset.brand;
+      if (selectedBrands.has(brand)) {
+        selectedBrands.delete(brand);
+        chip.classList.remove("selected");
+      } else {
+        selectedBrands.add(brand);
+        chip.classList.add("selected");
+      }
+      renderFeed();
+      renderRanking();
+    });
+  });
+
+  wrap.querySelectorAll(".brand-filter-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 }
 
 /* ---------- Discount Quick Filters (1+1 / 50%+) ---------- */
@@ -617,32 +680,17 @@ function renderRanking() {
 }
 
 /* ---------- Render: Feed Grid ---------- */
-function renderFeed() {
-  const grid = document.getElementById("feedGrid");
-  const title = document.getElementById("feedTitle");
-  const count = document.getElementById("feedCount");
-
-  const filtered = getFilteredEvents();
-
-  title.textContent = currentCategory === "all" ? "전체 이벤트" : `${getCategoryLabel(currentCategory)} 이벤트`;
-  count.textContent = `${filtered.length}개`;
-
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div class="empty-state">아직 등록된 이벤트가 없어요.</div>`;
-    return;
-  }
-
-  grid.innerHTML = filtered.map(ev => {
-    const distanceLabel = (gpsFilterActive && userLocation)
-      ? `<span class="card-distance">${haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng).toFixed(1)}km</span>`
-      : "";
-    const merchantBadge = ev.merchantType === "소상공인"
-      ? `<span class="card-merchant-badge">소상공인</span>`
-      : "";
-    const verifiedBadge = ev.isVerifiedReal
-      ? `<span class="card-verified-badge">✓ 실제 진행중</span>`
-      : "";
-    return `
+function renderEventCardHtml(ev) {
+  const distanceLabel = (gpsFilterActive && userLocation)
+    ? `<span class="card-distance">${haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng).toFixed(1)}km</span>`
+    : "";
+  const merchantBadge = ev.merchantType === "소상공인"
+    ? `<span class="card-merchant-badge">소상공인</span>`
+    : "";
+  const verifiedBadge = ev.isVerifiedReal
+    ? `<span class="card-verified-badge">✓ 실제 진행중</span>`
+    : "";
+  return `
     <div class="event-card" data-id="${ev.id}">
       <div class="card-media">
         <img class="card-photo" src="${ev.image}" alt="${ev.title}" loading="lazy">
@@ -669,7 +717,24 @@ function renderFeed() {
       </div>
     </div>
   `;
-  }).join("");
+}
+
+function renderFeed() {
+  const grid = document.getElementById("feedGrid");
+  const title = document.getElementById("feedTitle");
+  const count = document.getElementById("feedCount");
+
+  const filtered = getFilteredEvents();
+
+  title.textContent = currentCategory === "all" ? "전체 이벤트" : `${getCategoryLabel(currentCategory)} 이벤트`;
+  count.textContent = `${filtered.length}개`;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state">아직 등록된 이벤트가 없어요.</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(ev => renderEventCardHtml(ev)).join("");
 
   grid.querySelectorAll(".event-card").forEach(card => {
     card.addEventListener("click", () => openSheet(card.dataset.id));
@@ -1183,16 +1248,9 @@ document.getElementById("globalSearch").addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
   const q = e.target.value.trim();
   if (!q) return;
-  const match = EVENTS.find(ev =>
-    ev.brand.toLowerCase().includes(q.toLowerCase()) ||
-    ev.title.toLowerCase().includes(q.toLowerCase())
-  );
-  if (match) {
-    openSheet(match.id);
-    hideSearchSuggestions();
-  } else {
-    showToast(`"${q}"에 대한 검색 결과가 없어요`);
-  }
+  openSearchResults(q);
+  hideSearchSuggestions();
+  searchInput.blur();
 });
 
 /* ---------- 검색 자동완성 / 인기 검색어 ---------- */
@@ -1219,26 +1277,40 @@ function showSearchSuggestions() {
   const q = searchInput.value.trim();
 
   if (!q) {
+    // 인기 검색어 칩 — 클릭하면 그 브랜드가 들어간 이벤트 모음 화면으로 이동 (단일 이벤트 아님)
     const trending = getTrendingBrands();
     if (trending.length === 0) { hideSearchSuggestions(); return; }
     suggestionsEl.innerHTML = `
       <p class="search-suggestions-label">🔥 인기 검색어</p>
-      ${trending.map(ev => `<button type="button" class="search-suggestion-item" data-id="${ev.id}">${ev.brand}</button>`).join("")}
+      ${trending.map(ev => `<button type="button" class="search-suggestion-item" data-query="${ev.brand}">${ev.brand}</button>`).join("")}
     `;
-  } else {
-    const matches = EVENTS.filter(ev =>
-      ev.brand.toLowerCase().includes(q.toLowerCase()) || ev.title.toLowerCase().includes(q.toLowerCase())
-    ).slice(0, 6);
+    suggestionsEl.hidden = false;
+    suggestionsEl.querySelectorAll(".search-suggestion-item[data-query]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        openSearchResults(btn.dataset.query);
+        hideSearchSuggestions();
+        searchInput.blur();
+      });
+    });
+    return;
+  }
 
-    if (matches.length === 0) {
-      suggestionsEl.innerHTML = `<p class="search-suggestions-label">"${q}"에 대한 검색 결과가 없어요</p>`;
-    } else {
-      suggestionsEl.innerHTML = matches.map(ev => `
+  // 타이핑 중인 자동완성 — 특정 이벤트를 정확히 짚어 고르는 목록이라 클릭 시 바로 그 이벤트로 이동
+  const matches = EVENTS.filter(ev =>
+    ev.brand.toLowerCase().includes(q.toLowerCase()) || ev.title.toLowerCase().includes(q.toLowerCase())
+  ).slice(0, 6);
+
+  if (matches.length === 0) {
+    suggestionsEl.innerHTML = `<p class="search-suggestions-label">"${q}"에 대한 검색 결과가 없어요</p>`;
+  } else {
+    suggestionsEl.innerHTML = `
+      ${matches.map(ev => `
         <button type="button" class="search-suggestion-item" data-id="${ev.id}">
           ${highlightMatch(ev.brand, q)} · ${highlightMatch(ev.title, q)}
         </button>
-      `).join("");
-    }
+      `).join("")}
+      <button type="button" class="search-suggestion-viewall" data-query="${q}">"${q}" 전체 결과 보기 →</button>
+    `;
   }
 
   suggestionsEl.hidden = false;
@@ -1249,6 +1321,14 @@ function showSearchSuggestions() {
       searchInput.blur();
     });
   });
+  const viewAllBtn = suggestionsEl.querySelector(".search-suggestion-viewall");
+  if (viewAllBtn) {
+    viewAllBtn.addEventListener("click", () => {
+      openSearchResults(viewAllBtn.dataset.query);
+      hideSearchSuggestions();
+      searchInput.blur();
+    });
+  }
 }
 
 function hideSearchSuggestions() {
@@ -1259,6 +1339,49 @@ searchInput.addEventListener("focus", showSearchSuggestions);
 searchInput.addEventListener("input", showSearchSuggestions);
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".search-bar-wrap")) hideSearchSuggestions();
+});
+
+/* ---------- 검색 결과 모음 화면 ---------- */
+function openSearchResults(query) {
+  const q = query.trim();
+  if (!q) return;
+
+  const matches = EVENTS.filter(ev =>
+    ev.brand.toLowerCase().includes(q.toLowerCase()) ||
+    ev.title.toLowerCase().includes(q.toLowerCase()) ||
+    ev.tags.some(t => t.toLowerCase().includes(q.toLowerCase()))
+  ).sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
+
+  document.getElementById("searchResultsQuery").textContent = `"${q}"`;
+  document.getElementById("searchResultsCount").textContent = `${matches.length}개의 이벤트`;
+
+  const grid = document.getElementById("searchResultsGrid");
+  if (matches.length === 0) {
+    grid.innerHTML = `<p class="empty-state">"${q}"에 대한 검색 결과가 없어요.</p>`;
+  } else {
+    grid.innerHTML = matches.map(ev => renderEventCardHtml(ev)).join("");
+    grid.querySelectorAll(".event-card").forEach(card => {
+      card.addEventListener("click", () => openSheet(card.dataset.id));
+    });
+    grid.querySelectorAll(".card-like-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => { e.stopPropagation(); toggleLike(btn.dataset.id); });
+    });
+    grid.querySelectorAll(".card-logo-badge img").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  }
+
+  document.getElementById("searchResultsOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+document.getElementById("searchResultsClose").addEventListener("click", () => {
+  document.getElementById("searchResultsOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+});
+document.getElementById("searchResultsOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "searchResultsOverlay") {
+    document.getElementById("searchResultsOverlay").classList.remove("open");
+    document.body.style.overflow = "";
+  }
 });
 
 /* ---------- Hero Button ---------- */
@@ -2281,7 +2404,25 @@ async function checkNewFollowedEvents() {
   } catch { /* 조용히 무시 — 알림은 부가 기능이라 실패해도 사이트 기능에 영향 없어야 함 */ }
 }
 
-/* ---------- 고정 퀵메뉴 4버튼 ---------- */
+/* ---------- 더보기 메뉴 (헤더 "⋯" 버튼) ---------- */
+document.getElementById("moreMenuBtn").addEventListener("click", () => {
+  document.getElementById("moreMenuOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+});
+function closeMoreMenu() {
+  document.getElementById("moreMenuOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.getElementById("moreMenuClose").addEventListener("click", closeMoreMenu);
+document.getElementById("moreMenuOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "moreMenuOverlay") closeMoreMenu();
+});
+// 더보기 메뉴 안의 버튼을 누르면 각 기능 실행 후 메뉴도 자동으로 닫힘
+document.querySelector(".more-menu-grid").addEventListener("click", (e) => {
+  if (e.target.closest(".quick-menu-btn")) closeMoreMenu();
+});
+
+/* ---------- 퀵메뉴 4버튼 (더보기 메뉴 안에 위치) ---------- */
 document.getElementById("quickMenuCalendarBtn").addEventListener("click", () => openCalendar());
 
 document.getElementById("quickMenuLocalBtn").addEventListener("click", () => {

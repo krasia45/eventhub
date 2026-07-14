@@ -4,12 +4,15 @@ import os
 import urllib.request
 import urllib.error
 from urllib.parse import urlparse, parse_qs
+from datetime import datetime, timedelta
 
 # 날씨 아이콘 매핑 (OpenWeatherMap 코드 → 이모지)
 ICON_MAP = {
     "01": "☀️", "02": "🌤", "03": "☁️", "04": "☁️",
     "09": "🌧", "10": "🌦", "11": "⛈", "13": "❄️", "50": "🌫",
 }
+
+WEEKDAY_KR = ["월", "화", "수", "목", "금", "토", "일"]
 
 class handler(BaseHTTPRequestHandler):
 
@@ -34,13 +37,13 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": "날씨 API 키가 설정되지 않았습니다."})
             return
 
-        url = (
+        current_url = (
             "https://api.openweathermap.org/data/2.5/weather"
             f"?lat={lat}&lon={lng}&appid={API_KEY}&units=metric&lang=kr"
         )
 
         try:
-            with urllib.request.urlopen(url, timeout=8) as res:
+            with urllib.request.urlopen(current_url, timeout=8) as res:
                 data = json.loads(res.read())
 
             temp_c = round(data["main"]["temp"])
@@ -49,18 +52,60 @@ class handler(BaseHTTPRequestHandler):
             icon = ICON_MAP.get(icon_code, "🌤")
             location = data.get("name") or "현재 위치"
 
+            forecast = self._fetch_forecast(lat, lng, API_KEY)
+
             self._send_json(200, {
                 "location": location,
                 "tempC": temp_c,
                 "description": description,
                 "icon": icon,
                 "advice": self._advice_for(temp_c, icon_code),
+                "forecast": forecast,  # [{ "label": "오늘"/"화" 등, "icon": "☀️", "tempMax": 30, "tempMin": 22 }, ...]
             })
 
         except urllib.error.HTTPError as e:
             self._send_json(500, {"error": f"날씨 API 오류: {e.code}"})
         except Exception as e:
             self._send_json(500, {"error": str(e)})
+
+    def _fetch_forecast(self, lat, lng, api_key):
+        """5일치 3시간 단위 예보를 하루 단위로 묶어서(최고/최저기온, 대표 아이콘) 반환.
+        네이버 날씨처럼 '오늘/화/수/목/금' 형태의 일별 예보 리스트를 만들기 위함."""
+        url = (
+            "https://api.openweathermap.org/data/2.5/forecast"
+            f"?lat={lat}&lon={lng}&appid={api_key}&units=metric&lang=kr"
+        )
+        try:
+            with urllib.request.urlopen(url, timeout=8) as res:
+                data = json.loads(res.read())
+        except Exception:
+            return []  # 예보 조회 실패해도 현재 날씨는 보여줄 수 있도록 조용히 빈 배열 반환
+
+        days = {}
+        for item in data.get("list", []):
+            dt = datetime.fromtimestamp(item["dt"])
+            date_key = dt.strftime("%Y-%m-%d")
+            temp = item["main"]["temp"]
+            icon_code = item["weather"][0]["icon"][:2]
+
+            if date_key not in days:
+                days[date_key] = {"temps": [], "icons": [], "date": dt}
+            days[date_key]["temps"].append(temp)
+            days[date_key]["icons"].append(icon_code)
+
+        today_key = datetime.now().strftime("%Y-%m-%d")
+        result = []
+        for i, (date_key, d) in enumerate(sorted(days.items())[:5]):
+            label = "오늘" if date_key == today_key else WEEKDAY_KR[d["date"].weekday()]
+            # 대표 아이콘: 그날 가장 자주 나온 코드
+            common_icon = max(set(d["icons"]), key=d["icons"].count)
+            result.append({
+                "label": label,
+                "icon": ICON_MAP.get(common_icon, "🌤"),
+                "tempMax": round(max(d["temps"])),
+                "tempMin": round(min(d["temps"])),
+            })
+        return result
 
     def _advice_for(self, temp_c, icon_code):
         if icon_code in ("09", "10", "11"):

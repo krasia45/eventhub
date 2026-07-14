@@ -41,6 +41,9 @@
             <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z" fill="currentColor"/></svg>
             <span class="profile-btn-label" id="profileBtnLabel">로그인</span>
           </button>
+          <button class="icon-btn more-menu-btn" id="moreMenuBtn" aria-label="더보기">
+            <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg>
+          </button>
         </div>
       </div>
       <div class="search-bar-row">
@@ -78,15 +81,6 @@
   </div>
 
   <main class="main-scroll">
-
-    <!-- ===== Weather Popover (헤더의 작은 날씨 아이콘 클릭 시에만 노출) ===== -->
-    <div class="weather-popover" id="weatherPopover" hidden>
-      <span class="weather-icon" id="weatherIcon">⏳</span>
-      <div class="weather-text">
-        <p class="weather-summary" id="weatherSummary">날씨 정보를 불러오는 중이에요...</p>
-        <p class="weather-sub" id="weatherSub">위치 권한을 허용하면 우리 동네 날씨를 알려드려요</p>
-      </div>
-    </div>
 
     <!-- ===== Realtime Ranking ===== -->
     <section class="ranking-section">
@@ -158,24 +152,33 @@
 
   </main>
 
-  <!-- ===== 고정 퀵메뉴 (하단 내비게이션 바로 위) ===== -->
-  <div class="quick-menu-row">
-    <button class="quick-menu-btn" id="quickMenuFollowBtn">
-      <span class="quick-menu-emoji">🔔</span>
-      <span>브랜드 팔로우</span>
-    </button>
-    <button class="quick-menu-btn" id="quickMenuEndingBtn">
-      <span class="quick-menu-emoji">⏰</span>
-      <span>종료 임박 알림</span>
-    </button>
-    <button class="quick-menu-btn" id="quickMenuLocalBtn">
-      <span class="quick-menu-emoji">📍</span>
-      <span>지역 기반 추천</span>
-    </button>
-    <button class="quick-menu-btn" id="quickMenuCalendarBtn">
-      <span class="quick-menu-emoji">📅</span>
-      <span>이벤트 캘린더</span>
-    </button>
+  <!-- ===== 더보기 메뉴 (헤더 "⋯" 버튼에서 진입, 예전 고정 퀵메뉴 4개를 여기로 이동) ===== -->
+  <div class="sheet-overlay" id="moreMenuOverlay">
+    <div class="bottom-sheet more-menu-sheet" id="moreMenuSheet">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" id="moreMenuClose" aria-label="닫기">✕</button>
+      <div class="more-menu-body">
+        <h2 class="auth-title">더보기</h2>
+        <div class="more-menu-grid">
+          <button class="quick-menu-btn" id="quickMenuFollowBtn">
+            <span class="quick-menu-emoji">🔔</span>
+            <span>브랜드 팔로우</span>
+          </button>
+          <button class="quick-menu-btn" id="quickMenuEndingBtn">
+            <span class="quick-menu-emoji">⏰</span>
+            <span>종료 임박 알림</span>
+          </button>
+          <button class="quick-menu-btn" id="quickMenuLocalBtn">
+            <span class="quick-menu-emoji">📍</span>
+            <span>지역 기반 추천</span>
+          </button>
+          <button class="quick-menu-btn" id="quickMenuCalendarBtn">
+            <span class="quick-menu-emoji">📅</span>
+            <span>이벤트 캘린더</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ===== Bottom Nav ===== -->
@@ -447,6 +450,39 @@
         </div>
 
         <p class="calendar-login-notice" id="calendarLoginNotice" hidden>로그인하시면 개인 일정을 추가하고 저장할 수 있어요.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 날씨 예보 (헤더 날씨 아이콘 클릭 시 노출, 오늘+향후 예보) ===== -->
+  <div class="sheet-overlay" id="weatherOverlay">
+    <div class="bottom-sheet weather-sheet" id="weatherSheet">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" id="weatherClose" aria-label="닫기">✕</button>
+      <div class="weather-sheet-body">
+        <div class="weather-today-card">
+          <span class="weather-icon" id="weatherIcon">⏳</span>
+          <div class="weather-text">
+            <p class="weather-summary" id="weatherSummary">날씨 정보를 불러오는 중이에요...</p>
+            <p class="weather-sub" id="weatherSub">위치 권한을 허용하면 우리 동네 날씨를 알려드려요</p>
+          </div>
+        </div>
+
+        <p class="weather-forecast-label">앞으로의 날씨</p>
+        <div class="weather-forecast-row" id="weatherForecastRow"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 검색 결과 모음 화면 ===== -->
+  <div class="sheet-overlay" id="searchResultsOverlay">
+    <div class="bottom-sheet search-results-sheet" id="searchResultsSheet">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" id="searchResultsClose" aria-label="닫기">✕</button>
+      <div class="search-results-body">
+        <h2 class="auth-title" id="searchResultsQuery"></h2>
+        <p class="search-results-count" id="searchResultsCount"></p>
+        <div class="search-results-grid" id="searchResultsGrid"></div>
       </div>
     </div>
   </div>
