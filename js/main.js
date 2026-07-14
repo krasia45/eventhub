@@ -286,6 +286,8 @@ async function loadEventsFromApi() {
   renderCategoryTabs();
   renderRanking();
   renderFeed();
+  renderHeroCarousel();
+  renderNearbySection();
 }
 
 
@@ -545,53 +547,9 @@ function renderCategoryTabs() {
 /* ---------- Render: 브랜드 로고 필터 (전체 탭에서는 숨김, 카테고리 탭에서만 노출) ---------- */
 function renderBrandFilter() {
   const wrap = document.getElementById("brandFilterRow");
-
-  if (currentCategory === "all") {
-    wrap.hidden = true;
-    wrap.innerHTML = "";
-    return;
-  }
-
-  // 현재 카테고리에 실제로 존재하는 브랜드만 중복 없이 추출
-  const brandsInCategory = [];
-  const seen = new Set();
-  EVENTS.filter(ev => ev.category === currentCategory).forEach(ev => {
-    if (!seen.has(ev.brand)) {
-      seen.add(ev.brand);
-      brandsInCategory.push(ev);
-    }
-  });
-
-  if (brandsInCategory.length === 0) {
-    wrap.hidden = true;
-    wrap.innerHTML = "";
-    return;
-  }
-
-  wrap.hidden = false;
-  wrap.innerHTML = brandsInCategory.map(ev => `
-    <button class="brand-filter-chip ${selectedBrands.has(ev.brand) ? "selected" : ""}" data-brand="${ev.brand}">
-      <img class="brand-filter-logo" src="${getLogoUrl(ev.domain)}" data-domain="${ev.domain}" data-brand="${ev.brand}" alt="${ev.brand}">
-      <span>${ev.brand}</span>
-    </button>
-  `).join("");
-
-  wrap.querySelectorAll(".brand-filter-chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-      const brand = chip.dataset.brand;
-      if (selectedBrands.has(brand)) {
-        selectedBrands.delete(brand);
-        chip.classList.remove("selected");
-      } else {
-        selectedBrands.add(brand);
-        chip.classList.add("selected");
-      }
-      renderFeed();
-      renderRanking();
-    });
-  });
-
-  wrap.querySelectorAll(".brand-filter-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  // 요청에 따라 브랜드 로고 필터 줄 자체를 제거함 (참고 디자인이 더 깔끔한 필터만 쓰는 걸 선호)
+  wrap.hidden = true;
+  wrap.innerHTML = "";
 }
 
 /* ---------- Discount Quick Filters (1+1 / 50%+) ---------- */
@@ -706,7 +664,7 @@ function renderFeed() {
         <p class="card-meta">📍 ${ev.channel}</p>
         <div class="card-stats">
           <span>👁 ${formatCount((eventStatsCache[ev.id] || {}).views || 0)}</span>
-          <span>❤ ${formatCount((eventStatsCache[ev.id] || {}).likes || 0)}</span>
+          <span class="stat-heart">❤️ ${formatCount((eventStatsCache[ev.id] || {}).likes || 0)}</span>
         </div>
       </div>
     </div>
@@ -1099,211 +1057,126 @@ document.getElementById("shareBtn").addEventListener("click", () => {
   openShareFlow(ev);
 });
 
-/* ---------- AI Recommendation ---------- */
-const AI_RESPONSES = [
-  "입력하신 키워드를 분석해 관련도 높은 이벤트를 상단에 정렬했어요.",
-  "취향에 맞는 브랜드 혜택을 찾았어요! 아래 랭킹과 피드를 확인해보세요.",
-  "AI가 유사 관심사를 가진 사용자들이 많이 저장한 이벤트를 우선 추천했어요.",
-  "입력하신 내용과 가장 잘 맞는 카테고리로 피드를 정렬했어요.",
-];
+/* ---------- AI 추천 피드 (검색 없이 로그인 키워드 기반으로 상시 노출) ---------- */
+let aiFeedExpanded = false; // "더보기" 눌러서 로컬 매칭으로 카드를 더 보여준 상태인지
 
-// ✅ 이 코드로 교체하세요
-const AI_EXAMPLE_QUERIES = ["여름 원피스", "카페 할인", "캠핑용품", "홈 인테리어", "반려동물 용품"];
+async function loadAiFeed(keywords) {
+  const grid = document.getElementById("aiFeedGrid");
+  aiFeedExpanded = false;
 
-document.getElementById("aiRecommendBtn").addEventListener("click", async () => {
-  const input = document.getElementById("aiInput").value.trim();
-  const spinnerWrap = document.getElementById("aiSpinnerWrap");
-  const errorEl = document.getElementById("aiError");
-  const cardsEl = document.getElementById("aiResultCards");
-  const btn = document.getElementById("aiRecommendBtn");
-
-  errorEl.hidden = true;
-  cardsEl.hidden = true;
-
-  // ── 예외처리 1: 빈 입력값 ──────────────────────────
-  if (!input) {
-    showAiError("⚠️ 추천받고 싶은 브랜드나 상황을 입력해주세요!");
+  if (!keywords || keywords.length === 0) {
+    renderAiFeedSetupPrompt();
     return;
   }
 
-  // ── 로딩 스피너 표시 ────────────────────────────────
-  spinnerWrap.hidden = false;
-  btn.disabled = true;
-  btn.textContent = "분석 중...";
+  if (EVENTS.length === 0) { grid.innerHTML = renderFeedSkeleton(3); return; }
+
+  grid.innerHTML = renderFeedSkeleton(3);
 
   try {
-    // 실제 등록된 이벤트 목록(요약)을 함께 전송 → AI는 이 목록 안에서만 골라야 함
     const eventsSummary = EVENTS.map(ev => ({
       id: ev.id, brand: ev.brand, category: ev.category,
       title: ev.title, tags: ev.tags, discount: ev.discount
     }));
 
-    const response = await fetch("/api/recommend", {
+    const res = await fetch("/api/recommend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ interest: input, events: eventsSummary })
+      body: JSON.stringify({ interest: keywords.join(", "), events: eventsSummary }),
     });
+    const data = await res.json();
 
-    const data = await response.json();
-
-    // ── 예외처리 2: 서버 에러 / AI가 이해 못한 모호한 입력 ──
-    if (!response.ok || data.error || !Array.isArray(data.ids) || data.ids.length === 0) {
-      showAiError(data.error || "다른 검색어로 입력해 주세요.");
+    if (!res.ok || data.error || !Array.isArray(data.ids) || data.ids.length === 0) {
+      renderAiFeedFallback(keywords);
       return;
     }
 
-    // AI가 고른 id를 실제 이벤트 데이터에서 조회 (환각 데이터 대신 진짜 등록된 이벤트만 노출)
-    const matchedEvents = data.ids.map(id => EVENTS.find(ev => ev.id === id)).filter(Boolean);
-    if (matchedEvents.length === 0) {
-      showAiError("조건에 맞는 이벤트를 찾지 못했어요. 다른 검색어로 입력해 주세요.");
-      return;
-    }
+    const matched = data.ids.map(id => EVENTS.find(ev => ev.id === id)).filter(Boolean);
+    if (matched.length === 0) { renderAiFeedFallback(keywords); return; }
+    renderAiFeedCards(matched);
 
-    // ── 성공: 카드 렌더링 ───────────────────────────
-    renderAiCards(input, matchedEvents);
-    saveHistory(input, matchedEvents.map(r => r.title).join(", "));
-    renderHistory();
-
-    renderRanking();
-    const grid = document.getElementById("feedGrid");
-    grid.style.opacity = "0.4";
-    setTimeout(() => { grid.style.opacity = "1"; }, 220);
-
-  } catch (error) {
-    // ── 예외처리 3: 네트워크 오류 ───────────────────────
-    console.error("AI 추천 오류:", error);
-    showAiError("😥 죄송합니다. AI 서비스 서버가 바쁩니다. 잠시 후 다시 시도해주세요.");
-
-  } finally {
-    spinnerWrap.hidden = true;
-    btn.disabled = false;
-    btn.textContent = "추천받기";
+  } catch (err) {
+    console.error("AI 추천 피드 로드 오류:", err);
+    renderAiFeedFallback(keywords);
   }
-});
+}
 
-function showAiError(message) {
-  const errorEl = document.getElementById("aiError");
-  errorEl.hidden = false;
-  errorEl.innerHTML = `
-    <p>${message}</p>
-    <div class="ai-example-chips">
-      ${AI_EXAMPLE_QUERIES.map(q => `<button class="ai-example-chip" data-query="${q}">${q}</button>`).join("")}
+// AI 호출이 실패하거나 결과가 없을 때: 키워드가 태그/제목에 실제로 매칭되는 진짜 이벤트로 대체
+// (AI가 안 되더라도 화면이 비지 않게 하면서, 없는 데이터를 지어내지는 않음)
+function renderAiFeedFallback(keywords) {
+  const kwLower = (keywords || []).map(k => k.toLowerCase());
+  let candidates = EVENTS.filter(ev =>
+    kwLower.some(kw => ev.tags.some(t => t.toLowerCase().includes(kw)) || ev.title.toLowerCase().includes(kw))
+  );
+  if (candidates.length === 0) {
+    candidates = [...EVENTS].sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
+  }
+  renderAiFeedCards(candidates.slice(0, 3));
+}
+
+function renderAiFeedSetupPrompt() {
+  const grid = document.getElementById("aiFeedGrid");
+  grid.innerHTML = `
+    <div class="ai-feed-setup-card">
+      <span class="ai-feed-setup-emoji">🤖</span>
+      <p class="ai-feed-setup-title">AI 맞춤 추천을 받아보세요</p>
+      <p class="ai-feed-setup-sub">관심 키워드를 설정하면 취향에 맞는 이벤트를 바로 보여드려요.</p>
+      <button type="button" class="ai-btn" id="aiFeedSetupBtn">설정하기</button>
     </div>
   `;
-  errorEl.querySelectorAll(".ai-example-chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-      document.getElementById("aiInput").value = chip.dataset.query;
-      document.getElementById("aiRecommendBtn").click();
-    });
+  const setupBtn = document.getElementById("aiFeedSetupBtn");
+  setupBtn.addEventListener("click", () => {
+    if (!currentUser) { showToast("로그인 후 키워드를 설정할 수 있어요."); openAuthModal(); return; }
+    openOnboarding(true, []);
   });
 }
 
-function renderAiCards(query, matchedEvents) {
-  const cardsEl = document.getElementById("aiResultCards");
-  cardsEl.hidden = false;
-  cardsEl.innerHTML = `
-    <p class="ai-result-heading">✨ "${query}"에 맞는 이벤트 ${matchedEvents.length}개를 찾았어요</p>
-    <div class="ai-card-row">
-      ${matchedEvents.map(ev => {
-        const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
-        // 배지는 실제 데이터에서 유도(할인문구/카테고리)만 사용 — 없는 정보를 지어내지 않음
-        let badge = "";
-        if (ev.discount.includes("1+1")) badge = "1+1";
-        else if (ev.category === "popup") badge = "POPUP";
-        else {
-          const pct = ev.discount.match(/(\d+)\s*%/);
-          if (pct && parseInt(pct[1], 10) >= 50) badge = "SALE";
-        }
-        return `
-        <div class="ai-result-card" data-id="${ev.id}">
-          <div class="ai-result-card-media">
-            <img class="ai-result-card-img" src="${ev.image}" alt="${ev.title}" loading="lazy">
-            ${badge ? `<span class="ai-result-card-badge">${badge}</span>` : ""}
-          </div>
-          <p class="ai-result-card-brand">${ev.brand}</p>
-          <p class="ai-result-card-title">${ev.title}</p>
-          <span class="ai-result-card-dday">${ev.dday}</span>
-          <div class="ai-result-card-stats">
-            <span>👁 ${formatCount(stats.views)}</span>
-            <span>❤ ${formatCount(stats.likes)}</span>
-          </div>
+function renderAiFeedCards(events) {
+  const grid = document.getElementById("aiFeedGrid");
+  grid.innerHTML = events.map(ev => {
+    const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
+    // 배지는 실제 데이터(할인문구/카테고리)에서만 유도 — 없는 정보를 지어내지 않음
+    let badge = "";
+    if (ev.discount.includes("1+1")) badge = "1+1";
+    else if (ev.category === "popup") badge = "POPUP";
+    else {
+      const pct = ev.discount.match(/(\d+)\s*%/);
+      if (pct && parseInt(pct[1], 10) >= 50) badge = "SALE";
+    }
+    return `
+      <div class="ai-result-card" data-id="${ev.id}">
+        <div class="ai-result-card-media">
+          <img class="ai-result-card-img" src="${ev.image}" alt="${ev.title}" loading="lazy">
+          ${badge ? `<span class="ai-result-card-badge">${badge}</span>` : ""}
         </div>
-      `;
-      }).join("")}
-    </div>
-  `;
-  cardsEl.querySelectorAll(".ai-result-card").forEach(card => {
+        <p class="ai-result-card-brand">${ev.brand}</p>
+        <p class="ai-result-card-title">${ev.title}</p>
+        <span class="ai-result-card-dday">${ev.dday}</span>
+        <div class="ai-result-card-stats">
+          <span>👁 ${formatCount(stats.views)}</span>
+          <span class="stat-heart">❤️ ${formatCount(stats.likes)}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  grid.querySelectorAll(".ai-result-card").forEach(card => {
     card.addEventListener("click", () => openSheet(card.dataset.id));
   });
 }
+
+document.getElementById("aiFeedMoreBtn").addEventListener("click", () => {
+  // AI를 매번 다시 호출하지 않고, 로컬에서 점수순으로 더 보여줌 (비용/속도 모두 안전)
+  aiFeedExpanded = !aiFeedExpanded;
+  const sorted = [...EVENTS].sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
+  renderAiFeedCards(sorted.slice(0, aiFeedExpanded ? 9 : 3));
+  document.getElementById("aiFeedMoreBtn").textContent = aiFeedExpanded ? "접기 ^" : "더보기 >";
+});
 
 function formatCount(n) {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   return String(n);
 }
-
-// ── localStorage 히스토리 함수들 ──────────────────────────────────────────
-
-const HISTORY_KEY = "eventhub-ai-history";
-
-function saveHistory(query, result) {
-  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-  history.unshift({
-    query,
-    result,
-    time: new Date().toLocaleString("ko-KR")
-  });
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 5)));
-}
-
-function renderHistory() {
-  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-
-  // 히스토리 섹션 없으면 동적 생성
-  let section = document.getElementById("aiHistorySection");
-  if (!section) {
-    section = document.createElement("section");
-    section.id = "aiHistorySection";
-    section.className = "history-section";
-    // AI 섹션 바로 다음에 삽입
-    document.querySelector(".ai-section").insertAdjacentElement("afterend", section);
-  }
-
-  if (history.length === 0) {
-    section.hidden = true;
-    return;
-  }
-
-  section.hidden = false;
-  section.innerHTML = `
-    <div class="section-head">
-      <h2>🕐 최근 AI 추천 히스토리</h2>
-      <button onclick="clearHistory()" class="history-clear-btn">전체 삭제</button>
-    </div>
-    <ul class="history-list">
-      ${history.map(item => `
-        <li class="history-item">
-          <div class="history-query">"${item.query}"</div>
-          <div class="history-result">${item.result}</div>
-          <div class="history-time">${item.time}</div>
-        </li>
-      `).join("")}
-    </ul>
-  `;
-}
-
-function clearHistory() {
-  localStorage.removeItem(HISTORY_KEY);
-  renderHistory();
-  showToast("히스토리가 삭제되었습니다");
-}
-
-// 페이지 로드 시 저장된 히스토리 표시
-renderHistory();
-
-document.getElementById("aiInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") document.getElementById("aiRecommendBtn").click();
-});
 
 /* ---------- Global Search (simple filter feedback) ---------- */
 document.getElementById("globalSearch").addEventListener("keydown", (e) => {
@@ -1389,13 +1262,103 @@ document.addEventListener("click", (e) => {
 });
 
 /* ---------- Hero Button ---------- */
-document.getElementById("heroShopBtn").addEventListener("click", () => {
-  currentCategory = "all";
-  selectedBrands.clear();
-  renderCategoryTabs();
-  renderFeed();
-  document.querySelector(".feed-section").scrollIntoView({ behavior: "smooth", block: "start" });
-});
+/* ---------- 히어로 배너 캐러셀 (카테고리별 실제 인기 이벤트 1위로 자동 구성, 스와이프 가능) ---------- */
+const HERO_GRADIENTS = [
+  "linear-gradient(135deg, #FF7A45 0%, #FF4D6D 100%)",
+  "linear-gradient(135deg, #6C63FF 0%, #A78BFA 100%)",
+  "linear-gradient(135deg, #16A085 0%, #38EF7D 100%)",
+  "linear-gradient(135deg, #F857A6 0%, #FF5858 100%)",
+  "linear-gradient(135deg, #2C3E50 0%, #4CA1AF 100%)",
+];
+
+function renderHeroCarousel() {
+  const track = document.getElementById("heroCarousel");
+  const counterEl = document.getElementById("heroCarouselCounter");
+
+  // 카테고리(전체 제외)별로 실제 등록된 이벤트 중 인기순 1위를 뽑아 슬라이드 구성
+  const slides = [];
+  CATEGORIES.filter(c => c.id !== "all").forEach((cat, i) => {
+    const top = [...EVENTS]
+      .filter(ev => ev.category === cat.id)
+      .sort((a, b) => getEventScore(b.id) - getEventScore(a.id))[0];
+    if (top) slides.push({ event: top, category: cat, gradient: HERO_GRADIENTS[i % HERO_GRADIENTS.length] });
+  });
+
+  if (slides.length === 0) {
+    track.innerHTML = `<div class="hero-slide" style="background:${HERO_GRADIENTS[0]}"><p class="hero-eyebrow">EVENTHUB</p><h2 class="hero-title">흩어진 모든 할인,<br>하나의 앱</h2></div>`;
+    counterEl.textContent = "1/1";
+    return;
+  }
+
+  track.innerHTML = slides.map(s => `
+    <div class="hero-slide" data-cat="${s.category.id}" data-event-id="${s.event.id}" style="background:${s.gradient}">
+      <p class="hero-eyebrow">${s.category.label.toUpperCase()}</p>
+      <h2 class="hero-title">${s.event.brand}<br>${s.event.title}</h2>
+      <p class="hero-sub">${s.event.discount}</p>
+      <button class="hero-btn" data-event-id="${s.event.id}">지금 확인하기 →</button>
+      <img class="hero-slide-img" src="${s.event.image}" alt="${s.event.title}">
+    </div>
+  `).join("");
+
+  counterEl.textContent = `1/${slides.length}`;
+
+  track.querySelectorAll(".hero-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openSheet(btn.dataset.eventId);
+    });
+  });
+
+  // 스크롤 위치로 현재 슬라이드 번호 계산해서 카운터 갱신
+  track.addEventListener("scroll", () => {
+    const idx = Math.round(track.scrollLeft / track.clientWidth);
+    counterEl.textContent = `${Math.min(idx + 1, slides.length)}/${slides.length}`;
+  });
+}
+
+/* ---------- 내 주변 인기 이벤트 (GPS 조용히 시도 → 실패 시 서울 기준으로 대체) ---------- */
+async function renderNearbySection() {
+  const section = document.getElementById("nearbySection");
+  const scroll = document.getElementById("nearbyScroll");
+
+  if (EVENTS.length === 0) { section.hidden = true; return; }
+
+  const loc = await getQuietLocation();
+  const NEARBY_RADIUS_KM = 15;
+
+  const nearby = EVENTS
+    .map(ev => ({ ev, dist: haversineDistanceKm(loc.lat, loc.lng, ev.lat, ev.lng) }))
+    .filter(x => x.dist <= NEARBY_RADIUS_KM)
+    .sort((a, b) => getEventScore(b.ev.id) - getEventScore(a.ev.id))
+    .slice(0, 8);
+
+  if (nearby.length === 0) { section.hidden = true; return; }
+
+  section.hidden = false;
+
+  scroll.innerHTML = nearby.map(({ ev, dist }) => {
+    const distLabel = dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`;
+    const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
+    return `
+      <div class="nearby-card" data-id="${ev.id}">
+        <div class="nearby-card-media">
+          <img src="${ev.image}" alt="${ev.title}" loading="lazy">
+          <span class="nearby-card-distance">📍 ${distLabel}</span>
+        </div>
+        <p class="nearby-card-brand">${ev.brand}</p>
+        <p class="nearby-card-title">${ev.title}</p>
+        <div class="nearby-card-stats">
+          <span>👁 ${formatCount(stats.views)}</span>
+          <span class="stat-heart">❤️ ${formatCount(stats.likes)}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  scroll.querySelectorAll(".nearby-card").forEach(card => {
+    card.addEventListener("click", () => openSheet(card.dataset.id));
+  });
+}
 
 /* ---------- Bottom Nav (visual only, Home is functional) ---------- */
 document.querySelectorAll(".nav-item").forEach(btn => {
@@ -1406,10 +1369,7 @@ document.querySelectorAll(".nav-item").forEach(btn => {
     if (btn.dataset.nav === "saved") {
       openCouponWallet();
     } else if (btn.dataset.nav === "search") {
-      document.getElementById("aiSection").classList.remove("collapsed");
-      document.getElementById("aiSectionExpanded").hidden = false;
-      switchAiMode("travel");
-      document.querySelector(".ai-section").scrollIntoView({ behavior: "smooth", block: "start" });
+      openTravelPlanner();
     } else if (btn.dataset.nav !== "home") {
       showToast("준비 중인 기능이에요");
     }
@@ -1901,6 +1861,7 @@ document.getElementById("onboardingSubmitBtn").addEventListener("click", async (
 
   if (onboardingEditMode) {
     renderAiKeywordChips([...selectedKeywords]);
+    loadAiFeed([...selectedKeywords]);
   } else {
     await loadUserPreferencesAndSync();
   }
@@ -1913,6 +1874,7 @@ function renderAiKeywordChips(keywords) {
   if (!currentUser) {
     row.innerHTML = `<button type="button" class="ai-keyword-login-btn" id="aiKeywordLoginBtn">로그인하고 맞춤 키워드 설정하기 →</button>`;
     document.getElementById("aiKeywordLoginBtn").addEventListener("click", openAuthModal);
+    renderAiFeedSetupPrompt();
     return;
   }
 
@@ -1931,6 +1893,7 @@ function renderAiKeywordChips(keywords) {
       const { error } = await supabaseClient.from("user_preferences").update({ keywords: updated }).eq("user_id", currentUser.id);
       if (error) { showToast("키워드 삭제 중 오류가 발생했어요."); return; }
       renderAiKeywordChips(updated);
+      loadAiFeed(updated);
     });
   });
 
@@ -1954,6 +1917,7 @@ async function loadUserPreferencesAndSync() {
   }
 
   renderAiKeywordChips(pref.keywords || []);
+  loadAiFeed(pref.keywords || []);
 
   // 2) 로그인 전 localStorage에 쌓인 좋아요를 DB로 마이그레이션 (한 번만)
   if (likedEvents.size > 0) {
@@ -2064,49 +2028,26 @@ if (supabaseClient) {
 }
 
 /* ---------- AI 섹션 모드 전환 (맞춤 이벤트 추천 ↔ 여행 플래너) ---------- */
-function switchAiMode(mode) {
-  const titleEl = document.getElementById("aiSectionTitle");
-  const subEl = document.getElementById("aiSectionSub");
-  const recommendPanel = document.getElementById("aiRecommendPanel");
-  const travelPanel = document.getElementById("travelPlannerPanel");
+/* ---------- AI 여행 플래너 오버레이 (하단 "검색" 탭에서 진입) ---------- */
+function openTravelPlanner() {
+  const dateInput = document.getElementById("travelDate");
+  const endDateInput = document.getElementById("travelEndDate");
+  const today = new Date().toISOString().slice(0, 10);
+  if (!dateInput.value) dateInput.value = today;
+  if (!endDateInput.value) endDateInput.value = today;
 
-  document.querySelectorAll(".ai-mode-tab").forEach(t => t.classList.toggle("active", t.dataset.mode === mode));
-
-  if (mode === "travel") {
-    recommendPanel.hidden = true;
-    travelPanel.hidden = false;
-    titleEl.textContent = "AI 여행 플래너";
-    subEl.textContent = "날짜와 지역을 입력하면 날씨·행사·맛집·숙박까지 한 번에 계획해드려요";
-
-    const dateInput = document.getElementById("travelDate");
-    const endDateInput = document.getElementById("travelEndDate");
-    const today = new Date().toISOString().slice(0, 10);
-    if (!dateInput.value) dateInput.value = today;
-    if (!endDateInput.value) endDateInput.value = today;
-  } else {
-    recommendPanel.hidden = false;
-    travelPanel.hidden = true;
-    titleEl.textContent = "나만의 맞춤 혜택 찾기";
-    subEl.textContent = "관심사를 입력하면 AI가 딱 맞는 이벤트를 골라드려요";
-  }
+  document.getElementById("travelPlannerOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
 }
 
-document.querySelectorAll(".ai-mode-tab").forEach(tab => {
-  tab.addEventListener("click", () => switchAiMode(tab.dataset.mode));
+document.getElementById("travelPlannerClose").addEventListener("click", () => {
+  document.getElementById("travelPlannerOverlay").classList.remove("open");
+  document.body.style.overflow = "";
 });
-
-/* ---------- AI 섹션 접기/펼치기 (기본은 접힌 배너, 탭하면 펼침) ---------- */
-document.getElementById("aiSectionBanner").addEventListener("click", () => {
-  const section = document.getElementById("aiSection");
-  const expanded = document.getElementById("aiSectionExpanded");
-  const isCollapsed = section.classList.contains("collapsed");
-
-  if (isCollapsed) {
-    section.classList.remove("collapsed");
-    expanded.hidden = false;
-  } else {
-    section.classList.add("collapsed");
-    expanded.hidden = true;
+document.getElementById("travelPlannerOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "travelPlannerOverlay") {
+    document.getElementById("travelPlannerOverlay").classList.remove("open");
+    document.body.style.overflow = "";
   }
 });
 
