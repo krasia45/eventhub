@@ -8,7 +8,7 @@
    수정된 전략: "네트워크 우선(Network First)" — 온라인이면 항상 서버의 최신 파일을
    먼저 받아오고, 그 요청이 실패했을 때(오프라인 등)만 캐시된 화면을 보여줍니다. */
 
-const CACHE_NAME = "eventhub-shell-v2";
+const CACHE_NAME = "eventhub-shell-v3";
 const APP_SHELL = ["/", "/index.html", "/css/style.css", "/js/main.js"];
 
 self.addEventListener("install", (event) => {
@@ -32,6 +32,11 @@ self.addEventListener("fetch", (event) => {
 
   // API 요청(/api/*)은 서비스워커가 아예 관여하지 않음 — 항상 네트워크로 직행
   if (url.pathname.startsWith("/api/")) return;
+
+  // ⚠️ 캐시 API는 GET 요청만 저장할 수 있음(POST 등은 저장 시도만 해도 에러).
+  //    Supabase 저장 요청(POST) 같은 게 여기 걸려서 콘솔에 에러가 계속 쌓이던 문제를 수정.
+  //    GET이 아닌 요청은 캐싱 없이 그냥 네트워크로 통과시킴.
+  if (event.request.method !== "GET") return;
 
   // 네트워크 우선: 서버에서 최신 파일을 받아오고, 성공하면 캐시도 최신으로 갱신.
   // 오프라인 등으로 네트워크 요청이 실패할 때만 캐시된 예전 화면을 보여줌.
