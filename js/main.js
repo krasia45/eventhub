@@ -287,6 +287,7 @@ async function loadEventsFromApi() {
 let currentCategory = "all";
 let currentDiscountFilter = "all"; // "all" | "1+1" | "50plus"
 let selectedBrands = new Set(); // 카테고리 탭에서만 사용되는 브랜드 로고 다중 필터
+let endingSoonFilterActive = false; // 퀵메뉴 "종료 임박 알림" 토글 상태
 let gpsFilterActive = false;
 let userLocation = null; // { lat, lng }
 let likedEvents = new Set(JSON.parse(localStorage.getItem("eventhub-liked") || "[]"));
@@ -329,6 +330,8 @@ async function loadWeather(loc) {
   const iconEl = document.getElementById("weatherIcon");
   const summaryEl = document.getElementById("weatherSummary");
   const subEl = document.getElementById("weatherSub");
+  const headerIconEl = document.getElementById("weatherHeaderIcon");
+  const headerTempEl = document.getElementById("weatherHeaderTemp");
 
   const target = loc || await getQuietLocation();
 
@@ -341,6 +344,8 @@ async function loadWeather(loc) {
     iconEl.textContent = data.icon || "🌤";
     summaryEl.textContent = `${data.location} 현재 ${data.tempC}°C, ${data.description}`;
     subEl.textContent = data.advice || "";
+    headerIconEl.textContent = data.icon || "🌤";
+    headerTempEl.textContent = `${data.tempC}°`;
 
   } catch (err) {
     // ── 예외처리: 날씨 API 실패 시 Fallback UI ──────────
@@ -348,8 +353,21 @@ async function loadWeather(loc) {
     iconEl.textContent = "⚠️";
     summaryEl.textContent = "날씨 정보를 불러오지 못했어요.";
     subEl.textContent = "잠시 후 다시 시도해주세요.";
+    headerIconEl.textContent = "⚠️";
+    headerTempEl.textContent = "";
   }
 }
+
+document.getElementById("weatherHeaderChip").addEventListener("click", () => {
+  const popover = document.getElementById("weatherPopover");
+  popover.hidden = !popover.hidden;
+});
+document.addEventListener("click", (e) => {
+  const popover = document.getElementById("weatherPopover");
+  if (!popover.hidden && !e.target.closest(".weather-popover") && !e.target.closest("#weatherHeaderChip")) {
+    popover.hidden = true;
+  }
+});
 
 /* ---------- 거리 계산 (Haversine) & GPS 20km 필터 ---------- */
 function haversineDistanceKm(lat1, lng1, lat2, lng2) {
@@ -387,6 +405,10 @@ function getFilteredEvents() {
 
   if (gpsFilterActive && userLocation) {
     list = list.filter(ev => haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng) <= 20);
+  }
+
+  if (endingSoonFilterActive) {
+    list = [...list].sort((a, b) => new Date(a.periodEnd) - new Date(b.periodEnd));
   }
 
   return list;
@@ -727,6 +749,15 @@ function openSheet(eventId) {
     conditionsRow.hidden = true;
   }
 
+  // 대상(예: "신규 가입자 한정") — 값이 있을 때만 노출
+  const targetRow = document.getElementById("sheetTargetRow");
+  if (ev.targetAudience && ev.targetAudience.trim()) {
+    targetRow.hidden = false;
+    document.getElementById("sheetTarget").textContent = ev.targetAudience;
+  } else {
+    targetRow.hidden = true;
+  }
+
   const verifiedNote = document.getElementById("sheetVerifiedNote");
   if (verifiedNote) verifiedNote.hidden = !ev.isVerifiedReal;
   document.getElementById("sheetTags").innerHTML = ev.tags.map(t => `<span class="sheet-tag">#${t}</span>`).join("");
@@ -749,6 +780,7 @@ function openSheet(eventId) {
   }
 
   updateLikeButton();
+  renderBrandFollowButton(ev);
 
   // 조회수 집계 (백그라운드로 전송, 화면 동작 차단 안 함)
   eventStatsCache[eventId] = eventStatsCache[eventId] || { views: 0, likes: 0 };
@@ -794,6 +826,54 @@ function updateLikeButton() {
 }
 
 /* ---------- 다녀왔어요 / 한줄평 (소셜 증거) ---------- */
+async function renderBrandFollowButton(ev) {
+  const btn = document.getElementById("brandFollowBtn");
+  document.getElementById("brandFollowBox").querySelector(".brand-follow-text").textContent =
+    `${ev.brand}을(를) 팔로우하고 새로운 이벤트 알림을 받아보세요`;
+
+  if (!currentUser || !supabaseClient) {
+    btn.textContent = "+ 팔로우";
+    btn.classList.remove("following");
+    btn.onclick = () => showToast("로그인하시면 브랜드를 팔로우할 수 있어요.");
+    return;
+  }
+
+  let isFollowing = false;
+  try {
+    const { data } = await supabaseClient
+      .from("user_follows")
+      .select("brand")
+      .eq("user_id", currentUser.id)
+      .eq("brand", ev.brand)
+      .maybeSingle();
+    isFollowing = !!data;
+  } catch (err) {
+    console.error("팔로우 상태 조회 오류:", err);
+  }
+
+  updateFollowBtnUI(btn, isFollowing);
+
+  btn.onclick = async () => {
+    if (isFollowing) {
+      const { error } = await supabaseClient.from("user_follows").delete().eq("user_id", currentUser.id).eq("brand", ev.brand);
+      if (error) { showToast("팔로우 해제 중 오류가 발생했어요."); return; }
+      isFollowing = false;
+      showToast(`${ev.brand} 팔로우를 해제했어요`);
+    } else {
+      const { error } = await supabaseClient.from("user_follows").insert({ user_id: currentUser.id, brand: ev.brand });
+      if (error) { showToast("팔로우 중 오류가 발생했어요."); return; }
+      isFollowing = true;
+      showToast(`${ev.brand}을(를) 팔로우했어요! 🔔`);
+    }
+    updateFollowBtnUI(btn, isFollowing);
+  };
+}
+
+function updateFollowBtnUI(btn, isFollowing) {
+  btn.textContent = isFollowing ? "✓ 팔로잉" : "+ 팔로우";
+  btn.classList.toggle("following", isFollowing);
+}
+
 async function loadEventVisits(eventId) {
   const listEl = document.getElementById("visitCommentList");
   const countEl = document.getElementById("visitCount");
@@ -1670,11 +1750,14 @@ document.getElementById("authLogoutBtn").addEventListener("click", async () => {
 });
 
 /* ---------- 온보딩 (최초 로그인 시 키워드 3개 이상 + 알림 이메일) ---------- */
+let onboardingEditMode = false; // true면 "키워드 편집"(AI 섹션 + 버튼)으로 열린 것 — 이메일/최소개수 요구 안 함
+
 function renderKeywordChips() {
   Object.entries(KEYWORD_POOL).forEach(([group, keywords]) => {
     const wrap = document.querySelector(`.keyword-chips[data-group="${group}"]`);
     wrap.innerHTML = keywords.map(k => `<button type="button" class="keyword-chip" data-kw="${k}">${k}</button>`).join("");
     wrap.querySelectorAll(".keyword-chip").forEach(chip => {
+      if (selectedKeywords.has(chip.dataset.kw)) chip.classList.add("selected");
       chip.addEventListener("click", () => {
         const kw = chip.dataset.kw;
         if (selectedKeywords.has(kw)) {
@@ -1692,19 +1775,31 @@ function renderKeywordChips() {
 
 function updateOnboardingState() {
   const count = selectedKeywords.size;
-  document.getElementById("onboardingCount").textContent = `${count}개 선택됨 (최소 3개)`;
   const emailStep = document.getElementById("onboardingEmailStep");
   const submitBtn = document.getElementById("onboardingSubmitBtn");
 
-  emailStep.hidden = count < 3;
+  if (onboardingEditMode) {
+    document.getElementById("onboardingCount").textContent = `${count}개 선택됨`;
+    emailStep.hidden = true;
+    submitBtn.disabled = count === 0;
+    submitBtn.textContent = "키워드 저장";
+    return;
+  }
 
+  document.getElementById("onboardingCount").textContent = `${count}개 선택됨 (최소 3개)`;
+  emailStep.hidden = count < 3;
   const emailVal = document.getElementById("onboardingEmail").value.trim();
   submitBtn.disabled = !(count >= 3 && emailVal.length > 3);
+  submitBtn.textContent = "이벤트허브 시작하기";
 }
 document.getElementById("onboardingEmail").addEventListener("input", updateOnboardingState);
 
-async function openOnboarding() {
-  selectedKeywords = new Set();
+async function openOnboarding(editMode = false, existingKeywords = []) {
+  onboardingEditMode = editMode;
+  selectedKeywords = new Set(existingKeywords);
+  document.querySelector(".onboarding-title").textContent = editMode
+    ? "관심 키워드를 편집해보세요 ✏️"
+    : "환영해요! 좋아하는 관심사를\n3개 이상 골라주세요 ✨";
   renderKeywordChips();
   updateOnboardingState();
   // 구글 로그인이면 이메일이 이미 있으니 미리 채워줌 (수정 가능)
@@ -1715,12 +1810,13 @@ async function openOnboarding() {
 
 document.getElementById("onboardingSubmitBtn").addEventListener("click", async () => {
   if (!supabaseClient || !currentUser) { showToast("로그인 상태를 확인해주세요."); return; }
-  const contactEmail = document.getElementById("onboardingEmail").value.trim();
-  const { error } = await supabaseClient.from("user_preferences").upsert({
-    user_id: currentUser.id,
-    keywords: [...selectedKeywords],
-    contact_email: contactEmail,
-  });
+
+  const updatePayload = { user_id: currentUser.id, keywords: [...selectedKeywords] };
+  if (!onboardingEditMode) {
+    updatePayload.contact_email = document.getElementById("onboardingEmail").value.trim();
+  }
+
+  const { error } = await supabaseClient.from("user_preferences").upsert(updatePayload);
 
   if (error) {
     showToast("저장 중 오류가 발생했어요. 다시 시도해주세요.");
@@ -1730,9 +1826,45 @@ document.getElementById("onboardingSubmitBtn").addEventListener("click", async (
 
   onboardingOverlay.classList.remove("open");
   document.body.style.overflow = "";
-  showToast("환영해요! 맞춤 추천이 준비됐어요 🎉");
-  await loadUserPreferencesAndSync();
+  showToast(onboardingEditMode ? "키워드가 저장됐어요 ✅" : "환영해요! 맞춤 추천이 준비됐어요 🎉");
+
+  if (onboardingEditMode) {
+    renderAiKeywordChips([...selectedKeywords]);
+  } else {
+    await loadUserPreferencesAndSync();
+  }
 });
+
+/* ---------- AI 섹션 키워드 태그 (X 삭제 + "+" 추가) ---------- */
+function renderAiKeywordChips(keywords) {
+  const row = document.getElementById("aiKeywordRow");
+
+  if (!currentUser) {
+    row.innerHTML = `<button type="button" class="ai-keyword-login-btn" id="aiKeywordLoginBtn">로그인하고 맞춤 키워드 설정하기 →</button>`;
+    document.getElementById("aiKeywordLoginBtn").addEventListener("click", openAuthModal);
+    return;
+  }
+
+  const chips = (keywords || []).map(k => `
+    <span class="ai-keyword-chip">
+      ${k}
+      <button type="button" class="ai-keyword-remove" data-kw="${k}" aria-label="${k} 삭제">✕</button>
+    </span>
+  `).join("");
+
+  row.innerHTML = `${chips}<button type="button" class="ai-keyword-add-btn" id="aiKeywordAddBtn">+ 추가</button>`;
+
+  row.querySelectorAll(".ai-keyword-remove").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const updated = (keywords || []).filter(k => k !== btn.dataset.kw);
+      const { error } = await supabaseClient.from("user_preferences").update({ keywords: updated }).eq("user_id", currentUser.id);
+      if (error) { showToast("키워드 삭제 중 오류가 발생했어요."); return; }
+      renderAiKeywordChips(updated);
+    });
+  });
+
+  document.getElementById("aiKeywordAddBtn").addEventListener("click", () => openOnboarding(true, keywords || []));
+}
 
 /* ---------- 로그인 상태 변화 감지 + 좋아요 동기화 ---------- */
 async function loadUserPreferencesAndSync() {
@@ -1749,6 +1881,8 @@ async function loadUserPreferencesAndSync() {
     openOnboarding(); // 최초 로그인 → 온보딩 강제 노출
     return;
   }
+
+  renderAiKeywordChips(pref.keywords || []);
 
   // 2) 로그인 전 localStorage에 쌓인 좋아요를 DB로 마이그레이션 (한 번만)
   if (likedEvents.size > 0) {
@@ -1770,6 +1904,7 @@ async function loadUserPreferencesAndSync() {
   }
 
   await ensureReferralCode();
+  checkNewFollowedEvents();
 }
 
 /* ---------- 친구 초대 (그로스 루프) ---------- */
@@ -2063,22 +2198,17 @@ if (urlRefCode) localStorage.setItem("eventhub-pending-ref", urlRefCode);
 bindDiscountTabs();
 loadEventsFromApi(); // 내부에서 renderCategoryTabs/renderRanking/renderFeed까지 트리거함
 loadWeather(); // 위치 권한 없으면 서울 기준으로 기본 표시
+renderAiKeywordChips(); // 기본(비로그인) 상태 — 로그인하면 onAuthStateChange에서 다시 그려짐
 
-/* ---------- Day / Night Theme Toggle ----------
-   Reads any saved preference from localStorage; otherwise falls back to
-   the visitor's OS-level light/dark setting. Choice is remembered for
-   next time and can be flipped anytime via the sun/moon button. */
+/* ---------- Day / Night Theme (자동 감지만, 수동 토글 버튼은 제거됨) ----------
+   저장된 선호도가 있으면 그대로, 없으면 OS 설정을 따름.
+   ⚠️ 다크모드 토글 버튼은 삭제하고 그 자리에 알림벨을 넣기로 했으므로,
+   여기서 버튼 관련 엘리먼트를 참조하면 존재하지 않아 에러가 나서 이 아래 코드
+   전체가 실행이 안 되는 문제가 생길 뻔했음 — 자동 감지 로직만 남기고 정리함. */
 const THEME_KEY = "eventhub-theme";
-const themeToggleBtn = document.getElementById("themeToggleBtn");
-const themeIconSun = document.getElementById("themeIconSun");
-const themeIconMoon = document.getElementById("themeIconMoon");
 
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
-  const isDark = theme === "dark";
-  themeIconSun.hidden = isDark;
-  themeIconMoon.hidden = !isDark;
-  themeToggleBtn.setAttribute("aria-label", isDark ? "라이트 모드로 전환" : "다크 모드로 전환");
 }
 
 function getInitialTheme() {
@@ -2089,12 +2219,90 @@ function getInitialTheme() {
 
 applyTheme(getInitialTheme());
 
-themeToggleBtn.addEventListener("click", () => {
-  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-  applyTheme(next);
-  localStorage.setItem(THEME_KEY, next);
-  showToast(next === "dark" ? "🌙 다크 모드로 전환했어요" : "☀️ 라이트 모드로 전환했어요");
+/* ---------- 헤더 알림벨 (관심 브랜드/키워드 관련 새 이벤트 안내) ---------- */
+document.getElementById("notifBellBtn").addEventListener("click", () => {
+  openNotificationPanel();
 });
+
+async function openNotificationPanel() {
+  document.getElementById("notifDot").hidden = true;
+  localStorage.setItem("eventhub-last-seen-notif", Date.now().toString());
+
+  if (!currentUser || !supabaseClient) {
+    showToast("로그인하시면 관심 브랜드의 새 이벤트를 알려드려요.");
+    return;
+  }
+
+  try {
+    const { data: follows } = await supabaseClient
+      .from("user_follows")
+      .select("brand")
+      .eq("user_id", currentUser.id);
+
+    const followedBrands = (follows || []).map(f => f.brand);
+    if (followedBrands.length === 0) {
+      showToast("아직 팔로우한 브랜드가 없어요. 이벤트 상세에서 브랜드를 팔로우해보세요!");
+      return;
+    }
+
+    const matches = EVENTS.filter(ev => followedBrands.includes(ev.brand)).slice(0, 5);
+    if (matches.length === 0) {
+      showToast("팔로우한 브랜드의 진행 중인 이벤트가 아직 없어요.");
+      return;
+    }
+    openSheet(matches[0].id);
+    showToast(`팔로우한 ${matches[0].brand}의 이벤트예요!`);
+  } catch (err) {
+    console.error("알림 조회 오류:", err);
+  }
+}
+
+// 마지막 방문 이후 팔로우한 브랜드의 새 이벤트가 있으면 벨에 점 표시
+async function checkNewFollowedEvents() {
+  if (!currentUser || !supabaseClient || EVENTS.length === 0) return;
+  try {
+    const { data: follows } = await supabaseClient.from("user_follows").select("brand").eq("user_id", currentUser.id);
+    const followedBrands = (follows || []).map(f => f.brand);
+    if (followedBrands.length > 0 && EVENTS.some(ev => followedBrands.includes(ev.brand))) {
+      document.getElementById("notifDot").hidden = false;
+    }
+  } catch { /* 조용히 무시 — 알림은 부가 기능이라 실패해도 사이트 기능에 영향 없어야 함 */ }
+}
+
+/* ---------- 고정 퀵메뉴 4버튼 ---------- */
+document.getElementById("quickMenuCalendarBtn").addEventListener("click", () => openCalendar());
+
+document.getElementById("quickMenuLocalBtn").addEventListener("click", () => {
+  if (!gpsFilterActive) toggleGpsFilter();
+  document.querySelector(".feed-section").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+document.getElementById("quickMenuEndingBtn").addEventListener("click", () => {
+  endingSoonFilterActive = !endingSoonFilterActive;
+  showToast(endingSoonFilterActive ? "종료 임박 순으로 정렬했어요 ⏰" : "종료 임박 정렬을 해제했어요");
+  renderFeed();
+  document.querySelector(".feed-section").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+document.getElementById("quickMenuFollowBtn").addEventListener("click", openFollowedBrandsPanel);
+
+async function openFollowedBrandsPanel() {
+  if (!currentUser || !supabaseClient) {
+    showToast("로그인하시면 관심 브랜드를 팔로우하고 알림을 받을 수 있어요.");
+    return;
+  }
+  try {
+    const { data } = await supabaseClient.from("user_follows").select("brand").eq("user_id", currentUser.id);
+    const brands = (data || []).map(f => f.brand);
+    if (brands.length === 0) {
+      showToast("아직 팔로우한 브랜드가 없어요. 이벤트 상세에서 브랜드를 팔로우해보세요!");
+      return;
+    }
+    showToast(`팔로우 중: ${brands.join(", ")}`);
+  } catch (err) {
+    console.error("팔로우 목록 조회 오류:", err);
+  }
+}
 
 /* =========================================================
    문의하기 (Inquiry) — Google Apps Script 웹앱 연동

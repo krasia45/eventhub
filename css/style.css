@@ -222,29 +222,38 @@ a { text-decoration: none; color: inherit; }
 .tab-pill {
   flex-shrink: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 9px 16px;
-  border-radius: 999px;
-  background: var(--card-bg);
+  gap: 5px;
+  padding: 4px 6px 0;
   color: var(--text-2);
-  font-size: 13.5px;
+  font-size: 11px;
   font-weight: 600;
-  box-shadow: var(--shadow-card);
-  transition: all 0.18s ease;
   white-space: nowrap;
+  min-width: 58px;
 }
-.tab-pill .tab-emoji { font-size: 15px; }
-.tab-pill.active {
+.tab-pill .tab-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  box-shadow: var(--shadow-card);
+  font-size: 19px;
+  transition: all 0.18s ease;
+}
+.tab-pill.active .tab-emoji {
   background: var(--accent);
-  color: #fff;
   box-shadow: 0 6px 14px rgba(255, 111, 0, 0.35);
 }
+.tab-pill.active { color: var(--accent); font-weight: 800; }
 
 /* ===================== Main ===================== */
 .main-scroll {
   flex: 1;
-  padding: 0 clamp(16px, 4vw, 48px);
+  padding: 0 clamp(16px, 4vw, 48px) 160px;
   display: flex;
   flex-direction: column;
   gap: 26px;
@@ -556,19 +565,50 @@ a { text-decoration: none; color: inherit; }
   color: var(--accent-dark);
 }
 
-/* ===================== 날씨 위젯 ===================== */
-.weather-widget {
+/* ===================== 날씨 팝오버 (헤더 아이콘 클릭 시에만 노출) ===================== */
+.weather-popover {
   display: flex;
   align-items: center;
   gap: 12px;
   background: var(--card-bg);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  margin: 0 clamp(16px, 4vw, 48px) 14px;
+  max-width: var(--max-page);
 }
 .weather-icon { font-size: 28px; flex-shrink: 0; }
 .weather-summary { font-size: 13.5px; font-weight: 700; color: var(--text-1); }
 .weather-sub { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+
+/* ===================== 헤더 날씨 칩 / 알림벨 ===================== */
+.weather-chip-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--card-bg);
+  box-shadow: var(--shadow-card);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+#weatherHeaderIcon { font-size: 15px; }
+
+.notif-bell-btn { position: relative; }
+.notif-dot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1.5px solid var(--card-bg);
+}
 
 /* ===================== 카드 배지: 거리 / 소상공인 ===================== */
 .card-distance {
@@ -2027,3 +2067,106 @@ html[data-theme="dark"] .skeleton-block {
   justify-content: center;
   font-size: 19px;
 }
+
+/* ===================== 고정 퀵메뉴 (하단바 바로 위) ===================== */
+.quick-menu-row {
+  position: fixed;
+  bottom: 64px;
+  left: 0;
+  width: 100%;
+  z-index: 39;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.04);
+}
+.quick-menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-align: center;
+  line-height: 1.3;
+}
+.quick-menu-emoji { font-size: 18px; }
+.quick-menu-btn:active { background: var(--bg); }
+
+@media (min-width: 760px) {
+  .quick-menu-row { max-width: var(--max-page); left: 50%; transform: translateX(-50%); border-radius: var(--radius-lg) var(--radius-lg) 0 0; bottom: 0; box-shadow: var(--shadow-card); }
+  .bottom-nav { display: none; }
+  .main-scroll { padding-bottom: 100px; }
+}
+
+/* ===================== AI 섹션 키워드 태그 (X삭제 + 추가) ===================== */
+.ai-keyword-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.ai-keyword-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px 6px 12px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--accent);
+  color: var(--accent-dark);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.ai-keyword-remove {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255,111,0,0.15);
+  color: var(--accent-dark);
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ai-keyword-add-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--text-3);
+  color: var(--text-2);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.ai-keyword-login-btn {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  text-decoration: underline;
+}
+
+/* ===================== 브랜드 팔로우 박스 (상세페이지) ===================== */
+.brand-follow-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--accent-light);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.brand-follow-text { flex: 1; font-size: 12px; font-weight: 600; color: var(--accent-dark); line-height: 1.4; }
+.brand-follow-btn {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.brand-follow-btn.following { background: #fff; color: var(--accent); border: 1px solid var(--accent); }

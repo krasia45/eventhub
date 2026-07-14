@@ -51,6 +51,7 @@ class handler(BaseHTTPRequestHandler):
                     "periodStart": r.get("period_start"),  # 캘린더에 기간 전체를 표시하기 위한 원본 날짜
                     "channel": r.get("channel", ""),
                     "conditions": r.get("conditions", ""),
+                    "targetAudience": r.get("target_audience", ""),
                     "desc": r.get("desc", ""),
                     "tags": r.get("tags", []),
                     "image": r.get("image", ""),
