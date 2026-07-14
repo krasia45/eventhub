@@ -204,6 +204,7 @@ const CATEGORIES = [
   { id: "beauty",  label: "뷰티",       emoji: "💄" },
   { id: "food",    label: "카페·디저트", emoji: "🍰" },
   { id: "popup",   label: "팝업·컬처",   emoji: "🎪" },
+  { id: "living",  label: "라이프스타일", emoji: "🛋️" },
 ];
 
 // BRD 확정 사항: 구매 주기가 긴 전자기기/숙박/배달/리빙은 이번 개편에서 제외
@@ -703,6 +704,10 @@ function renderFeed() {
         <p class="card-title">${ev.title}</p>
         <p class="card-sub">${ev.subtitle}</p>
         <p class="card-meta">📍 ${ev.channel}</p>
+        <div class="card-stats">
+          <span>👁 ${formatCount((eventStatsCache[ev.id] || {}).views || 0)}</span>
+          <span>❤ ${formatCount((eventStatsCache[ev.id] || {}).likes || 0)}</span>
+        </div>
       </div>
     </div>
   `;
@@ -1199,19 +1204,42 @@ function renderAiCards(query, matchedEvents) {
   cardsEl.innerHTML = `
     <p class="ai-result-heading">✨ "${query}"에 맞는 이벤트 ${matchedEvents.length}개를 찾았어요</p>
     <div class="ai-card-row">
-      ${matchedEvents.map(ev => `
+      ${matchedEvents.map(ev => {
+        const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
+        // 배지는 실제 데이터에서 유도(할인문구/카테고리)만 사용 — 없는 정보를 지어내지 않음
+        let badge = "";
+        if (ev.discount.includes("1+1")) badge = "1+1";
+        else if (ev.category === "popup") badge = "POPUP";
+        else {
+          const pct = ev.discount.match(/(\d+)\s*%/);
+          if (pct && parseInt(pct[1], 10) >= 50) badge = "SALE";
+        }
+        return `
         <div class="ai-result-card" data-id="${ev.id}">
-          <img class="ai-result-card-img" src="${ev.image}" alt="${ev.title}" loading="lazy">
-          <span class="ai-result-card-discount">${ev.discount}</span>
+          <div class="ai-result-card-media">
+            <img class="ai-result-card-img" src="${ev.image}" alt="${ev.title}" loading="lazy">
+            ${badge ? `<span class="ai-result-card-badge">${badge}</span>` : ""}
+          </div>
           <p class="ai-result-card-brand">${ev.brand}</p>
           <p class="ai-result-card-title">${ev.title}</p>
+          <span class="ai-result-card-dday">${ev.dday}</span>
+          <div class="ai-result-card-stats">
+            <span>👁 ${formatCount(stats.views)}</span>
+            <span>❤ ${formatCount(stats.likes)}</span>
+          </div>
         </div>
-      `).join("")}
+      `;
+      }).join("")}
     </div>
   `;
   cardsEl.querySelectorAll(".ai-result-card").forEach(card => {
     card.addEventListener("click", () => openSheet(card.dataset.id));
   });
+}
+
+function formatCount(n) {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+  return String(n);
 }
 
 // ── localStorage 히스토리 함수들 ──────────────────────────────────────────

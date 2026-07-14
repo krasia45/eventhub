@@ -222,33 +222,25 @@ a { text-decoration: none; color: inherit; }
 .tab-pill {
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 5px;
-  padding: 4px 6px 0;
-  color: var(--text-2);
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-  min-width: 58px;
-}
-.tab-pill .tab-emoji {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  padding: 9px 16px;
+  border-radius: 999px;
   background: var(--card-bg);
+  color: var(--text-2);
+  font-size: 13.5px;
+  font-weight: 600;
   box-shadow: var(--shadow-card);
-  font-size: 19px;
   transition: all 0.18s ease;
+  white-space: nowrap;
 }
-.tab-pill.active .tab-emoji {
+.tab-pill .tab-emoji { display: none; } /* 최신 참고 디자인은 텍스트 전용 탭이라 아이콘은 숨김 */
+.tab-pill.active {
   background: var(--accent);
+  color: #fff;
+  font-weight: 700;
   box-shadow: 0 6px 14px rgba(255, 111, 0, 0.35);
 }
-.tab-pill.active { color: var(--accent); font-weight: 800; }
 
 /* ===================== Main ===================== */
 .main-scroll {
@@ -454,22 +446,46 @@ a { text-decoration: none; color: inherit; }
   transition: transform 0.12s ease;
 }
 .ai-result-card:active { transform: scale(0.97); }
+.ai-result-card-media { position: relative; }
 .ai-result-card-img {
   width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 8px;
   background: #f0f0f2;
+  display: block;
 }
-.ai-result-card-discount {
+.ai-result-card-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+.ai-result-card-brand { font-size: 10.5px; color: var(--text-3); font-weight: 700; margin-top: 8px; }
+.ai-result-card-title { font-size: 12.5px; font-weight: 700; color: var(--text-1); margin-top: 2px; line-height: 1.35; }
+.ai-result-card-dday {
   display: inline-block;
+  margin-top: 6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--accent);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.ai-result-card-stats {
+  display: flex;
+  gap: 10px;
   margin-top: 8px;
   font-size: 11px;
-  font-weight: 800;
-  color: var(--accent);
+  color: var(--text-3);
+  font-weight: 600;
 }
-.ai-result-card-brand { font-size: 10.5px; color: var(--text-3); font-weight: 700; margin-top: 2px; }
-.ai-result-card-title { font-size: 12.5px; font-weight: 700; color: var(--text-1); margin-top: 2px; line-height: 1.35; }
 
 /* ===================== 할인 퀵필터 + GPS 필터 ===================== */
 .filter-row {
@@ -1290,6 +1306,15 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
   font-weight: 600;
 }
 
+.card-stats {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 700;
+}
+
 .empty-state {
   grid-column: 1 / -1;
   text-align: center;
@@ -1572,7 +1597,7 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
 .sheet-dday-badge {
   position: absolute;
   top: 16px;
-  right: 16px;
+  left: 16px;
   z-index: 2;
   background: var(--accent);
   color: #fff;
@@ -1585,13 +1610,10 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
 
 /* ---------- 이미지 하단 태그 칩 오버레이 ---------- */
 .sheet-hero-tags {
-  position: absolute;
-  bottom: 92px;
-  left: 20px;
-  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  margin-bottom: 10px;
 }
 .hero-tag-chip {
   font-size: 11px;
