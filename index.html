@@ -249,9 +249,8 @@
 
       <div class="sheet-hero">
         <img id="sheetImage" class="sheet-photo" src="" alt="">
-        <button class="like-icon-btn" id="likeBtn" aria-label="관심 이벤트로 등록">
-          <span class="like-icon" id="likeIcon">🤍</span>
-        </button>
+        <span class="sheet-dday-badge" id="sheetDdayBadge"></span>
+        <div class="sheet-hero-tags" id="sheetHeroTags"></div>
         <div class="sheet-hero-overlay">
           <div class="sheet-brand-logo-wrap">
             <img id="sheetBrandLogo" src="" alt="">
@@ -268,6 +267,22 @@
           <button class="brand-follow-btn" id="brandFollowBtn">+ 팔로우</button>
         </div>
 
+        <div class="sheet-icon-actions" id="sheetIconActions">
+          <button class="sheet-icon-action" id="likeBtn" aria-label="관심 이벤트로 등록">
+            <span class="sheet-icon-action-emoji" id="likeIcon">🤍</span><span>찜하기</span>
+          </button>
+          <button class="sheet-icon-action" id="shareBtn">
+            <span class="sheet-icon-action-emoji">📤</span><span>공유하기</span>
+          </button>
+          <a class="sheet-icon-action" id="kakaoRouteBtn" href="#" target="_blank" rel="noopener noreferrer">
+            <span class="sheet-icon-action-emoji">🗺</span><span>길찾기</span>
+          </a>
+          <button class="sheet-icon-action" id="calendarBtn">
+            <span class="sheet-icon-action-emoji">📅</span><span>캘린더 저장</span>
+          </button>
+        </div>
+
+        <h3 class="sheet-h3">이벤트 정보</h3>
         <div class="info-summary-card">
           <div class="info-row">
             <span class="info-row-icon">📅</span>
@@ -286,21 +301,21 @@
           </div>
           <div class="info-row" id="sheetConditionsRow" hidden>
             <span class="info-row-icon">⚠️</span>
-            <span class="info-row-label">조건</span>
+            <span class="info-row-label">참여 조건</span>
             <span class="info-row-value" id="sheetConditions"></span>
           </div>
           <div class="info-row">
             <span class="info-row-icon">📍</span>
-            <span class="info-row-label">참여방법</span>
+            <span class="info-row-label">참여 방법</span>
             <span class="info-row-value" id="sheetChannel"></span>
           </div>
         </div>
 
-        <h3 class="sheet-h3">📝 상세 설명</h3>
+        <h3 class="sheet-h3">상세 안내</h3>
         <p class="sheet-desc" id="sheetDesc"></p>
         <p class="sheet-verified-note" id="sheetVerifiedNote" hidden>✓ 실제 확인된 진행 중인 프로모션입니다. 상세 조건은 공식 채널에서 다시 확인해주세요.</p>
 
-        <div class="sheet-tags" id="sheetTags"></div>
+        <div class="sheet-tags" id="sheetTags" hidden></div>
 
         <div class="visit-section" id="visitSection">
           <h3 class="sheet-h3">👀 다녀온 사람들의 한줄평 <span id="visitCount"></span></h3>
@@ -313,32 +328,28 @@
         </div>
 
         <div class="map-section" id="mapSection">
-          <h3 class="sheet-h3">오시는 길</h3>
+          <h3 class="sheet-h3">위치 안내</h3>
           <div class="kakao-map-wrap" id="kakaoMapWrap">
             <div class="kakao-map" id="kakaoMap"></div>
           </div>
+          <div class="location-detail-card">
+            <p class="location-address" id="locationAddress"></p>
+            <p class="location-sub" id="locationSub"></p>
+            <div class="location-btn-row">
+              <a class="location-btn" id="locationRouteBtn" href="#" target="_blank" rel="noopener noreferrer">🚗 길찾기</a>
+              <a class="location-btn" id="locationNaverBtn" href="#" target="_blank" rel="noopener noreferrer">🟢 네이버지도</a>
+              <a class="location-btn" id="locationKakaoBtn" href="#" target="_blank" rel="noopener noreferrer">📍 카카오맵</a>
+            </div>
+          </div>
         </div>
-
-        <div class="sheet-icon-actions" id="sheetIconActions">
-          <a class="sheet-icon-action" id="kakaoRouteBtn" href="#" target="_blank" rel="noopener noreferrer">
-            <span class="sheet-icon-action-emoji">🗺</span><span>길찾기</span>
-          </a>
-          <button class="sheet-icon-action" id="calendarBtn">
-            <span class="sheet-icon-action-emoji">📅</span><span>캘린더</span>
-          </button>
-          <button class="sheet-icon-action" id="shareBtn">
-            <span class="sheet-icon-action-emoji">📤</span><span>공유</span>
-          </button>
-        </div>
-
-        <a class="visit-btn" id="visitBtn" href="#" target="_blank" rel="noopener noreferrer">
-          브랜드 공식 이벤트 화면으로 이동하기 ↗
-        </a>
       </div>
 
-      <div class="sheet-sticky-cta">
-        <button class="download-btn" id="downloadBtn">
-          <span>⬇</span> 쿠폰 다운로드 받기
+      <div class="sheet-sticky-cta" id="sheetStickyCta">
+        <a class="sticky-cta-btn sticky-cta-primary" id="stickyCtaPrimaryBtn" href="#" target="_blank" rel="noopener noreferrer">
+          <span id="stickyCtaPrimaryIcon">🗺</span> <span id="stickyCtaPrimaryLabel">길찾기</span>
+        </a>
+        <button class="sticky-cta-btn sticky-cta-secondary" id="stickyCtaShareBtn">
+          📤 공유하기
         </button>
       </div>
     </div>

@@ -192,6 +192,11 @@ function getKakaoRouteLink(ev) {
   return `https://map.kakao.com/link/to/${to}`;
 }
 
+function getNaverMapLink(ev) {
+  // 네이버지도 검색 링크 (좌표+브랜드명 기반)
+  return `https://map.naver.com/p/search/${encodeURIComponent(ev.brand + " " + ev.title)}`;
+}
+
 /* ---------- Category Definitions ---------- */
 const CATEGORIES = [
   { id: "all",     label: "전체",       emoji: "🏠" },
@@ -737,8 +742,24 @@ function openSheet(eventId) {
   document.getElementById("sheetDiscount").textContent = ev.discount;
   document.getElementById("sheetDiscountRow").textContent = ev.discount;
   document.getElementById("sheetPeriod").textContent = ev.period;
-  document.getElementById("sheetChannel").textContent = ev.channel;
   document.getElementById("sheetDesc").textContent = ev.desc;
+
+  // D-day 배지 (이미지 우측 상단)
+  document.getElementById("sheetDdayBadge").textContent = ev.dday || "";
+
+  // 참여방법: 텍스트에 줄바꿈이 있으면 번호 목록으로, 없으면 그냥 한 줄로 표시
+  const channelEl = document.getElementById("sheetChannel");
+  const channelLines = (ev.channel || "").split("\n").map(s => s.trim()).filter(Boolean);
+  if (channelLines.length > 1) {
+    channelEl.innerHTML = `<ol class="channel-steps">${channelLines.map(line => `<li>${line}</li>`).join("")}</ol>`;
+  } else {
+    channelEl.textContent = ev.channel;
+  }
+
+  // 이미지 위 태그 칩 (참고 디자인처럼 이미지 하단에 오버레이)
+  document.getElementById("sheetHeroTags").innerHTML = ev.tags.slice(0, 3).map((t, i) =>
+    `<span class="hero-tag-chip ${i === 0 ? "hero-tag-primary" : ""}">${t}</span>`
+  ).join("");
 
   // 조건(예: "네이버페이 결제 시에만 적용") — 값이 있을 때만 노출
   const conditionsRow = document.getElementById("sheetConditionsRow");
@@ -760,23 +781,44 @@ function openSheet(eventId) {
 
   const verifiedNote = document.getElementById("sheetVerifiedNote");
   if (verifiedNote) verifiedNote.hidden = !ev.isVerifiedReal;
-  document.getElementById("sheetTags").innerHTML = ev.tags.map(t => `<span class="sheet-tag">#${t}</span>`).join("");
-  document.getElementById("visitBtn").href = ev.link;
+
+  const isPopup = ev.category === "popup";
 
   // 지도/길찾기는 "실제로 찾아가는 장소"인 팝업스토어에서만 의미가 있어 그 카테고리에서만 노출
   const mapSection = document.getElementById("mapSection");
-  const iconActions = document.getElementById("sheetIconActions");
   const routeBtn = document.getElementById("kakaoRouteBtn");
-  if (ev.category === "popup") {
+  const iconActions = document.getElementById("sheetIconActions");
+
+  if (isPopup) {
     mapSection.hidden = false;
     routeBtn.hidden = false;
-    iconActions.classList.remove("two-col");
+    iconActions.classList.remove("three-col");
     routeBtn.href = getKakaoRouteLink(ev);
     renderEventMap(ev);
+
+    document.getElementById("locationAddress").textContent = ev.title;
+    document.getElementById("locationSub").textContent = `${ev.channel.split("\n")[0]}`;
+    document.getElementById("locationRouteBtn").href = getKakaoRouteLink(ev);
+    document.getElementById("locationNaverBtn").href = getNaverMapLink(ev);
+    document.getElementById("locationKakaoBtn").href = getKakaoRouteLink(ev);
   } else {
     mapSection.hidden = true;
     routeBtn.hidden = true;
-    iconActions.classList.add("two-col");
+    iconActions.classList.add("three-col");
+  }
+
+  // 하단 고정 CTA: 팝업 → 길찾기+공유 / 그 외 → 브랜드사이트이동+공유 (참고 디자인 반영)
+  const primaryBtn = document.getElementById("stickyCtaPrimaryBtn");
+  if (isPopup) {
+    document.getElementById("stickyCtaPrimaryIcon").textContent = "🗺";
+    document.getElementById("stickyCtaPrimaryLabel").textContent = "길찾기";
+    primaryBtn.href = getKakaoRouteLink(ev);
+    primaryBtn.target = "_blank";
+  } else {
+    document.getElementById("stickyCtaPrimaryIcon").textContent = "🔗";
+    document.getElementById("stickyCtaPrimaryLabel").textContent = "브랜드 사이트 이동";
+    primaryBtn.href = ev.link;
+    primaryBtn.target = "_blank";
   }
 
   updateLikeButton();
@@ -793,7 +835,7 @@ function openSheet(eventId) {
   // "다녀왔어요" 후기는 실제로 방문하는 장소(팝업스토어)에만 의미가 있음.
   // 단순 할인 정보성 이벤트(패션/뷰티/카페 쿠폰 등)는 "방문"이라는 행위 자체가 없어서 숨김.
   const visitSection = document.getElementById("visitSection");
-  if (ev.category === "popup") {
+  if (isPopup) {
     visitSection.hidden = false;
     loadEventVisits(eventId);
   } else {
@@ -996,9 +1038,10 @@ document.getElementById("likeBtn").addEventListener("click", () => {
   toggleLike(activeEventId);
 });
 
-document.getElementById("downloadBtn").addEventListener("click", () => {
+document.getElementById("stickyCtaShareBtn").addEventListener("click", () => {
   const ev = EVENTS.find(e => e.id === activeEventId);
-  showToast(`${ev ? ev.brand + " " : ""}쿠폰이 다운로드되었습니다 🎉`);
+  if (!ev) return;
+  openShareFlow(ev);
 });
 
 /* ---------- 캘린더 등록 (구글 캘린더 바로가기 링크) ---------- */
