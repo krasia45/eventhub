@@ -665,7 +665,7 @@ function renderRanking() {
       <div class="rank-card-body">
         <img class="rank-card-logo" data-domain="${ev.domain}" data-brand="${ev.brand}" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고">
         <div class="rank-card-info">
-          <p class="rank-card-brand">${ev.brand}</p>
+          <p class="rank-card-brand"><span class="rank-card-live-tag">실시간</span> ${ev.brand}</p>
           <p class="rank-card-title">${ev.title}</p>
         </div>
       </div>

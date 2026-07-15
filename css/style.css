@@ -1057,6 +1057,19 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
 }
 .rank-card-info { min-width: 0; }
 .rank-card-brand { font-size: 10.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+.rank-card-live-tag {
+  display: inline-block;
+  background: #FFEBEE;
+  color: #E5484D;
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-right: 3px;
+  vertical-align: middle;
+}
 .rank-card-title {
   font-size: 12px;
   font-weight: 700;
@@ -1365,7 +1378,7 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
   position: fixed;
   inset: 0;
   background: rgba(10,10,14,0.5);
-  z-index: 200;
+  z-index: 220;
   display: flex;
   align-items: flex-end;
   justify-content: center;
