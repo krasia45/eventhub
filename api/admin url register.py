@@ -64,6 +64,10 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(401, {"error": "관리자 인증이 필요합니다."})
             return
 
+        if data.get("mode") == "manual":
+            self._handle_manual(data)
+            return
+
         url = (data.get("url") or "").strip()
         category = (data.get("category") or "").strip()
 
@@ -119,6 +123,55 @@ class handler(BaseHTTPRequestHandler):
             return
 
         self._send_json(200, {"success": True, "extracted": {"title": og_title, "image": og_image}})
+
+    def _handle_manual(self, data):
+        """URL 스크래핑 없이, 관리자가 이미 텍스트로 알고 있는 정보를 그대로 후보로 등록.
+        인스타그램 큐레이션 게시물처럼 자동 추출이 안 되는 소스에서 정보를 옮길 때 사용."""
+        brand = (data.get("brand") or "").strip()
+        title = (data.get("title") or "").strip()
+        category = (data.get("category") or "").strip()
+        discount = (data.get("discount") or "").strip()
+        channel = (data.get("channel") or "").strip()
+        period_start = (data.get("periodStart") or "").strip()
+        period_end = (data.get("periodEnd") or "").strip()
+        source_url = data.get("sourceUrl")
+
+        if not brand or not title or not period_start or not period_end:
+            self._send_json(400, {"error": "브랜드명, 제목, 시작일, 종료일은 필수예요."})
+            return
+        if category not in ("fashion", "beauty", "food", "popup"):
+            self._send_json(400, {"error": "카테고리를 선택해주세요."})
+            return
+
+        period_label = f"{period_start.replace('-', '.')} - {period_end.replace('-', '.')}"
+
+        candidate = {
+            "category": category,
+            "brand": brand,
+            "title": title[:100],
+            "subtitle": "관리자가 직접 수동 등록",
+            "discount": discount or "정보 확인 필요",
+            "period": period_label,
+            "period_start": period_start,
+            "period_end": period_end,
+            "channel": channel,
+            "desc": "",
+            "tags": [],
+            "image": "",
+            "domain": "",
+            "link": source_url or "",
+            "source_url": source_url or "",
+            "ai_confidence_note": "관리자가 수동으로 입력했습니다. 이미지/도메인은 승인 시 직접 채워주세요.",
+            "status": "pending",
+        }
+
+        try:
+            sb_insert("event_candidates", candidate)
+        except Exception as e:
+            self._send_json(500, {"error": f"저장 중 오류: {str(e)}"})
+            return
+
+        self._send_json(200, {"success": True, "extracted": {"title": title, "image": ""}})
 
     def _send_json(self, status, data):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
