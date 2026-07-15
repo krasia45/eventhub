@@ -2351,3 +2351,37 @@ html[data-theme="dark"] .skeleton-block {
   color: var(--text-3);
   font-weight: 700;
 }
+
+/* ===================== AI 추천 전용 화면 ===================== */
+.ai-page-greeting { font-size: 16px; font-weight: 800; color: var(--text-1); }
+.ai-page-greeting-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; margin-bottom: 18px; line-height: 1.4; }
+
+.ai-page-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.ai-page-tab {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+.ai-page-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.ai-page-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+@media (min-width: 480px) {
+  .ai-page-grid { grid-template-columns: repeat(3, 1fr); }
+}

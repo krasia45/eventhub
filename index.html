@@ -487,6 +487,39 @@
     </div>
   </div>
 
+  <!-- ===== AI 추천 전용 화면 ===== -->
+  <div class="page-overlay" id="aiRecommendPageOverlay">
+    <div class="page-view">
+      <div class="page-header">
+        <button class="page-back-btn" id="aiRecommendPageClose" aria-label="뒤로가기">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="page-header-text">
+          <h2>AI 추천</h2>
+        </div>
+      </div>
+      <div class="page-body">
+        <p class="ai-page-greeting" id="aiPageGreeting">✨ 맞춤 추천이에요</p>
+        <p class="ai-page-greeting-sub" id="aiPageGreetingSub"></p>
+
+        <div class="ai-page-tabs">
+          <button class="ai-page-tab active" data-tab="recommend">추천 이벤트</button>
+          <button class="ai-page-tab" data-tab="similar">유사 이벤트</button>
+          <button class="ai-page-tab" data-tab="brands">관심 브랜드</button>
+        </div>
+
+        <div class="ai-page-grid" id="aiPageGrid"></div>
+
+        <div class="ai-feed-setup-card" id="aiPageSetupCta">
+          <span class="ai-feed-setup-emoji">🤖</span>
+          <p class="ai-feed-setup-title">AI 맞춤 추천을 더 정확하게!</p>
+          <p class="ai-feed-setup-sub">관심사와 선호 브랜드를 추가하면 더 정확한 추천을 받을 수 있어요.</p>
+          <button type="button" class="ai-btn" id="aiPageSetupBtn">설정하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== 개인 일정 추가 모달 ===== -->
   <div class="sheet-overlay" id="scheduleFormOverlay">
     <div class="bottom-sheet schedule-form-sheet" id="scheduleFormSheet">
