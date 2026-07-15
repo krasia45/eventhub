@@ -296,6 +296,15 @@ let currentCategory = "all";
 let currentDiscountFilter = "all"; // "all" | "1+1" | "50plus"
 let selectedBrands = new Set(); // 카테고리 탭에서만 사용되는 브랜드 로고 다중 필터
 let endingSoonFilterActive = false; // 퀵메뉴 "종료 임박 알림" 토글 상태
+
+document.getElementById("logoHomeBtn").addEventListener("click", () => {
+  currentCategory = "all";
+  selectedBrands.clear();
+  endingSoonFilterActive = false;
+  renderCategoryTabs();
+  renderFeed();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
 let gpsFilterActive = false;
 let userLocation = null; // { lat, lng }
 let likedEvents = new Set(JSON.parse(localStorage.getItem("eventhub-liked") || "[]"));

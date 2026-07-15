@@ -114,6 +114,11 @@ a { text-decoration: none; color: inherit; }
   letter-spacing: -0.5px;
   color: var(--text-1);
   white-space: nowrap;
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
 }
 .logo span { color: var(--accent); }
 
