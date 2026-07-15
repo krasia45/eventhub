@@ -12,6 +12,18 @@ import urllib.error
 import urllib.parse
 
 
+def _raise_with_body(e):
+    """urllib의 HTTPError는 str(e)로 찍으면 'HTTP Error 400: Bad Request'처럼
+    상태코드/사유구문만 나오고, Supabase(PostgREST)가 응답 본문에 담아 보내는
+    실제 실패 이유(예: 누락된 컬럼, NOT NULL 위반, 타입 불일치 등)는 사라진다.
+    응답 본문을 읽어서 그대로 예외 메시지에 포함시켜 재발생시킨다."""
+    try:
+        detail = e.read().decode("utf-8", errors="ignore")
+    except Exception:
+        detail = ""
+    raise RuntimeError(f"Supabase {e.code} {e.reason}: {detail}") from e
+
+
 def _base_url():
     url = os.environ.get("SUPABASE_URL", "").rstrip("/")
     if not url:
@@ -37,8 +49,11 @@ def sb_select(table, params=None, use_service_role=True, timeout=10):
     query = urllib.parse.urlencode(params or {})
     url = f"{_base_url()}/rest/v1/{table}?{query}"
     req = urllib.request.Request(url, headers=_headers(use_service_role))
-    with urllib.request.urlopen(req, timeout=timeout) as res:
-        return json.loads(res.read())
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            return json.loads(res.read())
+    except urllib.error.HTTPError as e:
+        _raise_with_body(e)
 
 
 def sb_insert(table, rows, use_service_role=True, timeout=10):
@@ -48,8 +63,11 @@ def sb_insert(table, rows, use_service_role=True, timeout=10):
     headers["Prefer"] = "return=representation"
     body = json.dumps(rows).encode("utf-8")
     req = urllib.request.Request(url, data=body, headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=timeout) as res:
-        return json.loads(res.read())
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            return json.loads(res.read())
+    except urllib.error.HTTPError as e:
+        _raise_with_body(e)
 
 
 def sb_update(table, match_params, patch, use_service_role=True, timeout=10):
@@ -60,8 +78,11 @@ def sb_update(table, match_params, patch, use_service_role=True, timeout=10):
     headers["Prefer"] = "return=representation"
     body = json.dumps(patch).encode("utf-8")
     req = urllib.request.Request(url, data=body, headers=headers, method="PATCH")
-    with urllib.request.urlopen(req, timeout=timeout) as res:
-        return json.loads(res.read())
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            return json.loads(res.read())
+    except urllib.error.HTTPError as e:
+        _raise_with_body(e)
 
 
 def sb_upsert(table, rows, on_conflict, use_service_role=True, timeout=10):
@@ -71,8 +92,11 @@ def sb_upsert(table, rows, on_conflict, use_service_role=True, timeout=10):
     headers["Prefer"] = "resolution=merge-duplicates,return=representation"
     body = json.dumps(rows).encode("utf-8")
     req = urllib.request.Request(url, data=body, headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=timeout) as res:
-        return json.loads(res.read())
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            return json.loads(res.read())
+    except urllib.error.HTTPError as e:
+        _raise_with_body(e)
 
 
 def sb_rpc(fn_name, payload, use_service_role=True, timeout=10):
@@ -81,6 +105,9 @@ def sb_rpc(fn_name, payload, use_service_role=True, timeout=10):
     headers = _headers(use_service_role)
     body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=body, headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=timeout) as res:
-        raw = res.read()
-        return json.loads(raw) if raw else None
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            raw = res.read()
+            return json.loads(raw) if raw else None
+    except urllib.error.HTTPError as e:
+        _raise_with_body(e)
