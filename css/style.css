@@ -1378,6 +1378,55 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
   pointer-events: auto;
 }
 
+/* ===================== 전체화면 페이지 패턴 (검색결과 등 — 바텀시트가 아니라 실제 화면처럼) ===================== */
+.page-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  pointer-events: none;
+}
+.page-view {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.page-overlay.open { pointer-events: auto; }
+.page-overlay.open .page-view { transform: translateX(0); }
+
+.page-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: calc(14px + env(safe-area-inset-top)) 20px 14px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+}
+.page-back-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-1);
+  background: var(--bg);
+}
+.page-back-btn:active { background: var(--accent-light); }
+.page-header-text { min-width: 0; }
+.page-header-text h2 { font-size: 15px; font-weight: 800; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.page-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px calc(24px + env(safe-area-inset-bottom));
+}
+
 .bottom-sheet {
   position: relative;
   width: 100%;
@@ -2095,9 +2144,7 @@ html[data-theme="dark"] .skeleton-block {
 }
 
 /* ===================== 검색 결과 모음 화면 ===================== */
-.search-results-sheet { max-width: 640px; max-height: 92vh; }
-.search-results-body { padding: 8px 4px 4px; }
-.search-results-count { font-size: 12.5px; color: var(--text-3); margin-top: 4px; margin-bottom: 16px; }
+.search-results-count { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
 .search-results-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
