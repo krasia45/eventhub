@@ -1493,6 +1493,8 @@ document.querySelectorAll(".nav-item").forEach(btn => {
       openCouponWallet();
     } else if (btn.dataset.nav === "search") {
       openTravelPlanner();
+    } else if (btn.dataset.nav === "more") {
+      openMoreMenu();
     } else if (btn.dataset.nav !== "home") {
       showToast("준비 중인 기능이에요");
     }
@@ -1550,7 +1552,6 @@ couponWalletOverlay.addEventListener("click", (e) => {
   if (e.target === couponWalletOverlay) closeCouponWallet();
 });
 
-document.getElementById("couponNavBtn").addEventListener("click", openCouponWallet);
 
 /* =========================================================
    캘린더 (찜한 이벤트 자동 표기 + 개인 일정)
@@ -1711,7 +1712,6 @@ async function deletePersonalSchedule(scheduleId) {
   renderCalendarDayDetail(calendarSelectedDate);
 }
 
-document.getElementById("calendarNavBtn").addEventListener("click", openCalendar);
 document.getElementById("calendarClose").addEventListener("click", closeCalendar);
 calendarOverlay.addEventListener("click", (e) => { if (e.target === calendarOverlay) closeCalendar(); });
 
@@ -2404,11 +2404,11 @@ async function checkNewFollowedEvents() {
   } catch { /* 조용히 무시 — 알림은 부가 기능이라 실패해도 사이트 기능에 영향 없어야 함 */ }
 }
 
-/* ---------- 더보기 메뉴 (헤더 "⋯" 버튼) ---------- */
-document.getElementById("moreMenuBtn").addEventListener("click", () => {
+/* ---------- 더보기 메뉴 (하단 내비게이션 "더보기" 탭) ---------- */
+function openMoreMenu() {
   document.getElementById("moreMenuOverlay").classList.add("open");
   document.body.style.overflow = "hidden";
-});
+}
 function closeMoreMenu() {
   document.getElementById("moreMenuOverlay").classList.remove("open");
   document.body.style.overflow = "";
