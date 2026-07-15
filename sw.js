@@ -8,8 +8,34 @@
    수정된 전략: "네트워크 우선(Network First)" — 온라인이면 항상 서버의 최신 파일을
    먼저 받아오고, 그 요청이 실패했을 때(오프라인 등)만 캐시된 화면을 보여줍니다. */
 
-const CACHE_NAME = "eventhub-shell-v4";
-const APP_SHELL = ["/", "/index.html", "/css/style.css", "/js/main.js"];
+const CACHE_NAME = "eventhub-shell-v5";
+const APP_SHELL = [
+  "/",
+  "/index.html",
+  "/css/01-base.css",
+  "/css/02-header-nav.css",
+  "/css/03-ai-section.css",
+  "/css/04-filters-weather.css",
+  "/css/05-account-modals.css",
+  "/css/06-ranking-hero-feed.css",
+  "/css/07-nav-toast-sheet.css",
+  "/css/08-sheet-detail.css",
+  "/css/09-inquiry-footer-social.css",
+  "/css/10-search-share-menu.css",
+  "/css/11-brand-follow-nearby-ai.css",
+  "/js/01-bootstrap-map-share.js",
+  "/js/02-events-data.js",
+  "/js/03-weather-filters.js",
+  "/js/04-render-tabs-ranking-feed.js",
+  "/js/05-event-sheet.js",
+  "/js/06-ai-recommend.js",
+  "/js/07-search.js",
+  "/js/08-hero-nearby-coupon.js",
+  "/js/09-calendar.js",
+  "/js/10-auth.js",
+  "/js/11-init-misc.js",
+  "/js/12-inquiry-pwa.js",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

@@ -1,0 +1,157 @@
+/* ===================== 검색 자동완성 / 인기 검색어 ===================== */
+.search-bar-wrap { position: relative; flex: 1; min-width: 0; }
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 10px;
+  z-index: 50;
+}
+.search-suggestions-label { font-size: 11px; font-weight: 700; color: var(--text-3); padding: 4px 6px 8px; }
+.search-suggestion-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-1);
+}
+.search-suggestion-item:hover, .search-suggestion-item:active { background: var(--bg); }
+.search-suggestion-item .hl { color: var(--accent); font-weight: 700; }
+
+.search-suggestion-viewall {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 10px 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ===================== 검색 결과 모음 화면 ===================== */
+.search-results-count { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
+.search-results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+@media (min-width: 480px) {
+  .search-results-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ===================== 공유 메뉴 (여러 플랫폼) ===================== */
+.share-menu-sheet { max-width: 420px; }
+.share-menu-body { padding: 8px 4px 4px; }
+.share-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+.share-platform-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  font-weight: 700;
+  transition: transform 0.12s ease;
+}
+.share-platform-btn:active { transform: scale(0.95); }
+.share-platform-emoji {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+}
+
+/* ===================== 더보기 메뉴 (헤더 "⋯" 버튼에서 진입) ===================== */
+.more-menu-sheet { max-width: 420px; }
+.more-menu-body { padding: 8px 4px 4px; }
+.more-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+.quick-menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 4px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-align: center;
+  line-height: 1.3;
+}
+.quick-menu-emoji { font-size: 20px; }
+.quick-menu-btn:active { background: var(--accent-light); }
+
+@media (min-width: 760px) {
+  .bottom-nav { display: none; }
+}
+
+/* ===================== AI 섹션 키워드 태그 (X삭제 + 추가) ===================== */
+.ai-keyword-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.ai-keyword-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px 6px 12px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--accent);
+  color: var(--accent-dark);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.ai-keyword-remove {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255,111,0,0.15);
+  color: var(--accent-dark);
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ai-keyword-add-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--text-3);
+  color: var(--text-2);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.ai-keyword-login-btn {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  text-decoration: underline;
+}
+

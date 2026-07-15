@@ -1,0 +1,400 @@
+/* ===================== 카드 배지: 거리 / 소상공인 ===================== */
+.card-distance {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.card-merchant-badge {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.card-verified-badge {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #E1F6EA;
+  color: #1E8A4C;
+  margin-bottom: 3px;
+}
+html[data-theme="dark"] .card-verified-badge { background: #163826; color: #4ADE80; }
+
+.sheet-verified-note {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #1E8A4C;
+  background: #E1F6EA;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+html[data-theme="dark"] .sheet-verified-note { background: #163826; color: #4ADE80; }
+
+/* ===================== 통합 쿠폰함 ===================== */
+.coupon-wallet-sheet { max-width: 520px; }
+.coupon-wallet-body { padding: 8px 4px 4px; }
+.coupon-wallet-title { font-size: 18px; font-weight: 800; color: var(--text-1); }
+.coupon-wallet-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; margin-bottom: 16px; }
+
+.coupon-wallet-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.coupon-wallet-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+}
+.coupon-wallet-logo { width: 40px; height: 40px; border-radius: 10px; object-fit: contain; background: #fff; flex-shrink: 0; }
+.coupon-wallet-info { flex: 1; min-width: 0; }
+.coupon-wallet-brand { font-size: 11.5px; font-weight: 700; color: var(--text-3); }
+.coupon-wallet-item-title { font-size: 13px; font-weight: 700; color: var(--text-1); margin-top: 2px; }
+.coupon-wallet-period { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.coupon-wallet-discount { flex-shrink: 0; font-size: 12.5px; font-weight: 800; color: var(--accent); }
+
+/* ===================== 로그인 / 회원가입 ===================== */
+.auth-sheet { max-width: 420px; }
+.auth-body { padding: 8px 4px 4px; }
+.auth-title { font-size: 19px; font-weight: 800; color: var(--text-1); }
+.auth-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; margin-bottom: 18px; line-height: 1.5; }
+
+.auth-form { display: flex; flex-direction: column; gap: 10px; }
+.auth-form input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  font-size: 13.5px;
+  color: var(--text-1);
+  font-family: inherit;
+}
+
+.auth-error {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #C53030;
+  background: #FEF2F2;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.auth-toggle { margin-top: 16px; font-size: 12.5px; color: var(--text-3); text-align: center; }
+.auth-toggle button { color: var(--accent); font-weight: 700; text-decoration: underline; }
+
+.auth-logout-btn { background: #F1F1F1; color: #333; margin-top: 6px; }
+html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
+
+.social-login-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  transition: transform 0.12s ease;
+}
+.social-btn:active { transform: scale(0.98); }
+.social-btn-google { background: #fff; color: #333; }
+.social-btn-kakao { background: #FEE500; color: #191919; border-color: #FEE500; }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 14px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.auth-divider::before, .auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ===================== 온보딩 (관심 키워드 선택) ===================== */
+.onboarding-sheet { max-width: 480px; }
+.onboarding-body { padding: 12px 4px 4px; }
+.onboarding-title { font-size: 20px; font-weight: 800; color: var(--text-1); line-height: 1.4; }
+.onboarding-sub { font-size: 12.5px; color: var(--text-3); margin-top: 8px; margin-bottom: 20px; }
+
+.keyword-group { margin-bottom: 18px; }
+.keyword-group-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-bottom: 8px; }
+.keyword-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.keyword-chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+.keyword-chip.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.onboarding-email-step { margin: 18px 0; }
+.onboarding-email-step input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  font-size: 13.5px;
+  color: var(--text-1);
+  font-family: inherit;
+  margin-top: 4px;
+}
+
+.onboarding-count { font-size: 12px; color: var(--text-3); text-align: center; margin: 6px 0 12px; }
+.onboarding-submit-btn:disabled { opacity: 0.4; }
+
+/* ===================== 캘린더 ===================== */
+.calendar-sheet { max-width: 480px; }
+.calendar-body { padding: 8px 4px 4px; }
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.calendar-month-label { font-size: 16px; font-weight: 800; color: var(--text-1); }
+.calendar-nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text-2);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.calendar-day-cell {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  position: relative;
+}
+.calendar-day-cell.empty { visibility: hidden; }
+.calendar-day-cell.today { border: 1.5px solid var(--accent); font-weight: 800; }
+.calendar-day-cell.selected { background: var(--accent); color: #fff; }
+.calendar-day-dots { display: flex; gap: 2px; }
+.calendar-day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.calendar-day-cell.selected .calendar-day-dot { background: #fff; }
+
+.calendar-day-detail {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.calendar-day-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.calendar-day-detail-title { font-size: 14px; font-weight: 800; color: var(--text-1); }
+.calendar-add-btn {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+}
+
+.calendar-day-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.calendar-day-item {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.calendar-day-item.event-type { border-left: 3px solid var(--accent); }
+.calendar-day-item.personal-type { border-left: 3px solid #4F8EF7; }
+.calendar-day-item-time { flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--text-3); width: 70px; }
+.calendar-day-item-body { min-width: 0; }
+.calendar-day-item-title { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.calendar-day-item-memo { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+.calendar-day-item-delete { flex-shrink: 0; margin-left: auto; color: var(--text-3); font-size: 12px; }
+
+.calendar-login-notice {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--text-3);
+  padding: 14px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+}
+
+/* ===================== 개인 일정 추가 폼 ===================== */
+.schedule-form-sheet { max-width: 420px; }
+.schedule-form-body { padding: 8px 4px 4px; }
+.travel-planner-sheet { max-width: 440px; }
+.travel-planner-body { padding: 8px 4px 4px; }
+.schedule-form { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.schedule-time-row { display: flex; align-items: center; gap: 8px; }
+.schedule-time-row input { flex: 1; }
+.schedule-form input, .schedule-form textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13.5px;
+  color: var(--text-1);
+  font-family: inherit;
+}
+
+/* ===================== AI 여행 플래너 (AI 섹션 내 인라인) ===================== */
+.travel-planner-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+.travel-planner-form input {
+  background: #fff;
+  border: 1px solid #FFE1C0;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13.5px;
+  color: var(--text-1);
+  font-family: inherit;
+}
+@media (min-width: 480px) {
+  .travel-planner-form { flex-direction: row; }
+  .travel-planner-form input[type="date"] { flex: 0 0 160px; }
+  .travel-planner-form input[type="text"] { flex: 1; }
+}
+
+.travel-result { margin-top: 16px; }
+.travel-section-title { font-size: 15px; font-weight: 800; color: var(--text-1); margin-bottom: 12px; }
+
+.travel-block {
+  background: #fff;
+  border: 1px solid #FFE1C0;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.travel-block-label { font-size: 12px; font-weight: 700; color: var(--accent-dark); margin-bottom: 6px; }
+.travel-block-text { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+.travel-empty { font-size: 12px; color: var(--text-3); }
+
+.travel-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.travel-list li { font-size: 13px; color: var(--text-2); padding-left: 14px; position: relative; }
+.travel-list li::before { content: "•"; position: absolute; left: 0; color: var(--accent); }
+
+.travel-place-grid { display: flex; flex-direction: column; gap: 8px; }
+.travel-place-card { background: #fff; border-radius: 10px; padding: 10px 12px; border: 1px solid #FFE1C0; }
+.travel-place-name { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.travel-place-meta { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+.travel-place-link { font-size: 11.5px; font-weight: 700; color: var(--accent); margin-top: 4px; display: inline-block; }
+
+.travel-error-log {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--text-3);
+  background: #fff;
+  border: 1px solid #FFE1C0;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.travel-error-log summary { cursor: pointer; font-weight: 600; }
+.travel-error-log ul { margin-top: 8px; padding-left: 16px; }
+.travel-error-log li { margin-bottom: 4px; }
+
+.travel-form-hint { font-size: 11px; color: var(--text-3); margin-top: -4px; margin-bottom: 10px; }
+
+.travel-disclaimer {
+  font-size: 11.5px;
+  color: #9A6B00;
+  background: #FFF6E0;
+  border: 1px solid #FCE3A0;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.travel-day-card {
+  background: #fff;
+  border: 1px solid #FFE1C0;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.travel-day-title { font-size: 14px; font-weight: 800; color: var(--text-1); margin-bottom: 10px; }
+
+.travel-slot { padding: 8px 0; border-top: 1px dashed var(--border); }
+.travel-slot:first-of-type { border-top: none; padding-top: 0; }
+.travel-slot-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+.travel-activity-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+}
+.travel-slot-name { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.travel-slot-desc { font-size: 11.5px; color: var(--text-2); margin-top: 2px; line-height: 1.5; }
+.travel-day-route { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); font-style: italic; }
+
+@media (min-width: 760px) {
+  .ai-section { padding: 22px 26px; }
+  .ai-input-row { max-width: 640px; }
+}
+

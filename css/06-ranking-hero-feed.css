@@ -1,0 +1,338 @@
+/* ===================== Ranking ===================== */
+.live-dot {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: #FF3B30;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+}
+
+.ranking-list {
+  list-style: none;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.ranking-list::-webkit-scrollbar { display: none; }
+
+.rank-card {
+  position: relative;
+  flex: 0 0 150px;
+  scroll-snap-align: start;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.rank-card:active { transform: scale(0.97); }
+
+.rank-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 800;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rank-card:nth-child(1) .rank-badge { background: var(--accent); }
+.rank-card:nth-child(2) .rank-badge { background: #FF9640; }
+.rank-card:nth-child(3) .rank-badge { background: #FFB56B; }
+
+.rank-card-media { position: relative; width: 100%; aspect-ratio: 1 / 1; background: #f0f0f2; }
+.rank-card-photo { width: 100%; height: 100%; object-fit: cover; }
+.rank-card-discount {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.rank-card-body { display: flex; align-items: center; gap: 8px; padding: 10px; }
+.rank-card-logo {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 2px;
+}
+.rank-card-info { min-width: 0; }
+.rank-card-brand { font-size: 10.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+.rank-card-live-tag {
+  display: inline-block;
+  background: #FFEBEE;
+  color: #E5484D;
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-right: 3px;
+  vertical-align: middle;
+}
+.rank-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 640px) {
+  .rank-card { flex: 0 0 180px; }
+}
+
+/* ===================== Hero Banner ===================== */
+.hero-carousel-wrap { position: relative; }
+
+.hero-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  border-radius: var(--radius-lg);
+  scrollbar-width: none;
+}
+.hero-carousel::-webkit-scrollbar { display: none; }
+
+.hero-slide {
+  position: relative;
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  padding: clamp(20px, 3vw, 34px) clamp(20px, 4vw, 44px);
+  color: #fff;
+  overflow: hidden;
+  min-height: 150px;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+.hero-title {
+  font-size: clamp(18px, 2.6vw, 26px);
+  font-weight: 800;
+  line-height: 1.28;
+  letter-spacing: -0.3px;
+  max-width: 62%;
+  position: relative;
+  z-index: 1;
+}
+.hero-sub {
+  font-size: clamp(13px, 1.2vw, 15px);
+  font-weight: 800;
+  opacity: 0.95;
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+.hero-btn {
+  margin-top: 14px;
+  background: #fff;
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 16px;
+  border-radius: 999px;
+  position: relative;
+  z-index: 1;
+}
+.hero-slide-img {
+  position: absolute;
+  right: -10px;
+  bottom: -10px;
+  width: 46%;
+  max-width: 180px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 50%;
+  opacity: 0.9;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.15);
+}
+.hero-carousel-counter {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* ===================== Feed Grid ===================== */
+/* Fluid grid: column count grows automatically as the viewport widens,
+   from 2-up on phones to many-up on large desktop monitors. */
+.feed-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (min-width: 520px) {
+  .feed-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+}
+@media (min-width: 1000px) {
+  .feed-grid { gap: 20px; }
+}
+
+.event-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.event-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(20,20,30,0.12);
+}
+.event-card:active { transform: scale(0.97); }
+
+.card-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f0f0f2;
+  overflow: hidden;
+}
+.card-media img.card-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Brand logo badge: always visible, white plate so any logo (light or dark) reads clearly */
+.card-logo-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+.card-logo-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.card-discount {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 9px;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(255,111,0,0.35);
+}
+.card-dday {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.card-body { padding: 10px 12px 12px; }
+.card-brand-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+.card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.32;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-sub {
+  font-size: 11.5px;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+  min-height: 28px;
+}
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--text-3);
+  font-weight: 600;
+}
+
+.card-stats {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 700;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 10px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+

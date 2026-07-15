@@ -1,0 +1,236 @@
+/* ===================== 상세 시트: 보조 액션 아이콘 4개 (찜/공유/길찾기/캘린더) ===================== */
+.sheet-icon-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+  margin-bottom: 20px;
+}
+.sheet-icon-actions.three-col { grid-template-columns: repeat(3, 1fr); }
+.sheet-icon-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-2);
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.sheet-icon-action:active { transform: scale(0.95); }
+.sheet-icon-action:hover { border-color: var(--accent); background: var(--accent-light); }
+.sheet-icon-action-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  font-size: 16px;
+}
+.sheet-icon-action.liked .sheet-icon-action-emoji { background: #FFEAEA; }
+.sheet-icon-action.liked { border-color: #FF6B6B; color: #E5484D; }
+
+/* ---------- 참여방법 번호 목록 ---------- */
+.channel-steps { list-style: none; counter-reset: step; padding: 0; }
+.channel-steps li {
+  counter-increment: step;
+  padding-left: 22px;
+  position: relative;
+  margin-bottom: 4px;
+}
+.channel-steps li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+/* ---------- 위치 안내: 주소/시간 + 지도서비스 3버튼 ---------- */
+.location-detail-card { margin-top: 12px; }
+.location-address { font-size: 13.5px; font-weight: 700; color: var(--text-1); }
+.location-sub { font-size: 12px; color: var(--text-3); margin-top: 3px; margin-bottom: 12px; }
+.location-btn-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.location-btn {
+  text-align: center;
+  padding: 10px 4px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.location-btn:active { background: var(--accent-light); border-color: var(--accent); }
+
+/* ===================== 상세 시트: 하단 고정 2버튼 CTA ===================== */
+.sheet-sticky-cta {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 10px;
+  background: var(--card-bg);
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+}
+.sticky-cta-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 800;
+  transition: transform 0.12s ease;
+}
+.sticky-cta-btn:active { transform: scale(0.98); }
+.sticky-cta-primary { background: var(--accent); color: #fff; box-shadow: 0 8px 18px rgba(255,111,0,0.32); }
+.sticky-cta-secondary { background: var(--bg); color: var(--text-1); border: 1px solid var(--border); }
+
+.calendar-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.calendar-btn:active { transform: scale(0.98); }
+.calendar-btn:hover { border-color: var(--accent); }
+
+.kakao-share-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  background: #FEE500;
+  color: #191919;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  transition: transform 0.12s ease;
+}
+.kakao-share-btn:active { transform: scale(0.98); }
+
+.kakao-map-wrap {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin: 8px 0 10px;
+  border: 1px solid var(--border);
+}
+.kakao-map { width: 100%; height: 200px; background: var(--bg); }
+.map-status {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-3);
+  text-align: center;
+  padding: 0 20px;
+}
+.map-status.map-error { color: #C53030; }
+
+.kakao-route-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  background: #FEE500;
+  color: #191919;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  transition: transform 0.12s ease;
+}
+.kakao-route-btn:active { transform: scale(0.98); }
+
+.visit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--text-1);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+/* ===================== AI 히스토리 섹션 ===================== */
+.history-section {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-card);
+}
+
+.history-clear-btn {
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 600;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  background: none;
+}
+
+.history-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.history-item {
+  padding: 12px 14px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent);
+}
+
+.history-query {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 4px;
+}
+
+.history-result {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.history-time {
+  font-size: 10.5px;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+
