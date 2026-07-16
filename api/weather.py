@@ -27,14 +27,26 @@ class handler(BaseHTTPRequestHandler):
         query = parse_qs(urlparse(self.path).query)
         lat = query.get("lat", [None])[0]
         lng = query.get("lng", [None])[0]
-
-        if not lat or not lng:
-            self._send_json(400, {"error": "위치 정보(lat, lng)가 필요합니다."})
-            return
+        region = query.get("region", [None])[0]
 
         API_KEY = os.environ.get("OPENWEATHER_API_KEY", "")
         if not API_KEY:
             self._send_json(500, {"error": "날씨 API 키가 설정되지 않았습니다."})
+            return
+
+        resolved_name = None
+
+        # lat/lng가 없고 지역명(구 단위 포함, 예: "강남구", "해운대구")이 왔다면
+        # OpenWeatherMap Geocoding API로 실제 좌표를 찾는다.
+        if (not lat or not lng) and region:
+            geocoded = self._geocode_region(region, API_KEY)
+            if not geocoded:
+                self._send_json(404, {"error": f"'{region}' 지역을 찾지 못했어요. 다른 이름으로 다시 검색해보세요."})
+                return
+            lat, lng, resolved_name = geocoded["lat"], geocoded["lon"], geocoded["name"]
+
+        if not lat or not lng:
+            self._send_json(400, {"error": "위치 정보(lat, lng) 또는 지역명(region)이 필요합니다."})
             return
 
         current_url = (
@@ -50,7 +62,7 @@ class handler(BaseHTTPRequestHandler):
             description = data["weather"][0]["description"]
             icon_code = data["weather"][0]["icon"][:2]
             icon = ICON_MAP.get(icon_code, "🌤")
-            location = data.get("name") or "현재 위치"
+            location = resolved_name or data.get("name") or "현재 위치"
 
             forecast, hourly = self._fetch_forecast(lat, lng, API_KEY)
 
@@ -68,6 +80,28 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": f"날씨 API 오류: {e.code}"})
         except Exception as e:
             self._send_json(500, {"error": str(e)})
+
+    def _geocode_region(self, region, api_key):
+        """지역명(시/도, 시/군/구 단위 포함)을 OpenWeatherMap Geocoding API로 좌표 변환.
+        예: '강남구' → 국내에 동명 지역이 있을 수 있어 ',KR'을 붙여 한국으로 한정하고,
+        찾지 못하면 None을 반환해 호출부에서 '지역을 찾지 못했다'고 안내하도록 한다."""
+        import urllib.parse as _urlparse
+        q = _urlparse.quote(f"{region},KR")
+        url = f"https://api.openweathermap.org/geo/1.0/direct?q={q}&limit=1&appid={api_key}"
+        try:
+            with urllib.request.urlopen(url, timeout=8) as res:
+                results = json.loads(res.read())
+        except Exception:
+            return None
+
+        if not results:
+            return None
+
+        r = results[0]
+        # local_names에 한글 표기가 있으면 그걸, 없으면 영문 name을 그대로 사용
+        local_names = r.get("local_names") or {}
+        display_name = local_names.get("ko") or r.get("name") or region
+        return {"lat": r["lat"], "lon": r["lon"], "name": display_name}
 
     def _fetch_forecast(self, lat, lng, api_key):
         """5일치 3시간 단위 예보를 하루 단위(최고/최저기온, 대표 아이콘)로 묶은 목록과,

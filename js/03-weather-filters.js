@@ -1,34 +1,6 @@
 /* ---------- 날씨 위젯 ---------- */
 const DEFAULT_WEATHER_LOCATION = { lat: 37.5665, lng: 126.9780 }; // 서울시청 기준
 
-// 지역 검색용 주요 도시/여행지 좌표 (시청/중심가 기준 대표 좌표)
-const WEATHER_REGIONS = {
-  "서울": { lat: 37.5665, lng: 126.9780 },
-  "부산": { lat: 35.1796, lng: 129.0756 },
-  "인천": { lat: 37.4563, lng: 126.7052 },
-  "대구": { lat: 35.8714, lng: 128.6014 },
-  "광주": { lat: 35.1595, lng: 126.8526 },
-  "대전": { lat: 36.3504, lng: 127.3845 },
-  "울산": { lat: 35.5384, lng: 129.3114 },
-  "세종": { lat: 36.4801, lng: 127.2890 },
-  "수원": { lat: 37.2636, lng: 127.0286 },
-  "고양": { lat: 37.6584, lng: 126.8320 },
-  "용인": { lat: 37.2411, lng: 127.1776 },
-  "청주": { lat: 36.6424, lng: 127.4890 },
-  "전주": { lat: 35.8242, lng: 127.1480 },
-  "포항": { lat: 36.0190, lng: 129.3435 },
-  "창원": { lat: 35.2280, lng: 128.6811 },
-  "제주": { lat: 33.4996, lng: 126.5312 },
-  "서귀포": { lat: 33.2541, lng: 126.5601 },
-  "강릉": { lat: 37.7519, lng: 128.8761 },
-  "속초": { lat: 38.2070, lng: 128.5918 },
-  "춘천": { lat: 37.8813, lng: 127.7300 },
-  "여수": { lat: 34.7604, lng: 127.6622 },
-  "경주": { lat: 35.8562, lng: 129.2247 },
-  "통영": { lat: 34.8544, lng: 128.4331 },
-  "가평": { lat: 37.8315, lng: 127.5095 },
-};
-
 function getQuietLocation() {
   // GPS 필터처럼 명시적 버튼 클릭 없이, 이미 허용된 위치 권한이 있으면 사용하고
   // 없거나 거부되면 서울 기준으로 조용히 대체합니다.
@@ -55,7 +27,11 @@ async function loadWeather(loc) {
   const target = loc || await getQuietLocation();
 
   try {
-    const res = await fetch(`/api/weather?lat=${target.lat}&lng=${target.lng}`);
+    // target.region이 있으면 지역명 검색(서버가 지오코딩), 아니면 좌표 기반 조회
+    const apiUrl = target.region
+      ? `/api/weather?region=${encodeURIComponent(target.region)}`
+      : `/api/weather?lat=${target.lat}&lng=${target.lng}`;
+    const res = await fetch(apiUrl);
     const data = await res.json();
 
     if (!res.ok || data.error) throw new Error(data.error || "날씨 조회 실패");
@@ -98,7 +74,7 @@ async function loadWeather(loc) {
     // ── 예외처리: 날씨 API 실패 시 Fallback UI ──────────
     console.error("날씨 조회 오류:", err);
     iconEl.textContent = "⚠️";
-    summaryEl.textContent = "날씨 정보를 불러오지 못했어요.";
+    summaryEl.textContent = err.message || "날씨 정보를 불러오지 못했어요.";
     subEl.textContent = "잠시 후 다시 시도해주세요.";
     headerIconEl.textContent = "⚠️";
     headerTempEl.textContent = "";
@@ -108,24 +84,16 @@ async function loadWeather(loc) {
   }
 }
 
-// 지역 검색 datalist 채우기
-const weatherRegionList = document.getElementById("weatherRegionList");
-weatherRegionList.innerHTML = Object.keys(WEATHER_REGIONS).map(name => `<option value="${name}">`).join("");
-
 const weatherRegionInput = document.getElementById("weatherRegionInput");
 
 function searchWeatherRegion() {
   const name = weatherRegionInput.value.trim();
   if (!name) return;
-  if (WEATHER_REGIONS[name]) {
-    document.getElementById("weatherSummary").textContent = "날씨 정보를 불러오는 중이에요...";
-    loadWeather(WEATHER_REGIONS[name]);
-  } else {
-    showToast(`"${name}" 지역은 아직 지원하지 않아요. 목록에 있는 지역을 선택해주세요.`);
-  }
+  document.getElementById("weatherSummary").textContent = "날씨 정보를 불러오는 중이에요...";
+  // 구 단위(강남구, 해운대구 등)까지 서버가 지오코딩으로 직접 찾도록 지역명을 그대로 전달
+  loadWeather({ region: name });
 }
 
-weatherRegionInput.addEventListener("change", searchWeatherRegion);
 weatherRegionInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); searchWeatherRegion(); }
 });

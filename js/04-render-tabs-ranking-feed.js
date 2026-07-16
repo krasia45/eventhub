@@ -96,7 +96,7 @@ function renderRanking() {
 
   const pool = getFilteredEvents();
 
-  const fireIconSvg = `<svg class="fire-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M12 2c-1.3 4.6-6.3 7.6-6.3 12.6a6.3 6.3 0 1 0 12.6 0c0-2.7-1.2-5-2.5-6.5.4 2.7-1 4.3-2.6 4.3a2.5 2.5 0 0 1-2.5-2.5c0-3 2.2-4.7 1.3-7.9Z" fill="#C9401E"/><path d="M12 5c-1 3.6-5 6-5 10a5 5 0 1 0 10 0c0-2.1-1-3.9-2-5 .3 2.1-.8 3.4-2 3.4a2 2 0 0 1-2-2c0-2.4 1.7-3.7 1-6.4Z" fill="#F0791C"/><path d="M12 8c-.8 2.8-3.8 4.6-3.8 7.6a3.8 3.8 0 1 0 7.6 0c0-1.6-.8-3-1.5-3.8.2 1.6-.6 2.6-1.5 2.6a1.5 1.5 0 0 1-1.5-1.5c0-1.8 1.3-2.8.7-4.9Z" fill="#FBBF2E"/><path d="M12 12c-.4 1.5-2 2.4-2 4a2 2 0 1 0 4 0c0-.8-.4-1.5-.8-2 .1.8-.3 1.3-.8 1.3a.8.8 0 0 1-.8-.8c0-.9.7-1.4.4-2.5Z" fill="#FFF6DA"/></svg>`;
+  const fireIconSvg = `<svg class="fire-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M12 2c3 4 6 8 6 12a6 6 0 1 1-12 0c0-2 1-3.5 2-5-.3 2 .5 3.5 2 3.5s2.2-1.3 1.5-3C10.8 7.5 9.5 5 12 2Z" fill="#E8571F"/><path d="M12 10c1.2 1.6 2.3 3 2.3 4.6a2.3 2.3 0 1 1-4.6 0c0-.8.4-1.4.8-2-.1.8.2 1.3.7 1.3s.9-.5.7-1.2c-.3-.9-.7-1.8.1-2.7Z" fill="#FFE9A8"/></svg>`;
   titleEl.innerHTML = currentCategory === "all"
     ? `${fireIconSvg} 실시간 인기 이벤트`
     : `${fireIconSvg} ${getCategoryLabel(currentCategory)} 인기 이벤트`;
