@@ -52,7 +52,7 @@ class handler(BaseHTTPRequestHandler):
             icon = ICON_MAP.get(icon_code, "🌤")
             location = data.get("name") or "현재 위치"
 
-            forecast, today_am_pm = self._fetch_forecast(lat, lng, API_KEY)
+            forecast, hourly = self._fetch_forecast(lat, lng, API_KEY)
 
             self._send_json(200, {
                 "location": location,
@@ -61,7 +61,7 @@ class handler(BaseHTTPRequestHandler):
                 "icon": icon,
                 "advice": self._advice_for(temp_c, icon_code),
                 "forecast": forecast,  # [{ "label": "오늘"/"화" 등, "icon": "☀️", "tempMax": 30, "tempMin": 22 }, ...]
-                "todayAmPm": today_am_pm,  # { "am": {"icon","tempAvg"}, "pm": {...} } — 오늘 오전/오후 대표 날씨
+                "hourly": hourly,  # [{ "label": "지금"/"15시" 등, "icon": "☀️", "tempC": 27 }, ...] — 네이버 날씨처럼 시간대별
             })
 
         except urllib.error.HTTPError as e:
@@ -70,10 +70,8 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": str(e)})
 
     def _fetch_forecast(self, lat, lng, api_key):
-        """5일치 3시간 단위 예보를 하루 단위로 묶어서(최고/최저기온, 대표 아이콘) 반환.
-        네이버 날씨처럼 '오늘/화/수/목/금' 형태의 일별 예보 리스트를 만들기 위함.
-        동시에 '오늘'에 해당하는 시간대를 오전(00~11시)/오후(12~23시)로 나눠서
-        각각의 대표 아이콘과 평균 기온도 함께 계산해서 반환한다."""
+        """5일치 3시간 단위 예보를 하루 단위(최고/최저기온, 대표 아이콘)로 묶은 목록과,
+        네이버 날씨처럼 지금부터 이어지는 3시간 간격 시간대별 목록을 함께 반환한다."""
         url = (
             "https://api.openweathermap.org/data/2.5/forecast"
             f"?lat={lat}&lon={lng}&appid={api_key}&units=metric&lang=kr"
@@ -82,13 +80,13 @@ class handler(BaseHTTPRequestHandler):
             with urllib.request.urlopen(url, timeout=8) as res:
                 data = json.loads(res.read())
         except Exception:
-            return [], None  # 예보 조회 실패해도 현재 날씨는 보여줄 수 있도록 조용히 빈 값 반환
+            return [], []  # 예보 조회 실패해도 현재 날씨는 보여줄 수 있도록 조용히 빈 값 반환
 
         days = {}
+        raw_list = data.get("list", [])
         today_key = datetime.now().strftime("%Y-%m-%d")
-        am_slots, pm_slots = [], []
 
-        for item in data.get("list", []):
+        for item in raw_list:
             dt = datetime.fromtimestamp(item["dt"])
             date_key = dt.strftime("%Y-%m-%d")
             temp = item["main"]["temp"]
@@ -99,23 +97,9 @@ class handler(BaseHTTPRequestHandler):
             days[date_key]["temps"].append(temp)
             days[date_key]["icons"].append(icon_code)
 
-            if date_key == today_key:
-                (am_slots if dt.hour < 12 else pm_slots).append((temp, icon_code))
-
-        def summarize(slots):
-            if not slots:
-                return None
-            temps = [t for t, _ in slots]
-            icons = [i for _, i in slots]
-            common_icon = max(set(icons), key=icons.count)
-            return {"icon": ICON_MAP.get(common_icon, "🌤"), "tempAvg": round(sum(temps) / len(temps))}
-
-        today_am_pm = {"am": summarize(am_slots), "pm": summarize(pm_slots)}
-
         result = []
         for i, (date_key, d) in enumerate(sorted(days.items())[:5]):
             label = "오늘" if date_key == today_key else WEEKDAY_KR[d["date"].weekday()]
-            # 대표 아이콘: 그날 가장 자주 나온 코드
             common_icon = max(set(d["icons"]), key=d["icons"].count)
             result.append({
                 "label": label,
@@ -123,7 +107,19 @@ class handler(BaseHTTPRequestHandler):
                 "tempMax": round(max(d["temps"])),
                 "tempMin": round(min(d["temps"])),
             })
-        return result, today_am_pm
+
+        # 시간대별(3시간 간격) — 지금 이후 앞으로의 8개 구간(약 24시간)만 보여줌
+        hourly = []
+        for i, item in enumerate(raw_list[:8]):
+            dt = datetime.fromtimestamp(item["dt"])
+            icon_code = item["weather"][0]["icon"][:2]
+            hourly.append({
+                "label": "지금" if i == 0 else f"{dt.hour}시",
+                "icon": ICON_MAP.get(icon_code, "🌤"),
+                "tempC": round(item["main"]["temp"]),
+            })
+
+        return result, hourly
 
     def _advice_for(self, temp_c, icon_code):
         if icon_code in ("09", "10", "11"):
