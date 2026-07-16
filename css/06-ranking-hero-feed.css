@@ -1,7 +1,8 @@
 /* ===================== Ranking ===================== */
 .fire-icon {
   display: inline-flex;
-  vertical-align: -3px;
+  vertical-align: -6px;
+  margin-right: 2px;
   color: var(--accent);
   transform-origin: 50% 90%;
   animation: fireFlicker 1.6s ease-in-out infinite;
