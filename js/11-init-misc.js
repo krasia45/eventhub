@@ -27,60 +27,127 @@ function getInitialTheme() {
 
 applyTheme(getInitialTheme());
 
-/* ---------- 헤더 알림벨 (관심 브랜드/키워드 관련 새 이벤트 안내) ---------- */
+/* ---------- 헤더 알림벨 + 더보기 시트 알림 목록 (팔로우 브랜드의 "새" 이벤트 안내) ----------
+   기존 코드는 "마지막 확인 시각"을 저장만 하고 실제로는 비교에 쓰지 않아서,
+   팔로우한 브랜드의 이벤트가 예전부터 있었든 방금 새로 등록됐든 항상 점이 떴다.
+   여기서는 이벤트의 createdAt과 저장된 마지막 확인 시각을 실제로 비교해서
+   "마지막으로 확인한 뒤에 새로 등록된 이벤트"만 알림 대상으로 취급한다. */
+
+function getLastSeenNotifTs() {
+  const stored = localStorage.getItem("eventhub-last-seen-notif");
+  if (!stored) {
+    // 이 로직을 처음 도입하는 시점 — 이전부터 있던 이벤트를 전부 "새 이벤트"로
+    // 오인하지 않도록 지금 시각을 기준으로 삼고, 이후 등록되는 것부터 알림 대상으로 취급
+    const now = Date.now().toString();
+    localStorage.setItem("eventhub-last-seen-notif", now);
+    return Number(now);
+  }
+  return Number(stored);
+}
+
+function markNotifSeenNow() {
+  localStorage.setItem("eventhub-last-seen-notif", Date.now().toString());
+  setNotifDots(false);
+}
+
+function setNotifDots(visible) {
+  document.getElementById("notifDot").hidden = !visible;
+  const navDot = document.getElementById("navNotifDot");
+  if (navDot) navDot.hidden = !visible;
+}
+
+async function getFollowedBrands() {
+  if (!currentUser || !supabaseClient) return null; // null = 로그인 안 됨 (빈 배열과 구분)
+  const { data } = await supabaseClient.from("user_follows").select("brand").eq("user_id", currentUser.id);
+  return (data || []).map(f => f.brand);
+}
+
+function getNewFollowedMatches(followedBrands) {
+  const lastSeen = getLastSeenNotifTs();
+  return EVENTS
+    .filter(ev => followedBrands.includes(ev.brand) && ev.createdAt && new Date(ev.createdAt).getTime() > lastSeen)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+// 알림벨을 누르면 더보기 시트의 알림 목록으로 안내 (엔트리 포인트를 하나로 통합)
 document.getElementById("notifBellBtn").addEventListener("click", () => {
-  openNotificationPanel();
+  openMoreMenu();
 });
 
-async function openNotificationPanel() {
-  document.getElementById("notifDot").hidden = true;
-  localStorage.setItem("eventhub-last-seen-notif", Date.now().toString());
+// 마지막 확인 이후 팔로우한 브랜드의 새 이벤트가 있으면 벨에 점 표시 (앱 로드/로그인 시 호출)
+async function checkNewFollowedEvents() {
+  if (!currentUser || !supabaseClient || EVENTS.length === 0) return;
+  try {
+    const followedBrands = await getFollowedBrands();
+    if (!followedBrands || followedBrands.length === 0) return;
+    const matches = getNewFollowedMatches(followedBrands);
+    setNotifDots(matches.length > 0);
+  } catch { /* 조용히 무시 — 알림은 부가 기능이라 실패해도 사이트 기능에 영향 없어야 함 */ }
+}
+
+// 더보기 시트를 열 때(=사용자가 알림을 실제로 확인하는 시점) 목록을 그려줌
+async function renderNotificationList() {
+  const listEl = document.getElementById("notifList");
+  const emptyEl = document.getElementById("notifEmpty");
+  const loginEl = document.getElementById("notifLoginNotice");
+  const markAllBtn = document.getElementById("notifMarkAllBtn");
+
+  listEl.innerHTML = "";
+  emptyEl.hidden = true;
+  loginEl.hidden = true;
+  markAllBtn.hidden = true;
 
   if (!currentUser || !supabaseClient) {
-    showToast("로그인하시면 관심 브랜드의 새 이벤트를 알려드려요.");
+    loginEl.hidden = false;
     return;
   }
 
   try {
-    const { data: follows } = await supabaseClient
-      .from("user_follows")
-      .select("brand")
-      .eq("user_id", currentUser.id);
-
-    const followedBrands = (follows || []).map(f => f.brand);
-    if (followedBrands.length === 0) {
-      showToast("아직 팔로우한 브랜드가 없어요. 이벤트 상세에서 브랜드를 팔로우해보세요!");
+    const followedBrands = await getFollowedBrands();
+    if (!followedBrands || followedBrands.length === 0) {
+      emptyEl.hidden = false;
       return;
     }
 
-    const matches = EVENTS.filter(ev => followedBrands.includes(ev.brand)).slice(0, 5);
+    const matches = getNewFollowedMatches(followedBrands);
     if (matches.length === 0) {
-      showToast("팔로우한 브랜드의 진행 중인 이벤트가 아직 없어요.");
-      return;
+      emptyEl.hidden = false;
+    } else {
+      listEl.innerHTML = matches.map(ev => `
+        <li class="notif-item" data-id="${ev.id}">
+          <span class="notif-item-emoji">🔔</span>
+          <div class="notif-item-body">
+            <p class="notif-item-brand">${ev.brand}</p>
+            <p class="notif-item-title">${ev.title}</p>
+          </div>
+        </li>
+      `).join("");
+      listEl.querySelectorAll(".notif-item").forEach(el => {
+        el.addEventListener("click", () => {
+          closeMoreMenu();
+          openSheet(el.dataset.id);
+        });
+      });
+      markAllBtn.hidden = false;
     }
-    openSheet(matches[0].id);
-    showToast(`팔로우한 ${matches[0].brand}의 이벤트예요!`);
+
+    // 목록을 실제로 봤으니 지금을 "확인함"으로 기록하고 벨의 점을 지움
+    markNotifSeenNow();
   } catch (err) {
-    console.error("알림 조회 오류:", err);
+    console.error("알림 목록 조회 오류:", err);
   }
 }
 
-// 마지막 방문 이후 팔로우한 브랜드의 새 이벤트가 있으면 벨에 점 표시
-async function checkNewFollowedEvents() {
-  if (!currentUser || !supabaseClient || EVENTS.length === 0) return;
-  try {
-    const { data: follows } = await supabaseClient.from("user_follows").select("brand").eq("user_id", currentUser.id);
-    const followedBrands = (follows || []).map(f => f.brand);
-    if (followedBrands.length > 0 && EVENTS.some(ev => followedBrands.includes(ev.brand))) {
-      document.getElementById("notifDot").hidden = false;
-    }
-  } catch { /* 조용히 무시 — 알림은 부가 기능이라 실패해도 사이트 기능에 영향 없어야 함 */ }
-}
+document.getElementById("notifMarkAllBtn").addEventListener("click", () => {
+  renderNotificationList();
+});
+
 
 /* ---------- 더보기 메뉴 (하단 내비게이션 "더보기" 탭) ---------- */
 function openMoreMenu() {
   document.getElementById("moreMenuOverlay").classList.add("open");
   document.body.style.overflow = "hidden";
+  renderNotificationList();
 }
 function closeMoreMenu() {
   document.getElementById("moreMenuOverlay").classList.remove("open");
@@ -129,4 +196,3 @@ async function openFollowedBrandsPanel() {
     console.error("팔로우 목록 조회 오류:", err);
   }
 }
-

@@ -105,6 +105,49 @@
 .quick-menu-emoji { font-size: 20px; }
 .quick-menu-btn:active { background: var(--accent-light); }
 
+/* ── 알림 목록 (더보기 시트 상단, 퀵메뉴 그리드 위) ── */
+.notif-section { padding: 4px 12px 4px; }
+.notif-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.notif-mark-all-btn {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.notif-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.notif-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.notif-item:active { background: var(--accent-light); }
+.notif-item-emoji { font-size: 16px; }
+.notif-item-body { min-width: 0; }
+.notif-item-brand { font-size: 11.5px; font-weight: 700; color: var(--accent); margin: 0 0 2px; }
+.notif-item-title {
+  font-size: 12.5px;
+  color: var(--text-1);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.notif-empty, .notif-login-notice {
+  font-size: 12.5px;
+  color: var(--text-3);
+  padding: 14px 2px;
+  text-align: center;
+}
+
 @media (min-width: 760px) {
   .bottom-nav { display: none; }
 }
@@ -154,4 +197,3 @@
   color: var(--accent-dark);
   text-decoration: underline;
 }
-

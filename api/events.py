@@ -49,6 +49,7 @@ class handler(BaseHTTPRequestHandler):
                     "period": r["period"],
                     "periodEnd": r.get("period_end"),  # 프론트에서 D-day를 매일 새로 계산하기 위한 원본 날짜
                     "periodStart": r.get("period_start"),  # 캘린더에 기간 전체를 표시하기 위한 원본 날짜
+                    "createdAt": r.get("created_at"),  # 팔로우 브랜드 "새 이벤트" 알림 판별용
                     "channel": r.get("channel", ""),
                     "conditions": r.get("conditions", ""),
                     "targetAudience": r.get("target_audience", ""),
