@@ -159,7 +159,7 @@
       <div class="sheet-handle"></div>
       <button class="sheet-close" id="moreMenuClose" aria-label="닫기">✕</button>
       <div class="more-menu-body">
-        <h2 class="auth-title">더보기</h2>
+        <h2 class="auth-title">알림·바로가기</h2>
         <div class="more-menu-grid">
           <button class="quick-menu-btn" id="quickMenuFollowBtn">
             <span class="quick-menu-emoji">🔔</span>
@@ -183,26 +183,32 @@
   </div>
 
   <!-- ===== Bottom Nav ===== -->
+  <!-- 순서: 쿠폰함 / 여행플래너 / Home(중앙, elevated) / 알림(구 더보기, 기능 동일) / Profile -->
   <nav class="bottom-nav">
-    <button class="nav-item active" data-nav="home">
-      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M3 11.5 12 4l9 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Home</span>
+    <button class="nav-item" data-nav="saved">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 21s-7.2-4.5-9.6-9C.8 8.4 2.6 5 6 5c2 0 3.4 1 6 3.5C14.6 6 16 5 18 5c3.4 0 5.2 3.4 3.6 7-2.4 4.5-9.6 9-9.6 9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span>쿠폰함</span>
     </button>
     <button class="nav-item" data-nav="search">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm10 2-5.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <span>여행플래너</span>
     </button>
-    <button class="nav-item" data-nav="saved">
-      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 21s-7.2-4.5-9.6-9C.8 8.4 2.6 5 6 5c2 0 3.4 1 6 3.5C14.6 6 16 5 18 5c3.4 0 5.2 3.4 3.6 7-2.4 4.5-9.6 9-9.6 9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-      <span>쿠폰함</span>
+    <button class="nav-item nav-item-home active" data-nav="home">
+      <span class="nav-home-circle">
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M3 11.5 12 4l9 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" data-nav="more" id="navMoreBtn">
+      <span class="nav-item-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="nav-badge-dot"></span>
+      </span>
+      <span>알림</span>
     </button>
     <button class="nav-item" data-nav="profile">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z" fill="currentColor"/></svg>
       <span>Profile</span>
-    </button>
-    <button class="nav-item" data-nav="more" id="navMoreBtn">
-      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg>
-      <span>더보기</span>
     </button>
   </nav>
 
