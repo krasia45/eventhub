@@ -1,6 +1,18 @@
 /* ---------- 날씨 위젯 ---------- */
 const DEFAULT_WEATHER_LOCATION = { lat: 37.5665, lng: 126.9780 }; // 서울시청 기준
 
+// 지역 선택 드롭다운용 주요 도시 좌표 (시청/중심가 기준 대표 좌표)
+const WEATHER_REGIONS = {
+  seoul: { lat: 37.5665, lng: 126.9780 },
+  busan: { lat: 35.1796, lng: 129.0756 },
+  incheon: { lat: 37.4563, lng: 126.7052 },
+  daegu: { lat: 35.8714, lng: 128.6014 },
+  gwangju: { lat: 35.1595, lng: 126.8526 },
+  daejeon: { lat: 36.3504, lng: 127.3845 },
+  ulsan: { lat: 35.5384, lng: 129.3114 },
+  jeju: { lat: 33.4996, lng: 126.5312 },
+};
+
 function getQuietLocation() {
   // GPS 필터처럼 명시적 버튼 클릭 없이, 이미 허용된 위치 권한이 있으면 사용하고
   // 없거나 거부되면 서울 기준으로 조용히 대체합니다.
@@ -21,6 +33,7 @@ async function loadWeather(loc) {
   const headerIconEl = document.getElementById("weatherHeaderIcon");
   const headerTempEl = document.getElementById("weatherHeaderTemp");
   const forecastRow = document.getElementById("weatherForecastRow");
+  const amPmRow = document.getElementById("weatherAmPmRow");
 
   const target = loc || await getQuietLocation();
 
@@ -35,6 +48,19 @@ async function loadWeather(loc) {
     subEl.textContent = data.advice || "";
     headerIconEl.textContent = data.icon || "🌤";
     headerTempEl.textContent = `${data.tempC}°`;
+
+    // 오늘 오전/오후 날씨 (있을 때만 표시)
+    if (data.todayAmPm && (data.todayAmPm.am || data.todayAmPm.pm)) {
+      amPmRow.hidden = false;
+      const am = data.todayAmPm.am;
+      const pm = data.todayAmPm.pm;
+      document.getElementById("weatherAmIcon").textContent = am ? am.icon : "-";
+      document.getElementById("weatherAmTemp").textContent = am ? `${am.tempAvg}°C` : "정보 없음";
+      document.getElementById("weatherPmIcon").textContent = pm ? pm.icon : "-";
+      document.getElementById("weatherPmTemp").textContent = pm ? `${pm.tempAvg}°C` : "정보 없음";
+    } else {
+      amPmRow.hidden = true;
+    }
 
     // 향후 예보(네이버 날씨처럼 오늘/화/수/목/금 형태로) — API가 못 주면 조용히 생략
     if (Array.isArray(data.forecast) && data.forecast.length > 0) {
@@ -58,8 +84,21 @@ async function loadWeather(loc) {
     headerIconEl.textContent = "⚠️";
     headerTempEl.textContent = "";
     forecastRow.innerHTML = "";
+    amPmRow.hidden = true;
   }
 }
+
+document.getElementById("weatherRegionSelect").addEventListener("change", async (e) => {
+  const value = e.target.value;
+  const summaryEl = document.getElementById("weatherSummary");
+  summaryEl.textContent = "날씨 정보를 불러오는 중이에요...";
+
+  if (value === "gps") {
+    loadWeather(await getQuietLocation());
+  } else if (WEATHER_REGIONS[value]) {
+    loadWeather(WEATHER_REGIONS[value]);
+  }
+});
 
 document.getElementById("weatherHeaderChip").addEventListener("click", () => {
   document.getElementById("weatherOverlay").classList.add("open");
@@ -219,4 +258,3 @@ function getCategoryLabel(id) {
   const cat = CATEGORIES.find(c => c.id === id);
   return cat ? cat.label : "";
 }
-

@@ -1,17 +1,23 @@
 /* ===================== Ranking ===================== */
+.ranking-eyebrow {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
 .fire-icon {
   display: inline-flex;
-  vertical-align: -6px;
+  vertical-align: -8px;
   margin-right: 2px;
-  color: var(--accent);
+  filter: drop-shadow(0 0 4px rgba(255, 111, 0, 0.55));
   transform-origin: 50% 90%;
-  animation: fireFlicker 1.6s ease-in-out infinite;
+  animation: fireFlicker 1.5s ease-in-out infinite;
 }
 @keyframes fireFlicker {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  25% { transform: scale(1.06, 0.94) rotate(-4deg); }
-  50% { transform: scale(0.94, 1.06) rotate(3deg); }
-  75% { transform: scale(1.04, 0.96) rotate(-2deg); }
+  0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 4px rgba(255, 111, 0, 0.55)); }
+  25% { transform: scale(1.08, 0.92) rotate(-5deg); filter: drop-shadow(0 0 6px rgba(255, 140, 0, 0.7)); }
+  50% { transform: scale(0.92, 1.08) rotate(4deg); filter: drop-shadow(0 0 3px rgba(255, 111, 0, 0.4)); }
+  75% { transform: scale(1.05, 0.95) rotate(-3deg); filter: drop-shadow(0 0 5px rgba(255, 140, 0, 0.6)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .fire-icon { animation: none; }

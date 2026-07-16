@@ -1,3 +1,25 @@
+/* ---------- 한글 브랜드명 검색 지원 (예: "자라" 검색 시 "ZARA" 매칭) ----------
+   국내에서 통용되는 한글 표기가 실제 브랜드명(영문 등)과 달라서 단순 includes()로는
+   못 찾는 경우가 많아, 자주 검색될 만한 브랜드들의 한글-영문 별칭을 매핑해둔다. */
+const BRAND_ALIASES = {
+  "자라": "zara", "나이키": "nike", "아디다스": "adidas", "스타벅스": "starbucks",
+  "유니클로": "uniqlo", "구찌": "gucci", "샤넬": "chanel", "디올": "dior",
+  "이케아": "ikea", "던킨": "dunkin", "맥도날드": "mcdonald", "코치": "coach",
+  "룰루레몬": "lululemon", "반스": "vans", "컨버스": "converse",
+  "빈폴": "beanpole", "젠틀몬스터": "gentle monster", "나스": "nars",
+  "노스페이스": "north face", "파타고니아": "patagonia", "지오다노": "giordano",
+  "아고다": "agoda", "부킹닷컴": "booking.com", "익스피디아": "expedia", "힐튼": "hilton",
+  "메리어트": "marriott", "에어비앤비": "airbnb", "호텔스닷컴": "hotels.com", "여기어때": "goodchoice",
+};
+
+function textMatchesQuery(text, query) {
+  const t = (text || "").toLowerCase();
+  const q = query.toLowerCase().trim();
+  if (t.includes(q)) return true;
+  const alias = BRAND_ALIASES[q];
+  return !!alias && t.includes(alias);
+}
+
 /* ---------- Global Search (simple filter feedback) ---------- */
 document.getElementById("globalSearch").addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
@@ -52,7 +74,7 @@ function showSearchSuggestions() {
 
   // 타이핑 중인 자동완성 — 특정 이벤트를 정확히 짚어 고르는 목록이라 클릭 시 바로 그 이벤트로 이동
   const matches = EVENTS.filter(ev =>
-    ev.brand.toLowerCase().includes(q.toLowerCase()) || ev.title.toLowerCase().includes(q.toLowerCase())
+    textMatchesQuery(ev.brand, q) || textMatchesQuery(ev.title, q)
   ).slice(0, 6);
 
   if (matches.length === 0) {
@@ -102,9 +124,9 @@ function openSearchResults(query) {
   if (!q) return;
 
   const matches = EVENTS.filter(ev =>
-    ev.brand.toLowerCase().includes(q.toLowerCase()) ||
-    ev.title.toLowerCase().includes(q.toLowerCase()) ||
-    ev.tags.some(t => t.toLowerCase().includes(q.toLowerCase()))
+    textMatchesQuery(ev.brand, q) ||
+    textMatchesQuery(ev.title, q) ||
+    ev.tags.some(t => textMatchesQuery(t, q))
   ).sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
 
   document.getElementById("searchResultsQuery").textContent = `"${q}"`;
@@ -138,4 +160,3 @@ document.getElementById("searchResultsOverlay").addEventListener("click", (e) =>
     document.body.style.overflow = "";
   }
 });
-
