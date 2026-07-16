@@ -1,12 +1,11 @@
-/* ===================== 상세 시트: 보조 액션 아이콘 4개 (찜/공유/길찾기/캘린더) ===================== */
+/* ===================== 상세 시트: 보조 액션 아이콘 2개 (찜/캘린더) — 길찾기·공유하기는 하단 고정 CTA에서 처리 ===================== */
 .sheet-icon-actions {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-top: 4px;
   margin-bottom: 20px;
 }
-.sheet-icon-actions.three-col { grid-template-columns: repeat(3, 1fr); }
 .sheet-icon-action {
   display: flex;
   flex-direction: column;
@@ -233,4 +232,3 @@
   color: var(--text-3);
   margin-top: 6px;
 }
-

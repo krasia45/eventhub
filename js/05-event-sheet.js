@@ -62,14 +62,9 @@ function openSheet(eventId) {
 
   // 지도/길찾기는 "실제로 찾아가는 장소"인 팝업스토어에서만 의미가 있어 그 카테고리에서만 노출
   const mapSection = document.getElementById("mapSection");
-  const routeBtn = document.getElementById("kakaoRouteBtn");
-  const iconActions = document.getElementById("sheetIconActions");
 
   if (isPopup) {
     mapSection.hidden = false;
-    routeBtn.hidden = false;
-    iconActions.classList.remove("three-col");
-    routeBtn.href = getKakaoRouteLink(ev);
     renderEventMap(ev);
 
     document.getElementById("locationAddress").textContent = ev.title;
@@ -79,8 +74,6 @@ function openSheet(eventId) {
     document.getElementById("locationKakaoBtn").href = getKakaoRouteLink(ev);
   } else {
     mapSection.hidden = true;
-    routeBtn.hidden = true;
-    iconActions.classList.add("three-col");
   }
 
   // 하단 고정 CTA: 팝업 → 길찾기+공유 / 그 외 → 브랜드사이트이동+공유 (참고 디자인 반영)
@@ -363,10 +356,3 @@ document.getElementById("calendarBtn").addEventListener("click", () => {
 
   window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, "_blank", "noopener,noreferrer");
 });
-
-document.getElementById("shareBtn").addEventListener("click", () => {
-  const ev = EVENTS.find(e => e.id === activeEventId);
-  if (!ev) return;
-  openShareFlow(ev);
-});
-
