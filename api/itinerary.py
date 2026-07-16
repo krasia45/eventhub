@@ -3,6 +3,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.request
 import urllib.error
 import urllib.parse
@@ -269,18 +270,27 @@ class handler(BaseHTTPRequestHandler):
 
         req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
 
-        try:
-            with urllib.request.urlopen(req, timeout=25) as res:
-                result = json.loads(res.read())
-                raw_text = result["candidates"][0]["content"]["parts"][0]["text"]
-                return json.loads(raw_text)
+        # 429(요청 한도 초과)는 순간적인 트래픽 몰림으로 발생하는 경우가 많아
+        # 짧게 대기했다가 한 번만 재시도한다. 그래도 실패하면 안전한 기본값으로 폴백.
+        for attempt in range(2):
+            try:
+                with urllib.request.urlopen(req, timeout=25) as res:
+                    result = json.loads(res.read())
+                    raw_text = result["candidates"][0]["content"]["parts"][0]["text"]
+                    return json.loads(raw_text)
 
-        except urllib.error.HTTPError as e:
-            errors.append({"step": "LLM Generation", "type": "API Connection Error", "message": f"Gemini 요청 실패 (HTTP {e.code})"})
-        except json.JSONDecodeError:
-            errors.append({"step": "LLM Generation", "type": "Parsing Error", "message": "AI 응답을 JSON으로 해석하지 못했습니다."})
-        except Exception as e:
-            errors.append({"step": "LLM Generation", "type": "Unknown Error", "message": str(e)})
+            except urllib.error.HTTPError as e:
+                if e.code == 429 and attempt == 0:
+                    time.sleep(1.5)
+                    continue
+                errors.append({"step": "LLM Generation", "type": "API Connection Error", "message": f"Gemini 요청 실패 (HTTP {e.code})"})
+                break
+            except json.JSONDecodeError:
+                errors.append({"step": "LLM Generation", "type": "Parsing Error", "message": "AI 응답을 JSON으로 해석하지 못했습니다."})
+                break
+            except Exception as e:
+                errors.append({"step": "LLM Generation", "type": "Unknown Error", "message": str(e)})
+                break
 
         return {"days": [], "fallback_restaurants": [], "fallback_lodgings": []}
 

@@ -14,9 +14,14 @@ function formatDateKey(y, m, d) {
 }
 
 function dateHasSomething(dateKey) {
-  const hasEvent = likedEventPeriods.some(p => p.start && p.end && dateKey >= p.start && dateKey <= p.end);
-  const hasPersonal = personalSchedules.some(s => s.schedule_date === dateKey);
-  return { hasEvent, hasPersonal };
+  const eventMatches = likedEventPeriods.filter(p => p.start && p.end && dateKey >= p.start && dateKey <= p.end);
+  const personalMatches = personalSchedules.filter(s => s.schedule_date === dateKey);
+  return {
+    hasEvent: eventMatches.length > 0,
+    eventCount: eventMatches.length,
+    hasPersonal: personalMatches.length > 0,
+    personalCount: personalMatches.length,
+  };
 }
 
 async function openCalendar() {
@@ -68,13 +73,21 @@ function renderCalendarGrid() {
 
   for (let d = 1; d <= daysInMonth; d++) {
     const dateKey = formatDateKey(y, m, d);
-    const { hasEvent, hasPersonal } = dateHasSomething(dateKey);
+    const { hasEvent, eventCount, hasPersonal, personalCount } = dateHasSomething(dateKey);
     const isToday = dateKey === todayKey;
     const isSelected = dateKey === calendarSelectedDate;
 
     const dots = [];
-    if (hasEvent) dots.push(`<span class="calendar-day-dot" style="background:var(--accent)"></span>`);
-    if (hasPersonal) dots.push(`<span class="calendar-day-dot" style="background:#4F8EF7"></span>`);
+    if (hasEvent) {
+      dots.push(eventCount > 1
+        ? `<span class="calendar-day-count" style="background:var(--accent)">${eventCount}</span>`
+        : `<span class="calendar-day-dot" style="background:var(--accent)"></span>`);
+    }
+    if (hasPersonal) {
+      dots.push(personalCount > 1
+        ? `<span class="calendar-day-count" style="background:#4F8EF7">${personalCount}</span>`
+        : `<span class="calendar-day-dot" style="background:#4F8EF7"></span>`);
+    }
 
     cells += `
       <button class="calendar-day-cell ${isToday ? "today" : ""} ${isSelected ? "selected" : ""}" data-date="${dateKey}">
@@ -219,4 +232,3 @@ document.getElementById("scheduleForm").addEventListener("submit", async (e) => 
   renderCalendarGrid();
   renderCalendarDayDetail(calendarSelectedDate);
 });
-

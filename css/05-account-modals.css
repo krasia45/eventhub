@@ -193,6 +193,17 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
   font-weight: 700;
 }
 
+.calendar-legend {
+  display: flex;
+  gap: 14px;
+  padding: 0 4px 8px;
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 600;
+}
+.calendar-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.calendar-legend-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
+
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -227,6 +238,18 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
 .calendar-day-dots { display: flex; gap: 2px; }
 .calendar-day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
 .calendar-day-cell.selected .calendar-day-dot { background: #fff; }
+.calendar-day-count {
+  min-width: 12px;
+  height: 12px;
+  padding: 0 2px;
+  border-radius: 6px;
+  font-size: 8px;
+  line-height: 12px;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+}
+.calendar-day-cell.selected .calendar-day-count { background: #fff !important; color: var(--accent); }
 
 .calendar-day-detail {
   margin-top: 16px;

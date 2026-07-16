@@ -96,9 +96,10 @@ function renderRanking() {
 
   const pool = getFilteredEvents();
 
-  titleEl.textContent = currentCategory === "all"
-    ? "🔥 실시간 인기 이벤트"
-    : `🔥 ${getCategoryLabel(currentCategory)} 인기 이벤트`;
+  const fireIconSvg = `<svg class="fire-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 2c1.2 3-2.5 4.3-2.8 7.8A2.8 2.8 0 0 0 12 13a2.8 2.8 0 0 0 2.8-2.8c0-.7-.3-1.3-.6-1.7 1.4 2.4 3.3 3.6 3.3 6.5a5.5 5.5 0 1 1-11 0C6.5 10 11 8.5 11.2 3.2 11.3 2.5 11.6 2 12 2Z" fill="currentColor"/></svg>`;
+  titleEl.innerHTML = currentCategory === "all"
+    ? `${fireIconSvg} 실시간 인기 이벤트`
+    : `${fireIconSvg} ${getCategoryLabel(currentCategory)} 인기 이벤트`;
 
   if (pool.length === 0) {
     list.innerHTML = `<li class="empty-state">아직 랭킹에 표시할 이벤트가 없어요.</li>`;
@@ -207,4 +208,3 @@ function renderFeed() {
 
   grid.querySelectorAll(".card-logo-badge img").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 }
-
