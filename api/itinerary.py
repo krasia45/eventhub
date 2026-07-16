@@ -2,10 +2,14 @@ from http.server import BaseHTTPRequestHandler
 import json
 import os
 import re
+import sys
 import urllib.request
 import urllib.error
 import urllib.parse
 from datetime import datetime, timedelta
+
+sys.path.insert(0, os.path.dirname(__file__))
+from _supabase_client import sb_select
 
 
 MAX_DAYS = 5  # 과도한 API 호출/비용 방지를 위한 상한
@@ -81,6 +85,12 @@ class handler(BaseHTTPRequestHandler):
                             "message": "실시간 숙박 검색 결과가 없어 AI 백업 데이터로 대체합니다."})
             lodgings = ai_plan.get("fallback_lodgings", [])
 
+        # ── 3. EventHub에 등록된 숙박앱 특가(야놀자/여기어때/Agoda 등, category=stay) ──
+        # 네이버 검색 결과(실제 지역 숙소 장소)와는 성격이 달라 섞지 않고 별도 필드로 분리해서 제공.
+        # "평점" 데이터는 네이버 지역검색/EventHub 어느 쪽에도 없어서 정렬 기준으로 쓸 수 없고,
+        # 대신 실제로 값을 가진 할인율(discount) 기준으로 정렬한다.
+        stay_deals = self._get_stay_deals(errors)
+
         # 맛집을 날짜별 점심/저녁 슬롯에 순환 배분 (AI가 아닌 실제 검색 결과 기반)
         days_result = []
         ai_days = ai_plan.get("days", [])
@@ -107,10 +117,44 @@ class handler(BaseHTTPRequestHandler):
             "num_days": num_days,
             "days": days_result,
             "lodgings": lodgings[:3],
+            "stay_deals": stay_deals[:5],
             "errors": errors,
         }
 
         self._send_json(200, result)
+
+    # ------------------------------------------------------------------
+    def _get_stay_deals(self, errors):
+        """EventHub에 등록된 숙박앱/숙박 브랜드 이벤트(category=stay)를 할인율 기준 내림차순으로 반환."""
+        try:
+            rows = sb_select("events", {
+                "select": "id,brand,title,discount,link,domain,merchant_type",
+                "category": "eq.stay",
+                "is_active": "eq.true",
+            })
+        except Exception as e:
+            errors.append({
+                "step": "Stay Deals (EventHub)",
+                "type": "Query Error",
+                "message": f"등록된 숙박 이벤트를 불러오지 못했습니다: {e}",
+            })
+            return []
+
+        def discount_percent(discount_text):
+            m = re.search(r"(\d+)\s*%", discount_text or "")
+            return int(m.group(1)) if m else 0
+
+        deals = [{
+            "id": r["id"],
+            "brand": r["brand"],
+            "title": r["title"],
+            "discount": r.get("discount", ""),
+            "link": r.get("link") or r.get("domain", ""),
+            "merchantType": r.get("merchant_type", "브랜드"),
+        } for r in rows]
+
+        deals.sort(key=lambda d: discount_percent(d["discount"]), reverse=True)
+        return deals
 
     # ------------------------------------------------------------------
     def _call_gemini(self, api_key, region, date_list, errors):

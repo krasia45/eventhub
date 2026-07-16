@@ -485,6 +485,16 @@ function renderTravelResult(data) {
         </div>`).join("")
     : `<p class="travel-empty">추천 숙박 정보를 불러오지 못했어요.</p>`;
 
+  const stayDealsHtml = (data.stay_deals || []).length
+    ? data.stay_deals.map(d => `
+        <div class="travel-place-card travel-deal-card">
+          <span class="travel-deal-badge">${d.discount || "특가"}</span>
+          <p class="travel-place-name">${d.brand}</p>
+          <p class="travel-place-meta">${d.title}</p>
+          ${d.link ? `<a href="${d.link}" target="_blank" rel="noopener noreferrer" class="travel-place-link">이벤트 보기 ↗</a>` : ""}
+        </div>`).join("")
+    : "";
+
   const activityBlock = (label, slot) => {
     if (!slot || !slot.name) return "";
     const badge = slot.activity_type ? `<span class="travel-activity-badge">${slot.activity_type}</span>` : "";
@@ -527,12 +537,18 @@ function renderTravelResult(data) {
   resultEl.innerHTML = `
     <h3 class="travel-section-title">📍 ${data.destination} · ${dateRangeLabel} (${data.num_days || (data.days || []).length}일)</h3>
 
-    <p class="travel-disclaimer">⚠️ 명소·행사 정보는 AI가 생성한 참고용 추천입니다. 실제 운영 여부·정확한 일정은 방문 전 꼭 확인해주세요. 맛집·숙박 정보는 네이버 실시간 검색 결과입니다.</p>
+    <p class="travel-disclaimer">⚠️ 명소·행사 정보는 AI가 생성한 참고용 추천입니다. 실제 운영 여부·정확한 일정은 방문 전 꼭 확인해주세요. 맛집·실제 숙소 정보는 네이버 실시간 검색 결과이며, 숙박앱 특가는 EventHub에 등록된 이벤트입니다.</p>
 
     ${daysHtml || `<p class="travel-empty">일정을 불러오지 못했어요.</p>`}
 
+    ${stayDealsHtml ? `
     <div class="travel-block">
-      <p class="travel-block-label">🏨 추천 숙박</p>
+      <p class="travel-block-label">🏷 지금 숙박앱 특가 (EventHub 등록)</p>
+      <div class="travel-place-grid">${stayDealsHtml}</div>
+    </div>` : ""}
+
+    <div class="travel-block">
+      <p class="travel-block-label">🏨 ${data.destination} 실제 숙소 (네이버 검색)</p>
       <div class="travel-place-grid">${lodgingsHtml}</div>
     </div>
 
@@ -547,4 +563,3 @@ function renderTravelResult(data) {
     </details>` : ""}
   `;
 }
-
