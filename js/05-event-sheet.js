@@ -313,46 +313,19 @@ document.getElementById("stickyCtaShareBtn").addEventListener("click", () => {
   openShareFlow(ev);
 });
 
-/* ---------- 캘린더 등록 (구글 캘린더 바로가기 링크) ---------- */
-function parsePeriodToGCalDates(period) {
-  // "2026.05.28 - 2026.06.22" → { start: "20260528", end: "20260623" }
-  // (구글 캘린더 종료일은 배타적이라 실제 종료일 다음날로 +1일 처리)
-  const parts = period.split("-").map(s => s.trim());
-  if (parts.length !== 2) return null;
-
-  const parseDatePart = (str) => {
-    const m = str.match(/(\d{4})\.(\d{2})\.(\d{2})/);
-    if (!m) return null;
-    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  };
-
-  const startDate = parseDatePart(parts[0]);
-  const endDateRaw = parseDatePart(parts[1]);
-  if (!startDate || !endDateRaw) return null;
-
-  const endDate = new Date(endDateRaw);
-  endDate.setDate(endDate.getDate() + 1);
-
-  const fmt = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-  return { start: fmt(startDate), end: fmt(endDate) };
-}
-
+/* ---------- 캘린더 등록 (EventHub 자체 캘린더 — 09-calendar.js가 찜한 이벤트를 자동으로 표시) ---------- */
 document.getElementById("calendarBtn").addEventListener("click", () => {
   const ev = EVENTS.find(e => e.id === activeEventId);
   if (!ev) return;
 
-  const dates = parsePeriodToGCalDates(ev.period);
-  if (!dates) {
-    showToast("일정 등록 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.");
-    return;
+  if (!ev.periodStart || !ev.periodEnd) {
+    showToast("이 이벤트는 기간 정보가 없어 캘린더에 정확히 표시되지 않을 수 있어요.");
   }
 
-  const params = new URLSearchParams({
-    action: "TEMPLATE",
-    text: `[EventHub] ${ev.brand} - ${ev.title}`,
-    dates: `${dates.start}/${dates.end}`,
-    details: `${ev.desc}\n\n혜택: ${ev.discount}\n참여 방법: ${ev.channel}\n\n${ev.link}`,
-  });
-
-  window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, "_blank", "noopener,noreferrer");
+  if (!likedEvents.has(activeEventId)) {
+    // toggleLike이 자체적으로 "관심 이벤트로 등록되었습니다" 토스트를 띄우지만,
+    // 이 버튼에서는 "캘린더에 저장됐다"는 의도가 더 명확하게 전달되도록 아래에서 덮어씀
+    toggleLike(activeEventId);
+  }
+  showToast("이벤트허브 캘린더에 저장됐어요 📅");
 });

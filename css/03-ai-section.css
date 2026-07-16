@@ -1,4 +1,26 @@
 /* ===================== AI Section ===================== */
+.star-icon { display: inline-flex; vertical-align: -5px; margin-right: 2px; }
+.star-icon .star-main {
+  transform-origin: center;
+  animation: starPulse 1.8s ease-in-out infinite;
+}
+.star-icon .star-small {
+  transform-origin: center;
+  animation: starTwinkle 1.4s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+@keyframes starPulse {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.18) rotate(10deg); }
+}
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.35; transform: scale(0.75); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .star-icon .star-main, .star-icon .star-small { animation: none; }
+}
+
 .ai-feed-section { margin-top: 4px; }
 
 .ai-feed-more-btn { font-size: 12.5px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
@@ -144,4 +166,3 @@
   color: var(--text-3);
   font-weight: 600;
 }
-
