@@ -103,12 +103,22 @@ document.querySelectorAll(".nav-item").forEach(btn => {
     document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
 
+    // 탭 배치(Home 중앙 등)가 실제로 맞는 선택인지 나중에 데이터로 검증하기 위한 집계.
+    // 실패해도 조용히 무시 — 부가 기능이 메인 기능을 막으면 안 됨.
+    fetch("/api/stats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "navClick", tab: btn.dataset.nav }),
+    }).catch(() => {});
+
     if (btn.dataset.nav === "saved") {
       openCouponWallet();
     } else if (btn.dataset.nav === "search") {
       openTravelPlanner();
     } else if (btn.dataset.nav === "more") {
       openMoreMenu();
+    } else if (btn.dataset.nav === "profile") {
+      openAuthModal();
     } else if (btn.dataset.nav !== "home") {
       showToast("준비 중인 기능이에요");
     }
@@ -165,5 +175,3 @@ document.getElementById("couponWalletClose").addEventListener("click", closeCoup
 couponWalletOverlay.addEventListener("click", (e) => {
   if (e.target === couponWalletOverlay) closeCouponWallet();
 });
-
-

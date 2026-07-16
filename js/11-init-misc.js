@@ -117,8 +117,8 @@ async function renderNotificationList() {
         <li class="notif-item" data-id="${ev.id}">
           <span class="notif-item-emoji">🔔</span>
           <div class="notif-item-body">
-            <p class="notif-item-brand">${ev.brand}</p>
-            <p class="notif-item-title">${ev.title}</p>
+            <p class="notif-item-brand">${escapeHtml(ev.brand)}</p>
+            <p class="notif-item-title">${escapeHtml(ev.title)}</p>
           </div>
         </li>
       `).join("");

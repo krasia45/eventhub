@@ -137,8 +137,8 @@ function renderCalendarDayDetail(dateKey) {
     <li class="calendar-day-item personal-type">
       <span class="calendar-day-item-time">${s.start_time ? s.start_time.slice(0, 5) : ""}${s.end_time ? " ~ " + s.end_time.slice(0, 5) : ""}</span>
       <div class="calendar-day-item-body">
-        <p class="calendar-day-item-title">${s.title}</p>
-        ${s.memo ? `<p class="calendar-day-item-memo">${s.memo}</p>` : ""}
+        <p class="calendar-day-item-title">${escapeHtml(s.title)}</p>
+        ${s.memo ? `<p class="calendar-day-item-memo">${escapeHtml(s.memo)}</p>` : ""}
       </div>
       <button class="calendar-day-item-delete" data-schedule-id="${s.id}">삭제</button>
     </li>

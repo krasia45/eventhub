@@ -44,10 +44,10 @@ function getTrendingBrands(limit = 6) {
 }
 
 function highlightMatch(text, query) {
-  if (!query) return text;
+  if (!query) return escapeHtml(text);
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return text;
-  return `${text.slice(0, idx)}<span class="hl">${text.slice(idx, idx + query.length)}</span>${text.slice(idx + query.length)}`;
+  if (idx === -1) return escapeHtml(text);
+  return `${escapeHtml(text.slice(0, idx))}<span class="hl">${escapeHtml(text.slice(idx, idx + query.length))}</span>${escapeHtml(text.slice(idx + query.length))}`;
 }
 
 function showSearchSuggestions() {
@@ -78,7 +78,7 @@ function showSearchSuggestions() {
   ).slice(0, 6);
 
   if (matches.length === 0) {
-    suggestionsEl.innerHTML = `<p class="search-suggestions-label">"${q}"에 대한 검색 결과가 없어요</p>`;
+    suggestionsEl.innerHTML = `<p class="search-suggestions-label">"${escapeHtml(q)}"에 대한 검색 결과가 없어요</p>`;
   } else {
     suggestionsEl.innerHTML = `
       ${matches.map(ev => `
@@ -134,7 +134,7 @@ function openSearchResults(query) {
 
   const grid = document.getElementById("searchResultsGrid");
   if (matches.length === 0) {
-    grid.innerHTML = `<p class="empty-state">"${q}"에 대한 검색 결과가 없어요.</p>`;
+    grid.innerHTML = `<p class="empty-state">"${escapeHtml(q)}"에 대한 검색 결과가 없어요.</p>`;
   } else {
     grid.innerHTML = matches.map(ev => renderEventCardHtml(ev)).join("");
     grid.querySelectorAll(".event-card").forEach(card => {

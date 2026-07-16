@@ -18,6 +18,7 @@ import sys
 import urllib.request
 import urllib.error
 from urllib.parse import urlparse
+from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(__file__))
 from _supabase_client import sb_insert
@@ -66,6 +67,10 @@ class handler(BaseHTTPRequestHandler):
 
         if data.get("mode") == "manual":
             self._handle_manual(data)
+            return
+
+        if data.get("mode") == "parse_caption":
+            self._handle_parse_caption(data)
             return
 
         url = (data.get("url") or "").strip()
@@ -123,6 +128,83 @@ class handler(BaseHTTPRequestHandler):
             return
 
         self._send_json(200, {"success": True, "extracted": {"title": og_title, "image": og_image}})
+
+    def _handle_parse_caption(self, data):
+        """인스타그램 캡션처럼 사람이 읽는 텍스트를 관리자가 그대로 붙여넣으면,
+        Gemini가 브랜드/제목/카테고리/혜택/기간/참여방법을 추출해서 관리자 수동등록
+        폼에 미리 채워준다. DB에는 저장하지 않고 값만 반환 — 최종 저장은 관리자가
+        내용을 확인하고 '추가하기'를 눌러야만 이뤄진다 (환각/오탐 방지 원칙 유지)."""
+        caption = (data.get("caption") or "").strip()
+        if not caption:
+            self._send_json(400, {"error": "붙여넣을 캡션 내용이 없어요."})
+            return
+        if len(caption) > 3000:
+            caption = caption[:3000]
+
+        api_key = os.environ.get("GEMINI_API_KEY", "")
+        if not api_key:
+            self._send_json(500, {"error": "AI 파싱 기능을 쓰려면 GEMINI_API_KEY 설정이 필요해요."})
+            return
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        prompt = f"""아래는 인스타그램 등에서 그대로 복사해온 이벤트/팝업스토어 홍보 캡션입니다.
+이 텍스트에서 실제로 명시된 정보만 뽑아서 JSON으로 정리해주세요. 지어내지 마세요.
+
+오늘 날짜: {today} (연도가 캡션에 안 써있으면 이 날짜를 기준으로 가장 가까운 미래로 추정)
+
+[캡션 원문]
+{caption}
+
+규칙:
+- brand: 브랜드/매장명. 협업이면 "A X B" 형식으로.
+- title: 이벤트/팝업 제목이나 한 줄 소개.
+- category: 다음 중 하나만 — fashion, beauty, food, popup (애매하면 popup)
+- discount: 혜택/이벤트 내용 요약 (없으면 빈 문자열)
+- period_start, period_end: YYYY-MM-DD 형식. 캡션에 기간이 명시 안 되어 있으면 둘 다 null.
+- channel: 운영시간/장소/참여방법 (캡션에 있는 만큼만, 없으면 빈 문자열)
+- confidence_note: 애매하게 추정한 부분이 있으면 한 문장으로 명시, 없으면 빈 문자열
+
+다른 설명 없이 JSON만 응답하세요."""
+
+        schema = {
+            "type": "OBJECT",
+            "properties": {
+                "brand": {"type": "STRING"},
+                "title": {"type": "STRING"},
+                "category": {"type": "STRING", "enum": ["fashion", "beauty", "food", "popup"]},
+                "discount": {"type": "STRING"},
+                "period_start": {"type": "STRING", "nullable": True},
+                "period_end": {"type": "STRING", "nullable": True},
+                "channel": {"type": "STRING"},
+                "confidence_note": {"type": "STRING"},
+            },
+            "required": ["brand", "title", "category", "discount", "channel", "confidence_note"],
+        }
+
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        payload = json.dumps({
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": 0.2,
+                "responseMimeType": "application/json",
+                "responseSchema": schema,
+            },
+        }).encode("utf-8")
+        req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+
+        try:
+            with urllib.request.urlopen(req, timeout=20) as res:
+                result = json.loads(res.read())
+                raw_text = result["candidates"][0]["content"]["parts"][0]["text"]
+                parsed = json.loads(raw_text)
+        except urllib.error.HTTPError as e:
+            self._send_json(502, {"error": f"AI 파싱 요청 실패 (HTTP {e.code}). 잠시 후 다시 시도하거나 직접 입력해주세요."})
+            return
+        except Exception as e:
+            self._send_json(500, {"error": f"AI 파싱 중 오류: {str(e)}. 직접 입력해주세요."})
+            return
+
+        self._send_json(200, {"success": True, "parsed": parsed})
 
     def _handle_manual(self, data):
         """URL 스크래핑 없이, 관리자가 이미 텍스트로 알고 있는 정보를 그대로 후보로 등록.

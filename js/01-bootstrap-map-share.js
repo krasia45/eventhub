@@ -10,6 +10,18 @@
 /* 카카오맵 JavaScript 키 — Kakao Developers에서 발급, 배포 도메인 등록 필요 */
 const KAKAO_JS_KEY = "2a4211503ca5201a29e348b22957fba4";
 
+/* ── XSS 방지: 사용자가 입력한 텍스트(검색어, 개인 일정 메모 등)를 innerHTML에
+   끼워넣을 때는 반드시 이 함수로 이스케이프한 뒤 사용합니다. ── */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /* Supabase 클라이언트 (로그인/회원 데이터용) — anon key는 공개용 키라 노출돼도 안전합니다.
    실제 데이터 보호는 서버가 아니라 RLS(Row Level Security) 정책이 담당합니다.
    ⚠️ 아래 두 값을 실제 Supabase 프로젝트 값으로 바꿔주세요. */
@@ -199,4 +211,3 @@ function getNaverMapLink(ev) {
   // 네이버지도 검색 링크 (좌표+브랜드명 기반)
   return `https://map.naver.com/p/search/${encodeURIComponent(ev.brand + " " + ev.title)}`;
 }
-

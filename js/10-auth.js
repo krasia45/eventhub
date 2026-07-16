@@ -34,6 +34,7 @@ function openAuthModal() {
     document.getElementById("authAccountBody").hidden = false;
     document.getElementById("authUserEmail").textContent =
       currentUser.email || "카카오 계정으로 로그인됨";
+    renderProfileHub();
   } else {
     document.getElementById("authFormBody").hidden = false;
     document.getElementById("authAccountBody").hidden = true;
@@ -41,6 +42,77 @@ function openAuthModal() {
   authOverlay.classList.add("open");
   document.body.style.overflow = "hidden";
 }
+
+/* ---------- 프로필 허브: 아바타/인사말/통계/팔로우 브랜드 관리 ---------- */
+function renderProfileHub() {
+  const shortName = (currentUser.email || currentUser.user_metadata?.name || "회원").split("@")[0];
+  document.getElementById("profileAvatar").textContent = shortName.charAt(0).toUpperCase();
+  document.getElementById("profileGreeting").textContent = `👋 ${shortName}님, 안녕하세요!`;
+  document.getElementById("profileSavedCount").textContent = likedEvents.size;
+
+  // 팔로우 브랜드 목록은 매번 새로 불러와서 통계 숫자와 관리 리스트 둘 다에 반영
+  document.getElementById("profileFollowList").hidden = true;
+  document.getElementById("profileFollowChevron").textContent = "›";
+  if (!supabaseClient) return;
+
+  supabaseClient.from("user_follows").select("brand").eq("user_id", currentUser.id)
+    .then(({ data, error }) => {
+      if (error) { console.error("팔로우 목록 조회 오류:", error); return; }
+      const brands = (data || []).map(f => f.brand);
+      document.getElementById("profileFollowCount").textContent = brands.length;
+      profileFollowedBrands = brands;
+    });
+}
+
+let profileFollowedBrands = [];
+
+function renderProfileFollowList() {
+  const listEl = document.getElementById("profileFollowList");
+  if (profileFollowedBrands.length === 0) {
+    listEl.innerHTML = `<p class="profile-follow-empty">아직 팔로우한 브랜드가 없어요. 이벤트 상세에서 브랜드를 팔로우해보세요!</p>`;
+    return;
+  }
+  listEl.innerHTML = profileFollowedBrands.map(brand => `
+    <div class="profile-follow-row" data-brand="${escapeHtml(brand)}">
+      <span>${escapeHtml(brand)}</span>
+      <button class="profile-unfollow-btn" data-brand="${escapeHtml(brand)}">언팔로우</button>
+    </div>
+  `).join("");
+
+  listEl.querySelectorAll(".profile-unfollow-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const brand = btn.dataset.brand;
+      const { error } = await supabaseClient.from("user_follows").delete().eq("user_id", currentUser.id).eq("brand", brand);
+      if (error) { showToast("언팔로우 중 오류가 발생했어요."); return; }
+      profileFollowedBrands = profileFollowedBrands.filter(b => b !== brand);
+      document.getElementById("profileFollowCount").textContent = profileFollowedBrands.length;
+      renderProfileFollowList();
+      showToast(`${brand} 팔로우를 취소했어요`);
+    });
+  });
+}
+
+document.getElementById("profileFollowManageBtn").addEventListener("click", () => {
+  const listEl = document.getElementById("profileFollowList");
+  const chevron = document.getElementById("profileFollowChevron");
+  const nowOpen = listEl.hidden;
+  listEl.hidden = !nowOpen;
+  chevron.textContent = nowOpen ? "⌄" : "›";
+  if (nowOpen) renderProfileFollowList();
+});
+document.getElementById("profileStatFollow").addEventListener("click", () => {
+  document.getElementById("profileFollowManageBtn").click();
+});
+
+document.getElementById("profileStatSaved").addEventListener("click", () => {
+  closeAuthModal();
+  openCouponWallet();
+});
+document.getElementById("profileCalendarBtn").addEventListener("click", () => {
+  closeAuthModal();
+  openCalendar();
+});
+
 function closeAuthModal() {
   authOverlay.classList.remove("open");
   document.body.style.overflow = "";
@@ -479,30 +551,30 @@ function renderTravelResult(data) {
   const lodgingsHtml = (data.lodgings || []).length
     ? data.lodgings.map(l => `
         <div class="travel-place-card">
-          <p class="travel-place-name">${l.name}</p>
-          <p class="travel-place-meta">${l.category || ""} ${l.address ? "· " + l.address : ""}</p>
-          ${l.url ? `<a href="${l.url}" target="_blank" rel="noopener noreferrer" class="travel-place-link">자세히 보기 ↗</a>` : ""}
+          <p class="travel-place-name">${escapeHtml(l.name)}</p>
+          <p class="travel-place-meta">${escapeHtml(l.category || "")} ${l.address ? "· " + escapeHtml(l.address) : ""}</p>
+          ${l.url ? `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer" class="travel-place-link">자세히 보기 ↗</a>` : ""}
         </div>`).join("")
     : `<p class="travel-empty">추천 숙박 정보를 불러오지 못했어요.</p>`;
 
   const stayDealsHtml = (data.stay_deals || []).length
     ? data.stay_deals.map(d => `
         <div class="travel-place-card travel-deal-card">
-          <span class="travel-deal-badge">${d.discount || "특가"}</span>
-          <p class="travel-place-name">${d.brand}</p>
-          <p class="travel-place-meta">${d.title}</p>
-          ${d.link ? `<a href="${d.link}" target="_blank" rel="noopener noreferrer" class="travel-place-link">이벤트 보기 ↗</a>` : ""}
+          <span class="travel-deal-badge">${escapeHtml(d.discount || "특가")}</span>
+          <p class="travel-place-name">${escapeHtml(d.brand)}</p>
+          <p class="travel-place-meta">${escapeHtml(d.title)}</p>
+          ${d.link ? `<a href="${escapeHtml(d.link)}" target="_blank" rel="noopener noreferrer" class="travel-place-link">이벤트 보기 ↗</a>` : ""}
         </div>`).join("")
     : "";
 
   const activityBlock = (label, slot) => {
     if (!slot || !slot.name) return "";
-    const badge = slot.activity_type ? `<span class="travel-activity-badge">${slot.activity_type}</span>` : "";
+    const badge = slot.activity_type ? `<span class="travel-activity-badge">${escapeHtml(slot.activity_type)}</span>` : "";
     return `
       <div class="travel-slot">
         <p class="travel-slot-label">${label} ${badge}</p>
-        <p class="travel-slot-name">${slot.name}</p>
-        <p class="travel-slot-desc">${slot.description || ""}</p>
+        <p class="travel-slot-name">${escapeHtml(slot.name)}</p>
+        <p class="travel-slot-desc">${escapeHtml(slot.description || "")}</p>
       </div>`;
   };
 
@@ -511,21 +583,21 @@ function renderTravelResult(data) {
     return `
       <div class="travel-slot">
         <p class="travel-slot-label">${label}</p>
-        <p class="travel-slot-name">${place.name}</p>
-        <p class="travel-slot-desc">${place.category || ""} ${place.address ? "· " + place.address : ""}</p>
-        ${place.url ? `<a href="${place.url}" target="_blank" rel="noopener noreferrer" class="travel-place-link">자세히 보기 ↗</a>` : ""}
+        <p class="travel-slot-name">${escapeHtml(place.name)}</p>
+        <p class="travel-slot-desc">${escapeHtml(place.category || "")} ${place.address ? "· " + escapeHtml(place.address) : ""}</p>
+        ${place.url ? `<a href="${escapeHtml(place.url)}" target="_blank" rel="noopener noreferrer" class="travel-place-link">자세히 보기 ↗</a>` : ""}
       </div>`;
   };
 
   const daysHtml = (data.days || []).map(day => `
     <div class="travel-day-card">
-      <p class="travel-day-title">Day ${day.day_number} · ${day.date}</p>
+      <p class="travel-day-title">Day ${day.day_number} · ${escapeHtml(day.date)}</p>
       ${activityBlock("🌅 오전", day.morning)}
       ${mealBlock("🍚 점심", day.lunch)}
       ${activityBlock("☀️ 오후", day.afternoon)}
       ${mealBlock("🍽 저녁", day.dinner)}
       ${activityBlock("🌙 저녁 활동", day.evening)}
-      ${day.route_tip ? `<p class="travel-slot-desc travel-day-route">🗺 ${day.route_tip}</p>` : ""}
+      ${day.route_tip ? `<p class="travel-slot-desc travel-day-route">🗺 ${escapeHtml(day.route_tip)}</p>` : ""}
     </div>
   `).join("");
 
@@ -535,7 +607,7 @@ function renderTravelResult(data) {
     : `${data.start_date} ~ ${data.end_date}`;
 
   resultEl.innerHTML = `
-    <h3 class="travel-section-title">📍 ${data.destination} · ${dateRangeLabel} (${data.num_days || (data.days || []).length}일)</h3>
+    <h3 class="travel-section-title">📍 ${escapeHtml(data.destination)} · ${escapeHtml(dateRangeLabel)} (${data.num_days || (data.days || []).length}일)</h3>
 
     <p class="travel-disclaimer">⚠️ 명소·행사 정보는 AI가 생성한 참고용 추천입니다. 실제 운영 여부·정확한 일정은 방문 전 꼭 확인해주세요. 맛집·실제 숙소 정보는 네이버 실시간 검색 결과이며, 숙박앱 특가는 EventHub에 등록된 이벤트입니다.</p>
 

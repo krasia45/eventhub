@@ -1,8 +1,11 @@
 """
 POST /api/stats
 { "action": "trackView" | "like" | "unlike", "eventId": "e001" }
+{ "action": "navClick", "tab": "home" | "search" | "saved" | "more" | "profile" }
 
 조회수/좋아요를 Supabase에 원자적으로 증감시킵니다 (increment_event_stat RPC 사용).
+하단탭 클릭 집계는 increment_nav_click RPC를 사용합니다 — 어느 탭 배치가
+실제로 많이 쓰이는지 데이터로 검증하기 위한 가벼운 카운터입니다.
 """
 
 from http.server import BaseHTTPRequestHandler
@@ -12,6 +15,8 @@ import os
 
 sys.path.insert(0, os.path.dirname(__file__))
 from api._supabase_client import sb_rpc
+
+VALID_TABS = ("home", "search", "saved", "more", "profile")
 
 
 class handler(BaseHTTPRequestHandler):
@@ -30,10 +35,24 @@ class handler(BaseHTTPRequestHandler):
         try:
             data = json.loads(body)
             action = data.get("action")
-            event_id = data.get("eventId")
         except Exception:
             self._send_json(400, {"error": "잘못된 요청 형식입니다."})
             return
+
+        if action == "navClick":
+            tab = data.get("tab")
+            if tab not in VALID_TABS:
+                self._send_json(400, {"error": "유효한 tab 값이 필요합니다."})
+                return
+            try:
+                sb_rpc("increment_nav_click", {"p_tab": tab})
+                self._send_json(200, {"success": True})
+            except Exception as e:
+                # 탭 클릭 집계는 부가 기능이라 실패해도 사용자 경험엔 영향 없어야 함
+                self._send_json(200, {"success": False, "error": str(e)})
+            return
+
+        event_id = data.get("eventId")
 
         if not event_id or action not in ("trackView", "like", "unlike"):
             self._send_json(400, {"error": "eventId와 유효한 action이 필요합니다."})

@@ -21,12 +21,18 @@ function renderCategoryTabs() {
   renderBrandFilter();
 }
 
-/* ---------- Render: 브랜드 로고 필터 (전체 탭에서는 숨김, 카테고리 탭에서만 노출) ---------- */
+/* ---------- Render: 브랜드 로고 필터 (전체 탭에서는 숨김, 카테고리 탭에서만 노출) ----------
+   가로로 계속 밀어야 하는 무한 스크롤 대신, 한 줄에 들어가는 만큼만 우선 보여주고
+   나머지는 "더보기"를 눌러야 아래로 펼쳐지는 방식 — 한눈에 훑을 수 있는 양만 먼저 노출해
+   피로감을 줄인다. 몇 개가 한 줄에 들어가는지는 화면 폭마다 달라서, 실제로 렌더링한 뒤
+   줄바꿈된 지점을 오프셋으로 측정해서 판단한다(고정 개수로 자르지 않음 — 기기별로 정확함). */
 function renderBrandFilter() {
+  const outerWrap = document.getElementById("brandFilterWrap");
   const wrap = document.getElementById("brandFilterRow");
+  const toggleBtn = document.getElementById("brandFilterToggle");
 
   if (currentCategory === "all") {
-    wrap.hidden = true;
+    outerWrap.hidden = true;
     wrap.innerHTML = "";
     return;
   }
@@ -42,12 +48,16 @@ function renderBrandFilter() {
   });
 
   if (brandsInCategory.length === 0) {
-    wrap.hidden = true;
+    outerWrap.hidden = true;
     wrap.innerHTML = "";
     return;
   }
 
-  wrap.hidden = false;
+  outerWrap.hidden = false;
+  wrap.classList.remove("expanded");
+  toggleBtn.textContent = "더보기 ⌄";
+  toggleBtn.hidden = true;
+
   wrap.innerHTML = brandsInCategory.map(ev => `
     <button class="brand-filter-chip ${selectedBrands.has(ev.brand) ? "selected" : ""}" data-brand="${ev.brand}">
       <img class="brand-filter-logo" src="${getLogoUrl(ev.domain)}" data-domain="${ev.domain}" data-brand="${ev.brand}" alt="${ev.brand}">
@@ -71,7 +81,24 @@ function renderBrandFilter() {
   });
 
   wrap.querySelectorAll(".brand-filter-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+
+  // 실제로 그려진 뒤, 몇 번째 칩부터 다음 줄로 넘어갔는지 측정해서
+  // 두 줄 이상이면(=한 줄에 다 안 들어가면) "더보기" 버튼을 보여준다.
+  requestAnimationFrame(() => {
+    const chips = [...wrap.querySelectorAll(".brand-filter-chip")];
+    if (chips.length === 0) return;
+    const firstTop = chips[0].offsetTop;
+    const wraps = chips.some(chip => chip.offsetTop > firstTop);
+    toggleBtn.hidden = !wraps;
+  });
 }
+
+document.getElementById("brandFilterToggle").addEventListener("click", () => {
+  const wrap = document.getElementById("brandFilterRow");
+  const toggleBtn = document.getElementById("brandFilterToggle");
+  const nowExpanded = wrap.classList.toggle("expanded");
+  toggleBtn.textContent = nowExpanded ? "접기 ⌃" : "더보기 ⌄";
+});
 
 /* ---------- Discount Quick Filters (1+1 / 50%+) ---------- */
 function bindDiscountTabs() {
@@ -96,7 +123,7 @@ function renderRanking() {
 
   const pool = getFilteredEvents();
 
-  const fireIconSvg = `<svg class="fire-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M12 2c3 4 6 8 6 12a6 6 0 1 1-12 0c0-2 1-3.5 2-5-.3 2 .5 3.5 2 3.5s2.2-1.3 1.5-3C10.8 7.5 9.5 5 12 2Z" fill="#E8571F"/><path d="M12 10c1.2 1.6 2.3 3 2.3 4.6a2.3 2.3 0 1 1-4.6 0c0-.8.4-1.4.8-2-.1.8.2 1.3.7 1.3s.9-.5.7-1.2c-.3-.9-.7-1.8.1-2.7Z" fill="#FFE9A8"/></svg>`;
+  const fireIconSvg = `<svg class="fire-icon" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g transform="rotate(-8 12 13)"><path d="M12 2C8 6 6 10 6 14a6 6 0 0 0 12 0c0-2-1-4-2-5 .5 3-1 5-3 5a3 3 0 0 1-3-3c0-3.5 3-5.5 2-9Z" fill="#D6480F"/><path d="M12 8c-1.8 2.2-2.8 4-2.8 6a2.8 2.8 0 0 0 5.6 0c0-1-.5-1.9-1-2.4.2 1.4-.5 2.4-1.4 2.4a1.4 1.4 0 0 1-1.4-1.4c0-1.7 1.4-2.6 1-4.6Z" fill="#FFC94D"/></g></svg>`;
   titleEl.innerHTML = currentCategory === "all"
     ? `${fireIconSvg} 실시간 인기 이벤트`
     : `${fireIconSvg} ${getCategoryLabel(currentCategory)} 인기 이벤트`;

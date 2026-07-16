@@ -291,6 +291,18 @@
 
 .sheet-body { padding: 20px 20px 28px; }
 
+.discount-hero-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--accent);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.discount-hero-icon { font-size: 22px; flex-shrink: 0; }
+.discount-hero-text { font-size: 17px; font-weight: 800; color: #fff; line-height: 1.35; }
+
 .info-summary-card {
   background: var(--bg);
   border: 1px solid var(--border);
@@ -319,7 +331,6 @@
 }
 .info-row-label { flex-shrink: 0; width: 64px; font-size: 12px; font-weight: 700; color: var(--text-3); }
 .info-row-value { flex: 1; font-size: 13px; font-weight: 700; color: var(--text-1); text-align: right; line-height: 1.4; }
-.info-row-value-accent { color: var(--accent); font-size: 14px; font-weight: 800; }
 #sheetConditionsRow .info-row-value { color: #C05621; }
 #sheetConditionsRow .info-row-icon { background: #FFF3E0; }
 
