@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EventHub — 할인 표기 가이드 (가상 예시 10개, 실제 데이터 아님)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root{
+  --accent:#FF6F00; --accent-dark:#E56200; --accent-light:#FFF1E0;
+  --bg:#F6F6F8; --card-bg:#FFFFFF; --text-1:#1A1A1E; --text-2:#5C5C66; --text-3:#9A9AA5;
+  --border:#ECECF0; --radius-lg:20px; --radius-md:14px; --radius-sm:10px;
+}
+*{box-sizing:border-box;}
+body{
+  background:var(--bg); font-family:'Pretendard',-apple-system,sans-serif; color:var(--text-1);
+  margin:0; padding:24px 16px 60px; max-width:480px; margin-inline:auto;
+}
+.page-title{font-size:19px; font-weight:800; margin:0 0 4px;}
+.page-sub{font-size:13px; color:var(--text-3); margin:0 0 24px; line-height:1.5;}
+.warn-banner{
+  background:#FFF3E0; border:1px solid #FFD9A0; border-radius:var(--radius-sm);
+  padding:12px 14px; font-size:12.5px; color:#8A5300; margin-bottom:28px; line-height:1.5;
+}
+.example{
+  background:var(--card-bg); border-radius:var(--radius-lg); padding:16px;
+  margin-bottom:18px; box-shadow:0 4px 16px rgba(20,20,30,0.06);
+}
+.example-num{font-size:11px; font-weight:700; color:var(--text-3); margin:0 0 10px;}
+.discount-hero-banner{
+  display:flex; align-items:center; gap:10px; background:var(--accent);
+  border-radius:var(--radius-md); padding:16px 18px; margin-bottom:10px;
+}
+.discount-hero-icon{font-size:22px; flex-shrink:0;}
+.discount-hero-text{font-size:17px; font-weight:800; color:#fff; line-height:1.35;}
+.info-summary-card{ background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden;}
+.info-row{ display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--border);}
+.info-row:last-child{border-bottom:none;}
+.info-row-icon{flex-shrink:0; width:24px; text-align:center; font-size:14px;}
+.info-row-label{flex-shrink:0; width:58px; font-size:11.5px; font-weight:700; color:var(--text-3);}
+.info-row-value{flex:1; font-size:12.5px; font-weight:700; color:var(--text-1); text-align:right; line-height:1.4;}
+.info-row-value.conditions{color:#C05621;}
+.badge{display:inline-block; font-size:10.5px; font-weight:700; color:var(--text-2); background:var(--border); padding:2px 8px; border-radius:999px; margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+  <p class="page-title">할인 배너 표기 가이드</p>
+  <p class="page-sub">"뭐가 할인되는지"가 배너 큰 글씨에 바로 보이고, 결제수단·앱 한정 같은 세부조건은 아래 정보카드의 "참여 조건"에 작게 들어가는 방식이에요. 아래 10개는 이 원칙을 보여주기 위한 <b>가상의 예시</b>입니다.</p>
+
+  <div class="warn-banner">
+    ⚠️ 아래 10개는 실제 EventHub에 등록된 이벤트가 아니라, 표기 방식을 보여주기 위한 참고용 가상 예시예요. 실제 등록 시에는 반드시 진짜 이벤트 정보로 입력해주세요.
+  </div>
+
+  <div class="example">
+    <p class="example-num">예시 1 — 카페/베이커리</p>
+    <div class="discount-hero-banner"><span class="discount-hero-icon">🏷</span><span class="discount-hero-text">시그니처 크로플 40% 할인</span></div>
+    <div class="info-summary-card">
+      <div class="info-row"><span class="info-row-icon">⚠️</span><span class="info-row-label">참여 조건</span><span class="info-row-value conditions">네이버페이 결제 시에만 적용</span></div>
+      <div class="info-row"><span class="info-row-icon">📍</span><span class="info-row-label">참여 방법</span><span class="info-row-value">매장 방문 시 직원에게 "네이버 할인" 안내</span></div>
+    </div>
+  </div>
+
+  <div class="example">
+    <p class="example-num">예시 2 — 패션</p>
+    <div class="discount-hero-banner"><span class="discount-hero-icon">🏷</span><span class="discount-hero-text">여름 티셔츠 전 품목 30% 할인</span></div>
+    <div class="info-summary-card">
+      <div class="info-row"><span class="info-row-icon">⚠️</span><span class="info-row-label">참여 조건</span><span class="info-row-value conditions">앱 회원가입 후 첫 구매에 한함</span></div>
+      <div class="info-row"><span class="info-row-icon">📍</span><span class="info-row-label">참여 방법</span><span class="info-row-value">공식 앱에서 쿠폰 다운로드 후 사용</span></div>
+    </div>
+  </div>
+
+  <div class="example">
+    <p class="example-num">예시 3 — 뷰티</p>
+    <div class="discount-hero-banner"><span class="discount-hero-icon">🏷</span><span class="discount-hero-text">수분크림 1+1 증정</span></div>
+    <div class="info-summary-card">
+      <div class="info-row"><span class="info-row-icon">⚠️</span><span class="info-row-label">참여 조건</span><span class="info-row-value conditions">동일 상품 재구매 시에만, 1인 1회 한정</span></div>
+      <div class="info-row"><span class="info-row-icon">📍</span><span class="info-row-label">참여 방법</span><span class="info-row-value">매장 계산대에서 자동 적용</span></div>
+    </div>
+  </div>
+
+  <div class="example">
+    <p class="example-num">예시 4 — 팝업스토어</p>
+    <div class="discount-hero-banner"><span class="discount-hero-icon">🏷</span><span class="discount-hero-text">한정판 굿즈 20% 할인 + 포토카드 증정</span></div>
+    <div class="info-summary-card">
+      <div class="info-row"><span class="info-row-icon">⚠️</span><span class="info-row-label">참여 조건</span><span class="info-row-value conditions">SNS 스토리 업로드 인증 시</span></div>
+      <div class="info-row"><span class="info-row-icon">📍</span><span class="info-row-label">참여 방법</span><span class="info-row-value">입장 후 직원에게 인증 화면 제시</span></div>
+    </div>
+  </div>
+
+  <div class="example">
+    <p class="example-num">예시 5 — 숙박</p>
+    <div class="discount-hero-banner"><span class="discount-hero-icon">🏷</span><span class="discount-hero-text">주말 객실 최대 35% 할인</span></div>
+    <div class="info-summary-card">
+      <div class="info-row"><span class="info-row-icon">⚠️</span><span class="info-row-label">참여 조건</span><span class="info-row-value conditions">얼리버드 예약(3일 전) 시에만</span></div>
+      <div class="info-row"><span class="info-row-icon">📍</span><span class="info-row-label">참여 방법</span><span class="info-row-value">예약 시 프로모션 코드 입력</span></div>
+    </div>
+  </div>
+
+  <div class="example">
+    <p class="example-num">예시 6 — 카페/음료</p>
+    <div class="discount-hero-banner"><span class="discount-hero-icon">🏷</span><span class="discount-hero-text">아이스 아메리카노 1,500원</span></div>
+    <div class="info-summary-card">
+      <div class="info-row"><span class="info-row-icon">⚠️</span><span class="info-row-label">참여 조건</span><span class="info-row-value conditions">평일 오후 2~5시, 테이크아웃만</span></div>
+      <div class="info-row"><span class="info-row-icon">📍</span><span class="info-row-label">참여 방법</span><span class="info-row-value">주문 시 "타임할인" 언급</span></div>
+    </div>
+  </div>
+
+  <div class="example">
+    <p class="example-num">예시 7 — 전자제품</p>
+    <div class="discount-hero-banner"><span class="discount-hero-icon">🏷</span><span class="discount-hero-text">무선이어폰 5만원 할인</span></div>
+    <div class="info-summary-card">
+      <div class="info-row"><span class="info-row-icon">⚠️</span><span class="info-row-label">참여 조건</span><span class="info-row-value conditions">카드사 제휴할인 중복 불가</span></div>
+      <div class="info-row"><span class="info-row-icon">📍</span><span class="info-row-label">참여 방법</span><span class="info-row-value">공식몰 결제 시 자동 할인</span></div>
+    </div>
+  </div>
+
+  <div class="example">
+    <p class="example-num">예시 8 — 음식점</p>
+    <div class="discount-hero-banner"><span class="discount-hero-icon">🏷</span><span class="discount-hero-text">런치 세트 2인 이상 15% 할인</span></div>
+    <div class="info-summary-card">
+      <div class="info-row"><span class="info-row-icon">⚠️</span><span class="info-row-label">참여 조건</span><span class="info-row-value conditions">전화 예약 필수, 당일 워크인 제외</span></div>
+      <div class="info-row"><span class="info-row-icon">📍</span><span class="info-row-label">참여 방법</span><span class="info-row-value">예약 시 "이벤트허브 할인" 언급</span></div>
+    </div>
+  </div>
+
+  <div class="example">
+    <p class="example-num">예시 9 — 반려동물</p>
+    <div class="discount-hero-banner"><span class="discount-hero-icon">🏷</span><span class="discount-hero-text">강아지 유치원 첫 달 50% 할인</span></div>
+    <div class="info-summary-card">
+      <div class="info-row"><span class="info-row-icon">⚠️</span><span class="info-row-label">참여 조건</span><span class="info-row-value conditions">신규 등록 회원만, 재등록 불가</span></div>
+      <div class="info-row"><span class="info-row-icon">📍</span><span class="info-row-label">참여 방법</span><span class="info-row-value">상담 예약 후 현장 결제 시 적용</span></div>
+    </div>
+  </div>
+
+  <div class="example">
+    <p class="example-num">예시 10 — 액티비티</p>
+    <div class="discount-hero-banner"><span class="discount-hero-icon">🏷</span><span class="discount-hero-text">방탈출 티켓 2인 20% 할인</span></div>
+    <div class="info-summary-card">
+      <div class="info-row"><span class="info-row-icon">⚠️</span><span class="info-row-label">참여 조건</span><span class="info-row-value conditions">카카오페이 결제 시에만, 주말 제외</span></div>
+      <div class="info-row"><span class="info-row-icon">📍</span><span class="info-row-label">참여 방법</span><span class="info-row-value">예약 사이트에서 쿠폰코드 "EVENTHUB" 입력</span></div>
+    </div>
+  </div>
+
+</body>
+</html>

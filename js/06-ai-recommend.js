@@ -10,9 +10,9 @@ async function loadAiFeed(keywords) {
     return;
   }
 
-  if (EVENTS.length === 0) { grid.innerHTML = renderFeedSkeleton(3); return; }
+  if (EVENTS.length === 0) { grid.innerHTML = renderFeedSkeleton(6); return; }
 
-  grid.innerHTML = renderFeedSkeleton(3);
+  grid.innerHTML = renderFeedSkeleton(6);
 
   try {
     const eventsSummary = EVENTS.map(ev => ({
@@ -52,7 +52,7 @@ function renderAiFeedFallback(keywords) {
   if (candidates.length === 0) {
     candidates = [...EVENTS].sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
   }
-  renderAiFeedCards(candidates.slice(0, 3));
+  renderAiFeedCards(candidates.slice(0, 6));
 }
 
 function renderAiFeedSetupPrompt() {
@@ -237,4 +237,3 @@ function formatCount(n) {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   return String(n);
 }
-

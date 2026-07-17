@@ -57,13 +57,22 @@ async function loadWeather(loc) {
       hourlyRow.innerHTML = "";
     }
 
-    // 향후 예보(네이버 날씨처럼 오늘/화/수/목/금 형태로) — API가 못 주면 조용히 생략
+    // 향후 예보(네이버 주간예보처럼 요일별로 오전/오후 나란히, 강수확률까지) — API가 못 주면 조용히 생략
     if (Array.isArray(data.forecast) && data.forecast.length > 0) {
       forecastRow.innerHTML = data.forecast.map(d => `
-        <div class="weather-forecast-day">
+        <div class="weather-forecast-day-row">
           <p class="weather-forecast-day-label">${d.label}</p>
-          <span class="weather-forecast-day-icon">${d.icon}</span>
-          <p class="weather-forecast-day-temp"><strong>${d.tempMax}°</strong> / ${d.tempMin}°</p>
+          <div class="weather-forecast-half">
+            <span class="weather-forecast-half-tag">오전</span>
+            ${d.amPop !== null ? `<span class="weather-forecast-half-pop">${d.amPop}%</span>` : ""}
+            <span class="weather-forecast-day-icon">${d.amIcon || "-"}</span>
+          </div>
+          <div class="weather-forecast-half">
+            <span class="weather-forecast-half-tag">오후</span>
+            ${d.pmPop !== null ? `<span class="weather-forecast-half-pop">${d.pmPop}%</span>` : ""}
+            <span class="weather-forecast-day-icon">${d.pmIcon || "-"}</span>
+          </div>
+          <p class="weather-forecast-day-temp"><span class="lo">${d.tempMin}°</span> <span class="hi">${d.tempMax}°</span></p>
         </div>
       `).join("");
     } else {

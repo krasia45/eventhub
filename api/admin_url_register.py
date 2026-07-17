@@ -15,6 +15,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.request
 import urllib.error
 from urllib.parse import urlparse
@@ -192,17 +193,23 @@ class handler(BaseHTTPRequestHandler):
         }).encode("utf-8")
         req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
 
-        try:
-            with urllib.request.urlopen(req, timeout=20) as res:
-                result = json.loads(res.read())
-                raw_text = result["candidates"][0]["content"]["parts"][0]["text"]
-                parsed = json.loads(raw_text)
-        except urllib.error.HTTPError as e:
-            self._send_json(502, {"error": f"AI 파싱 요청 실패 (HTTP {e.code}). 잠시 후 다시 시도하거나 직접 입력해주세요."})
-            return
-        except Exception as e:
-            self._send_json(500, {"error": f"AI 파싱 중 오류: {str(e)}. 직접 입력해주세요."})
-            return
+        parsed = None
+        for attempt in range(2):
+            try:
+                with urllib.request.urlopen(req, timeout=20) as res:
+                    result = json.loads(res.read())
+                    raw_text = result["candidates"][0]["content"]["parts"][0]["text"]
+                    parsed = json.loads(raw_text)
+                break
+            except urllib.error.HTTPError as e:
+                if e.code == 429 and attempt == 0:
+                    time.sleep(1.5)
+                    continue
+                self._send_json(502, {"error": f"AI 파싱 요청 실패 (HTTP {e.code}). 잠시 후 다시 시도하거나 직접 입력해주세요."})
+                return
+            except Exception as e:
+                self._send_json(500, {"error": f"AI 파싱 중 오류: {str(e)}. 직접 입력해주세요."})
+                return
 
         self._send_json(200, {"success": True, "parsed": parsed})
 

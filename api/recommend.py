@@ -58,9 +58,10 @@ class handler(BaseHTTPRequestHandler):
             f"아래는 EventHub 서비스에 실제로 등록되어 있는 이벤트 목록이야.\n\n"
             f"{events_text}\n\n"
             f"사용자의 관심사: \"{interest}\"\n\n"
-            "위 목록에 있는 이벤트 중에서만 사용자 관심사에 가장 잘 맞는 것을 정확히 3개 골라줘. "
+            "위 목록에 있는 이벤트 중에서만 사용자 관심사에 가장 잘 맞는 것을 정확히 6개 골라줘. "
             "절대로 목록에 없는 새로운 이벤트를 만들어내지 마. "
-            "반드시 목록에 있는 id 값 그대로, 정확히 3개의 문자열 배열(JSON)로만 응답해. "
+            "목록에 있는 이벤트가 6개 미만이면 있는 만큼만 골라줘. "
+            "반드시 목록에 있는 id 값 그대로, 문자열 배열(JSON)로만 응답해. "
             "다른 설명 문장은 절대 붙이지 마."
         )
 
@@ -71,8 +72,8 @@ class handler(BaseHTTPRequestHandler):
                 "responseSchema": {
                     "type": "ARRAY",
                     "items": {"type": "STRING"},
-                    "minItems": 3,
-                    "maxItems": 3,
+                    "minItems": 1,
+                    "maxItems": 6,
                 },
             },
         }).encode("utf-8")
@@ -100,7 +101,7 @@ class handler(BaseHTTPRequestHandler):
 
                 # ── 환각 방지: AI가 목록에 없는 id를 반환했으면 걸러낸다 ──
                 valid_ids = {e.get("id") for e in events}
-                picked_ids = [pid for pid in picked_ids if pid in valid_ids][:3]
+                picked_ids = [pid for pid in picked_ids if pid in valid_ids][:6]
 
                 if not picked_ids:
                     self._send_json(200, {

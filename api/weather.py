@@ -64,7 +64,7 @@ class handler(BaseHTTPRequestHandler):
             icon = ICON_MAP.get(icon_code, "🌤")
             location = resolved_name or data.get("name") or "현재 위치"
 
-            forecast, hourly = self._fetch_forecast(lat, lng, API_KEY)
+            forecast, hourly = self._fetch_forecast(lat, lng, API_KEY, temp_c, icon)
 
             self._send_json(200, {
                 "location": location,
@@ -72,7 +72,7 @@ class handler(BaseHTTPRequestHandler):
                 "description": description,
                 "icon": icon,
                 "advice": self._advice_for(temp_c, icon_code),
-                "forecast": forecast,  # [{ "label": "오늘"/"화" 등, "icon": "☀️", "tempMax": 30, "tempMin": 22 }, ...]
+                "forecast": forecast,  # [{ "label", "amIcon", "amPop", "pmIcon", "pmPop", "tempMax", "tempMin" }, ...] — 네이버 주간예보처럼 오전/오후 구분
                 "hourly": hourly,  # [{ "label": "지금"/"15시" 등, "icon": "☀️", "tempC": 27 }, ...] — 네이버 날씨처럼 시간대별
             })
 
@@ -103,9 +103,16 @@ class handler(BaseHTTPRequestHandler):
         display_name = local_names.get("ko") or r.get("name") or region
         return {"lat": r["lat"], "lon": r["lon"], "name": display_name}
 
-    def _fetch_forecast(self, lat, lng, api_key):
-        """5일치 3시간 단위 예보를 하루 단위(최고/최저기온, 대표 아이콘)로 묶은 목록과,
-        네이버 날씨처럼 지금부터 이어지는 3시간 간격 시간대별 목록을 함께 반환한다."""
+    def _fetch_forecast(self, lat, lng, api_key, current_temp_c, current_icon):
+        """5일치 3시간 단위 예보를 하루 단위로 묶어서 오전/오후 아이콘·강수확률·최고/최저기온을
+        반환하고(네이버 주간예보와 같은 형태), 동시에 지금부터 이어지는 3시간 간격 시간대별
+        목록도 함께 반환한다.
+
+        정확도를 위해 두 가지를 신경씀:
+        1. '지금' 슬롯은 예보값이 아니라 방금 조회한 실제 현재 날씨를 그대로 사용한다.
+           (예보의 첫 항목은 최대 3시간 전에 시작된 구간일 수 있어 '지금'이라기엔 부정확했음)
+        2. 이미 끝난 3시간 구간은 목록에서 제외한다 (예: 지금이 07시인데 06시 구간이
+           그대로 남아있던 문제)."""
         url = (
             "https://api.openweathermap.org/data/2.5/forecast"
             f"?lat={lat}&lon={lng}&appid={api_key}&units=metric&lang=kr"
@@ -114,41 +121,59 @@ class handler(BaseHTTPRequestHandler):
             with urllib.request.urlopen(url, timeout=8) as res:
                 data = json.loads(res.read())
         except Exception:
-            return [], []  # 예보 조회 실패해도 현재 날씨는 보여줄 수 있도록 조용히 빈 값 반환
+            return [], [{"label": "지금", "icon": current_icon, "tempC": current_temp_c}]
 
+        now = datetime.now()
         days = {}
         raw_list = data.get("list", [])
-        today_key = datetime.now().strftime("%Y-%m-%d")
+        today_key = now.strftime("%Y-%m-%d")
+
+        # 아직 안 끝난(현재 시각이 이 3시간 구간 안에 있거나 미래인) 예보만 사용
+        future_list = [item for item in raw_list if datetime.fromtimestamp(item["dt"]) + timedelta(hours=3) > now]
 
         for item in raw_list:
             dt = datetime.fromtimestamp(item["dt"])
             date_key = dt.strftime("%Y-%m-%d")
             temp = item["main"]["temp"]
             icon_code = item["weather"][0]["icon"][:2]
+            pop = item.get("pop", 0)  # 강수확률 0~1
 
             if date_key not in days:
-                days[date_key] = {"temps": [], "icons": [], "date": dt}
+                days[date_key] = {"temps": [], "date": dt, "am": [], "pm": []}
             days[date_key]["temps"].append(temp)
-            days[date_key]["icons"].append(icon_code)
+            slot = (icon_code, pop)
+            (days[date_key]["am"] if dt.hour < 12 else days[date_key]["pm"]).append(slot)
+
+        def half_day_summary(slots):
+            if not slots:
+                return None
+            icons = [s[0] for s in slots]
+            common_icon = max(set(icons), key=icons.count)
+            max_pop = max(s[1] for s in slots)
+            return {"icon": ICON_MAP.get(common_icon, "🌤"), "pop": round(max_pop * 100)}
 
         result = []
-        for i, (date_key, d) in enumerate(sorted(days.items())[:5]):
+        for date_key, d in sorted(days.items())[:5]:
             label = "오늘" if date_key == today_key else WEEKDAY_KR[d["date"].weekday()]
-            common_icon = max(set(d["icons"]), key=d["icons"].count)
+            am = half_day_summary(d["am"])
+            pm = half_day_summary(d["pm"])
             result.append({
                 "label": label,
-                "icon": ICON_MAP.get(common_icon, "🌤"),
+                "amIcon": am["icon"] if am else None,
+                "amPop": am["pop"] if am else None,
+                "pmIcon": pm["icon"] if pm else None,
+                "pmPop": pm["pop"] if pm else None,
                 "tempMax": round(max(d["temps"])),
                 "tempMin": round(min(d["temps"])),
             })
 
-        # 시간대별(3시간 간격) — 지금 이후 앞으로의 8개 구간(약 24시간)만 보여줌
-        hourly = []
-        for i, item in enumerate(raw_list[:8]):
+        # 시간대별(3시간 간격) — '지금'은 실제 현재 날씨, 이후는 아직 안 끝난 예보 구간만
+        hourly = [{"label": "지금", "icon": current_icon, "tempC": current_temp_c}]
+        for item in future_list[:7]:
             dt = datetime.fromtimestamp(item["dt"])
             icon_code = item["weather"][0]["icon"][:2]
             hourly.append({
-                "label": "지금" if i == 0 else f"{dt.hour}시",
+                "label": f"{dt.hour}시",
                 "icon": ICON_MAP.get(icon_code, "🌤"),
                 "tempC": round(item["main"]["temp"]),
             })

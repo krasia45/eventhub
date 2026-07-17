@@ -179,19 +179,41 @@
 .weather-forecast-label { font-size: 13px; font-weight: 800; color: var(--text-1); margin-bottom: 10px; }
 .weather-forecast-row {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
 }
-.weather-forecast-day {
+.weather-forecast-day-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.weather-forecast-day-row:last-child { border-bottom: none; }
+.weather-forecast-day-label {
+  flex: 0 0 34px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text-1);
+}
+.weather-forecast-half {
   flex: 1;
-  text-align: center;
-  padding: 12px 4px;
-  border-radius: var(--radius-sm);
-  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
-.weather-forecast-day-label { font-size: 11.5px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; }
-.weather-forecast-day-icon { font-size: 20px; display: block; margin-bottom: 6px; }
-.weather-forecast-day-temp { font-size: 11px; color: var(--text-3); }
-.weather-forecast-day-temp strong { color: var(--text-1); font-weight: 800; }
+.weather-forecast-half-tag { font-size: 10px; color: var(--text-3); font-weight: 600; }
+.weather-forecast-half-pop { font-size: 11px; color: #4F8EF7; font-weight: 700; min-width: 26px; text-align: right; }
+.weather-forecast-day-icon { font-size: 17px; }
+.weather-forecast-day-temp {
+  flex: 0 0 64px;
+  text-align: right;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.weather-forecast-day-temp .lo { color: var(--text-3); }
+.weather-forecast-day-temp .hi { color: var(--text-1); font-weight: 800; margin-left: 4px; }
 
 /* ===================== 헤더 날씨 칩 / 알림벨 ===================== */
 .weather-chip-header {
