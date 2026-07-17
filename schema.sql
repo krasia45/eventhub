@@ -37,6 +37,7 @@ create index idx_events_period_end on events(period_end);
 alter table events add column if not exists is_active boolean not null default true;
 alter table events add column if not exists conditions text;      -- 참여 조건 (나이/수량 제한 등)
 alter table events add column if not exists target_audience text; -- 참여 대상
+alter table events add column if not exists link_last_checked timestamptz; -- check_broken_links.py가 마지막으로 확인한 시각
 
 -- 2. 이벤트 통계 (조회수/좋아요 — 기존 EventStats 시트 대체)
 create table event_stats (
@@ -81,6 +82,10 @@ create table event_candidates (
 
 create index idx_candidates_status on event_candidates(status);
 
+alter table event_candidates add column if not exists image text;
+alter table event_candidates add column if not exists conditions text;
+alter table event_candidates add column if not exists target_audience text;
+
 -- ── Row Level Security: 읽기는 누구나, 쓰기는 서버(service_role)만 ──
 alter table events enable row level security;
 alter table event_stats enable row level security;
@@ -118,12 +123,12 @@ $$ language plpgsql;
 -- ════════════════════════════════════════════════════════════
 
 -- 찜한 이벤트 (하트 버튼) — 05-event-sheet.js, 10-auth.js
+-- 실제 DB에는 합성 id 없이 (user_id, event_id) 자체가 복합키로 되어 있음.
 create table if not exists user_saves (
-  id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   event_id text not null references events(id) on delete cascade,
-  created_at timestamptz default now(),
-  unique (user_id, event_id)
+  saved_at timestamptz default now(),
+  primary key (user_id, event_id)
 );
 alter table user_saves enable row level security;
 create policy "본인 찜 목록만 조회" on user_saves for select using (auth.uid() = user_id);
@@ -131,12 +136,12 @@ create policy "본인 찜만 추가" on user_saves for insert with check (auth.u
 create policy "본인 찜만 삭제" on user_saves for delete using (auth.uid() = user_id);
 
 -- 팔로우한 브랜드 — 05-event-sheet.js, 11-init-misc.js, 프로필 허브
+-- 마찬가지로 합성 id 없이 (user_id, brand) 복합키.
 create table if not exists user_follows (
-  id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   brand text not null,
-  created_at timestamptz default now(),
-  unique (user_id, brand)
+  followed_at timestamptz default now(),
+  primary key (user_id, brand)
 );
 alter table user_follows enable row level security;
 create policy "본인 팔로우 목록만 조회" on user_follows for select using (auth.uid() = user_id);
@@ -146,9 +151,9 @@ create policy "본인 팔로우만 삭제" on user_follows for delete using (aut
 -- 온보딩 관심키워드/연락 이메일 — 06-ai-recommend.js, 10-auth.js
 create table if not exists user_preferences (
   user_id uuid primary key references auth.users(id) on delete cascade,
-  keywords text[] default '{}',
+  keywords text[] not null default '{}',
   contact_email text,
-  created_at timestamptz default now()
+  onboarded_at timestamptz default now()
 );
 alter table user_preferences enable row level security;
 create policy "본인 설정만 조회" on user_preferences for select using (auth.uid() = user_id);
@@ -158,7 +163,7 @@ create policy "본인 설정만 수정" on user_preferences for update using (au
 -- EventHub 자체 캘린더의 개인 일정 — 09-calendar.js
 create table if not exists user_schedules (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
   schedule_date date not null,
   start_time time,
   end_time time,
@@ -172,10 +177,11 @@ create policy "본인 일정만 추가" on user_schedules for insert with check 
 create policy "본인 일정만 삭제" on user_schedules for delete using (auth.uid() = user_id);
 
 -- 친구초대 코드 — 10-auth.js
+-- invited_by: 이 사람을 초대한 사람의 코드 (가입 시 기록, 없으면 자체 유입)
 create table if not exists user_referrals (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid primary key references auth.users(id) on delete cascade,
   referral_code text not null unique,
+  invited_by text,
   created_at timestamptz default now()
 );
 alter table user_referrals enable row level security;
@@ -186,8 +192,8 @@ create policy "본인 초대코드만 생성" on user_referrals for insert with 
 -- 본인 것만 쓸 수 있지만, 조회는 다른 사람 것도 봐야 하는 게 후기 기능의 본질이라 select는 전체 공개.
 create table if not exists event_visits (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  event_id text not null references events(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
+  event_id text references events(id) on delete cascade,
   comment text,
   visited_at timestamptz default now(),
   unique (user_id, event_id)
@@ -218,3 +224,29 @@ begin
     set click_count = nav_click_stats.click_count + 1, updated_at = now();
 end;
 $$ language plpgsql;
+
+-- ════════════════════════════════════════════════════════════
+-- 7. 집계용 뷰 (view) — 실제 Supabase 스키마 덤프에서 발견됨.
+--    코드(js/*.py, api/*.py) grep만으로는 안 잡혔던 것들 — 아마 관리자가
+--    대시보드에서 직접 참고하거나, 프론트 어딘가에서 조회수/찜수/추천 성과를
+--    보여줄 때 쓰는 것으로 추정. 정확한 정의(어떤 컬럼을 group by 하는지)는
+--    실제 DB에 이미 있는 걸 그대로 문서화하는 목적이라 아래는 추정 재현입니다 —
+--    실제 뷰 정의와 다르면 Supabase 대시보드에서 뷰 SQL을 확인해 이 부분만 교체해주세요.
+-- ════════════════════════════════════════════════════════════
+
+create or replace view event_save_counts as
+select event_id, count(*) as save_count
+from user_saves
+group by event_id;
+
+create or replace view event_visit_counts as
+select event_id, count(*) as visit_count
+from event_visits
+where event_id is not null
+group by event_id;
+
+create or replace view referral_counts as
+select invited_by as referral_code, count(*) as invited_count
+from user_referrals
+where invited_by is not null
+group by invited_by;
