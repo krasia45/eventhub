@@ -128,29 +128,25 @@ class handler(BaseHTTPRequestHandler):
         raw_list = data.get("list", [])
         today_key = now.strftime("%Y-%m-%d")
 
-        # 아직 안 끝난(현재 시각이 이 3시간 구간 안에 있거나 미래인) 예보만 사용
-        future_list = [item for item in raw_list if datetime.fromtimestamp(item["dt"]) + timedelta(hours=3) > now]
-
         for item in raw_list:
             dt = datetime.fromtimestamp(item["dt"])
             date_key = dt.strftime("%Y-%m-%d")
             temp = item["main"]["temp"]
             icon_code = item["weather"][0]["icon"][:2]
-            pop = item.get("pop", 0)  # 강수확률 0~1
 
             if date_key not in days:
-                days[date_key] = {"temps": [], "date": dt, "am": [], "pm": []}
-            days[date_key]["temps"].append(temp)
-            slot = (icon_code, pop)
+                days[date_key] = {"date": dt, "am": [], "pm": []}
+            slot = (icon_code, temp)
             (days[date_key]["am"] if dt.hour < 12 else days[date_key]["pm"]).append(slot)
 
         def half_day_summary(slots):
             if not slots:
                 return None
             icons = [s[0] for s in slots]
+            temps = [s[1] for s in slots]
             common_icon = max(set(icons), key=icons.count)
-            max_pop = max(s[1] for s in slots)
-            return {"icon": ICON_MAP.get(common_icon, "🌤"), "pop": round(max_pop * 100)}
+            avg_temp = round(sum(temps) / len(temps))
+            return {"icon": ICON_MAP.get(common_icon, "🌤"), "temp": avg_temp}
 
         result = []
         for date_key, d in sorted(days.items())[:5]:
@@ -160,22 +156,70 @@ class handler(BaseHTTPRequestHandler):
             result.append({
                 "label": label,
                 "amIcon": am["icon"] if am else None,
-                "amPop": am["pop"] if am else None,
+                "amTemp": am["temp"] if am else None,
                 "pmIcon": pm["icon"] if pm else None,
-                "pmPop": pm["pop"] if pm else None,
-                "tempMax": round(max(d["temps"])),
-                "tempMin": round(min(d["temps"])),
+                "pmTemp": pm["temp"] if pm else None,
             })
 
-        # 시간대별(3시간 간격) — '지금'은 실제 현재 날씨, 이후는 아직 안 끝난 예보 구간만
-        hourly = [{"label": "지금", "icon": current_icon, "tempC": current_temp_c}]
-        for item in future_list[:7]:
+        # 시간대별 — 네이버 날씨처럼 '지금'부터 1시간 간격으로 24시간 쭉 이어지게 구성.
+        # OpenWeatherMap 무료 예보는 3시간 단위라, 두 개의 실측 지점 사이 온도는 선형보간하고
+        # (예: 21시 25도 → 24시 22도 라면 22시/23시는 그 사이값으로 자연스럽게 채움),
+        # 아이콘/강수확률은 그 시각이 속한 3시간 구간의 실제 예보값을 그대로 사용한다.
+        # (아이콘까지 보간하면 있지도 않은 '중간 날씨'를 지어내는 셈이라 그건 하지 않음)
+        anchors = [(now, current_temp_c, current_icon, None)]
+        for item in raw_list:
             dt = datetime.fromtimestamp(item["dt"])
+            if dt <= now:
+                continue
             icon_code = item["weather"][0]["icon"][:2]
+            anchors.append((dt, item["main"]["temp"], ICON_MAP.get(icon_code, "🌤"), round(item.get("pop", 0) * 100)))
+
+        def value_at(target_dt):
+            """target_dt 시점의 (온도, 아이콘, 강수확률)을 anchors 사이에서 계산."""
+            before = None
+            after = None
+            for a in anchors:
+                if a[0] <= target_dt:
+                    before = a
+                if a[0] >= target_dt and after is None:
+                    after = a
+            if before is None:
+                before = anchors[0]
+            if after is None:
+                after = anchors[-1]
+            if before[0] == after[0]:
+                return round(before[1]), (before[2] or after[2]), before[3] if before[3] is not None else after[3]
+            ratio = (target_dt - before[0]).total_seconds() / (after[0] - before[0]).total_seconds()
+            temp = before[1] + (after[1] - before[1]) * ratio
+            # 아이콘/강수확률은 보간하지 않고, 더 가까운 쪽(주로 이후 구간)의 실제 예보값을 사용
+            icon = after[2] or before[2]
+            pop = after[3] if after[3] is not None else before[3]
+            return round(temp), icon, pop
+
+        hourly = []
+        cursor = now.replace(minute=0, second=0, microsecond=0)
+        last_date_key = now.strftime("%Y-%m-%d")
+        for i in range(24):
+            target = cursor if i == 0 else cursor + timedelta(hours=i)
+            date_key = target.strftime("%Y-%m-%d")
+            date_label = None
+            if i > 0 and date_key != last_date_key:
+                delta_days = (target.date() - now.date()).days
+                date_label = "내일" if delta_days == 1 else f"{target.month}/{target.day}"
+                last_date_key = date_key
+
+            if i == 0:
+                temp_c, icon_c, pop_c = current_temp_c, current_icon, None
+                label = "지금"
+            else:
+                temp_c, icon_c, pop_c = value_at(target)
+                label = f"{target.hour}시"
+
             hourly.append({
-                "label": f"{dt.hour}시",
-                "icon": ICON_MAP.get(icon_code, "🌤"),
-                "tempC": round(item["main"]["temp"]),
+                "label": label,
+                "dateLabel": date_label,  # 날짜가 바뀌는 시점에만 값이 있고, 나머진 null
+                "icon": icon_c,
+                "tempC": temp_c,
             })
 
         return result, hourly

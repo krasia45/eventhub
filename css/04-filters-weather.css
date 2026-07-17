@@ -171,7 +171,21 @@
   border-radius: var(--radius-md);
   padding: 10px 6px;
   text-align: center;
+  position: relative;
 }
+.weather-hourly-date {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 1px 6px;
+  margin: -2px auto 6px;
+  width: fit-content;
+  white-space: nowrap;
+}
+.weather-hourly-date-spacer { visibility: hidden; height: 16.5px; margin-bottom: 6px; }
 .weather-hourly-time { font-size: 11px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; white-space: nowrap; }
 .weather-hourly-icon { font-size: 20px; display: block; margin-bottom: 6px; }
 .weather-hourly-temp { font-size: 12.5px; font-weight: 800; color: var(--text-1); white-space: nowrap; }
@@ -201,19 +215,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
 }
 .weather-forecast-half-tag { font-size: 10px; color: var(--text-3); font-weight: 600; }
-.weather-forecast-half-pop { font-size: 11px; color: #4F8EF7; font-weight: 700; min-width: 26px; text-align: right; }
 .weather-forecast-day-icon { font-size: 17px; }
-.weather-forecast-day-temp {
-  flex: 0 0 64px;
-  text-align: right;
-  font-size: 12.5px;
-  font-weight: 700;
-}
-.weather-forecast-day-temp .lo { color: var(--text-3); }
-.weather-forecast-day-temp .hi { color: var(--text-1); font-weight: 800; margin-left: 4px; }
+.weather-forecast-half-temp { font-size: 13px; font-weight: 800; color: var(--text-1); }
 
 /* ===================== 헤더 날씨 칩 / 알림벨 ===================== */
 .weather-chip-header {

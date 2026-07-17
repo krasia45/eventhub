@@ -42,11 +42,12 @@ async function loadWeather(loc) {
     headerIconEl.textContent = data.icon || "🌤";
     headerTempEl.textContent = `${data.tempC}°`;
 
-    // 시간대별 날씨 (네이버 날씨처럼 지금부터 이어지는 3시간 간격)
+    // 시간대별 날씨 (네이버 날씨처럼 지금부터 1시간 간격으로 24시간 쭉 이어짐, 날짜 바뀌면 라벨 표시)
     if (Array.isArray(data.hourly) && data.hourly.length > 0) {
       hourlyLabel.hidden = false;
       hourlyRow.innerHTML = data.hourly.map(h => `
         <div class="weather-hourly-item">
+          ${h.dateLabel ? `<span class="weather-hourly-date">${h.dateLabel}</span>` : `<span class="weather-hourly-date weather-hourly-date-spacer"></span>`}
           <p class="weather-hourly-time">${h.label}</p>
           <span class="weather-hourly-icon">${h.icon}</span>
           <p class="weather-hourly-temp">${h.tempC}°</p>
@@ -64,15 +65,14 @@ async function loadWeather(loc) {
           <p class="weather-forecast-day-label">${d.label}</p>
           <div class="weather-forecast-half">
             <span class="weather-forecast-half-tag">오전</span>
-            ${d.amPop !== null ? `<span class="weather-forecast-half-pop">${d.amPop}%</span>` : ""}
             <span class="weather-forecast-day-icon">${d.amIcon || "-"}</span>
+            <span class="weather-forecast-half-temp">${d.amTemp !== null ? d.amTemp + "°" : "-"}</span>
           </div>
           <div class="weather-forecast-half">
             <span class="weather-forecast-half-tag">오후</span>
-            ${d.pmPop !== null ? `<span class="weather-forecast-half-pop">${d.pmPop}%</span>` : ""}
             <span class="weather-forecast-day-icon">${d.pmIcon || "-"}</span>
+            <span class="weather-forecast-half-temp">${d.pmTemp !== null ? d.pmTemp + "°" : "-"}</span>
           </div>
-          <p class="weather-forecast-day-temp"><span class="lo">${d.tempMin}°</span> <span class="hi">${d.tempMax}°</span></p>
         </div>
       `).join("");
     } else {
