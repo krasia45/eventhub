@@ -199,7 +199,7 @@ class handler(BaseHTTPRequestHandler):
         hourly = []
         cursor = now.replace(minute=0, second=0, microsecond=0)
         last_date_key = now.strftime("%Y-%m-%d")
-        for i in range(24):
+        for i in range(25):  # 지금(0) ~ +24시간(다음날 같은 시각)까지 정확히 포함
             target = cursor if i == 0 else cursor + timedelta(hours=i)
             date_key = target.strftime("%Y-%m-%d")
             date_label = None
