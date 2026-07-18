@@ -6,95 +6,13 @@
   margin-bottom: 6px;
 }
 
-/* ── EventHub Flame Icon · Liquid Flame v1.0 ──
-   컨테이너는 폰트 크기(em)에 연동, 애니메이션은 transform/opacity만 사용(GPU). */
-.eh-flame {
+/* ── EventHub Flame Icon: 정적 이미지 (애니메이션 없이 심플하게) ── */
+.flame-icon-img {
   display: inline-block;
   width: 26px;
-  height: 32.5px;             /* viewBox 64:80 = 1:1.25 비율 유지, 24~30px 권장 범위 내 고정 크기 */
-  vertical-align: -8px;
-  line-height: 0;
+  height: auto;
+  vertical-align: -7px;
   margin-right: 3px;
-}
-.eh-flame svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;         /* glow/ember 잘림 방지 */
-}
-
-/* ① Glow: 은은한 맥동 */
-.flame-glow {
-  opacity: 0.14;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: eh-glow 1.9s ease-in-out infinite;
-  will-change: opacity, transform;
-}
-@keyframes eh-glow {
-  0%, 100% { opacity: 0.10; transform: scale(0.92); }
-  50%      { opacity: 0.18; transform: scale(1.06); }
-}
-
-/* ② Outer: 미세 스케일 흔들림 */
-.flame-outer {
-  transform-box: fill-box;
-  transform-origin: center bottom;
-  animation: eh-outer 1.9s ease-in-out infinite;
-  will-change: transform;
-}
-@keyframes eh-outer {
-  0%, 100% { transform: scaleY(1)    scaleX(1);    }
-  50%      { transform: scaleY(1.05) scaleX(0.98); }
-}
-
-/* ③ Inner: Outer와 살짝 다른 위상 */
-.flame-inner {
-  transform-box: fill-box;
-  transform-origin: center bottom;
-  animation: eh-inner 1.6s ease-in-out infinite;
-  will-change: transform;
-}
-@keyframes eh-inner {
-  0%, 100% { transform: scaleY(1)    translateY(0);      }
-  50%      { transform: scaleY(1.07) translateY(-0.4px); }
-}
-
-/* ④ Core: 발광 맥동 */
-.flame-core {
-  opacity: 0.85;
-  transform-box: fill-box;
-  transform-origin: center bottom;
-  animation: eh-core 1.9s ease-in-out infinite;
-  will-change: opacity, transform;
-}
-@keyframes eh-core {
-  0%, 100% { opacity: 0.75; transform: translateY(0)      scale(1);    }
-  50%      { opacity: 1;    transform: translateY(-0.6px) scale(1.08); }
-}
-
-/* Ember: 기본 숨김 (작은 사이즈 노이즈 방지) */
-.flame-ember { opacity: 0; }
-.eh-flame--lg .flame-ember {
-  animation: eh-ember 2.4s ease-in-out infinite;
-  will-change: opacity, transform;
-}
-.eh-flame--lg .ember-2 { animation-delay: 0.5s; }
-.eh-flame--lg .ember-3 { animation-delay: 1.0s; }
-@keyframes eh-ember {
-  0%   { opacity: 0;   transform: translateY(0)    scale(0.6); }
-  30%  { opacity: 0.9; transform: translateY(-3px) scale(1);  }
-  100% { opacity: 0;   transform: translateY(-9px) scale(0.4); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .flame-glow, .flame-outer, .flame-inner, .flame-core, .flame-ember {
-    animation: none !important;
-  }
-  .flame-glow { opacity: 0.14; }
-  .flame-core { opacity: 0.9;  }
-}
-@media (max-width: 600px) {
-  .eh-flame--lg .flame-ember { display: none; }
 }
 
 .live-dot {

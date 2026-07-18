@@ -54,7 +54,7 @@ class handler(BaseHTTPRequestHandler):
                     "conditions": r.get("conditions", ""),
                     "targetAudience": r.get("target_audience", ""),
                     "desc": r.get("desc", ""),
-                    "tags": r.get("tags", []),
+                    "tags": r.get("tags", []) or [],
                     "image": r.get("image", ""),
                     "domain": r.get("domain", ""),
                     "link": r.get("link", ""),

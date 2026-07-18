@@ -123,7 +123,7 @@ function renderRanking() {
 
   const pool = getFilteredEvents();
 
-  const fireIconSvg = `<span class="eh-flame" aria-hidden="true"><svg viewBox="0 0 64 80"><use href="#flame-symbol"/></svg></span>`;
+  const fireIconSvg = `<img class="flame-icon-img" src="assets/flame-icon.png?v20260718d" alt="" aria-hidden="true">`;
   titleEl.innerHTML = currentCategory === "all"
     ? `${fireIconSvg} 실시간 인기 이벤트`
     : `${fireIconSvg} ${getCategoryLabel(currentCategory)} 인기 이벤트`;

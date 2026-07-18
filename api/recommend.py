@@ -14,6 +14,14 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
+        # 예상 못한 예외로 서버가 응답 없이 죽는 걸 막는 최상위 안전망.
+        # (실제로 tags가 null인 이벤트 하나 때문에 전체가 500으로 죽은 적이 있었음)
+        try:
+            self._handle_post()
+        except Exception as e:
+            self._send_json(500, {"error": f"예상치 못한 오류가 발생했어요: {str(e)}"})
+
+    def _handle_post(self):
         # 1. 요청 바디 읽기
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
@@ -50,7 +58,7 @@ class handler(BaseHTTPRequestHandler):
         # 이벤트 요약본을 프롬프트에 그대로 포함 (id를 반드시 반환하도록 지시)
         events_text = "\n".join(
             f"- id:{e.get('id')} | 브랜드:{e.get('brand')} | 카테고리:{e.get('category')} | "
-            f"제목:{e.get('title')} | 태그:{','.join(e.get('tags', []))} | 혜택:{e.get('discount')}"
+            f"제목:{e.get('title')} | 태그:{','.join(e.get('tags') or [])} | 혜택:{e.get('discount')}"
             for e in events
         )
 

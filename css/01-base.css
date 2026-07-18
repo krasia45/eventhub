@@ -8,16 +8,16 @@
   --mint: #79D8C5;
   --mint-dark: #4FB89F;
   --mint-light: #EAFAF5;
-  --bg: #F8F8F6;
+  --bg: #FBFBFA;
   --card-bg: #FFFFFF;
   --text-1: #1B1B1F;
   --text-2: #5C5C66;
   --text-3: #9A9AA5;
-  --border: #E5E5E0;
+  --border: #E8E8E3;
   --radius-lg: 22px;
   --radius-md: 16px;
   --radius-sm: 11px;
-  --shadow-card: 0 3px 12px rgba(27, 27, 31, 0.08);
+  --shadow-card: 0 2px 10px rgba(27, 27, 31, 0.07);
   --shadow-lift: 0 14px 32px rgba(27, 27, 31, 0.14);
   --max-page: 1280px;
   /* Flame 아이콘 색상 (라이트) */
