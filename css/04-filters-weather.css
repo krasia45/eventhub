@@ -225,9 +225,9 @@
 .weather-chip-header {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   height: 38px;
-  padding: 0 10px;
+  padding: 0 12px;
   border-radius: 999px;
   background: var(--card-bg);
   box-shadow: var(--shadow-card);

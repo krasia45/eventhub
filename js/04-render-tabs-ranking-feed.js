@@ -123,7 +123,7 @@ function renderRanking() {
 
   const pool = getFilteredEvents();
 
-  const fireIconSvg = `<svg class="fire-icon" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g transform="rotate(-8 12 13)"><path d="M12 2C8 6 6 10 6 14a6 6 0 0 0 12 0c0-2-1-4-2-5 .5 3-1 5-3 5a3 3 0 0 1-3-3c0-3.5 3-5.5 2-9Z" fill="#D6480F"/><path d="M12 8c-1.8 2.2-2.8 4-2.8 6a2.8 2.8 0 0 0 5.6 0c0-1-.5-1.9-1-2.4.2 1.4-.5 2.4-1.4 2.4a1.4 1.4 0 0 1-1.4-1.4c0-1.7 1.4-2.6 1-4.6Z" fill="#FFC94D"/></g></svg>`;
+  const fireIconSvg = `<span class="eh-flame" aria-hidden="true"><svg viewBox="0 0 64 80"><use href="#flame-symbol"/></svg></span>`;
   titleEl.innerHTML = currentCategory === "all"
     ? `${fireIconSvg} 실시간 인기 이벤트`
     : `${fireIconSvg} ${getCategoryLabel(currentCategory)} 인기 이벤트`;

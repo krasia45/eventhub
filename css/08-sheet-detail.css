@@ -10,27 +10,27 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 4px 10px;
-  border-radius: var(--radius-sm);
+  gap: 8px;
+  padding: 16px 4px 14px;
+  border-radius: var(--radius-md);
   background: var(--bg);
-  border: 1px solid var(--border);
-  font-size: 10.5px;
+  border: 1.5px solid var(--border);
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--text-2);
   transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
-.sheet-icon-action:active { transform: scale(0.95); }
+.sheet-icon-action:active { transform: scale(0.96); }
 .sheet-icon-action:hover { border-color: var(--accent); background: var(--accent-light); }
 .sheet-icon-action-emoji {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: var(--card-bg);
-  font-size: 16px;
+  font-size: 18px;
 }
 .sheet-icon-action.liked .sheet-icon-action-emoji { background: #FFEAEA; }
 .sheet-icon-action.liked { border-color: #FF6B6B; color: #E5484D; }
@@ -60,7 +60,7 @@
   text-align: center;
   padding: 10px 4px;
   border-radius: var(--radius-sm);
-  background: var(--bg);
+  background: var(--card-bg);
   border: 1px solid var(--border);
   font-size: 11.5px;
   font-weight: 700;
@@ -79,7 +79,6 @@
   border-top: 1px solid var(--border);
 }
 .sticky-cta-btn {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,8 +90,8 @@
   transition: transform 0.12s ease;
 }
 .sticky-cta-btn:active { transform: scale(0.98); }
-.sticky-cta-primary { background: var(--accent); color: #fff; box-shadow: 0 8px 18px rgba(255,111,0,0.32); }
-.sticky-cta-secondary { background: var(--bg); color: var(--text-1); border: 1px solid var(--border); }
+.sticky-cta-primary { flex: 1; background: var(--accent); color: #fff; box-shadow: 0 8px 20px rgba(255,106,0,0.26); }
+.sticky-cta-secondary { flex: 0 0 auto; padding-left: 22px; padding-right: 22px; background: var(--card-bg); color: var(--text-1); border: 1.5px solid var(--border); }
 
 .calendar-btn {
   width: 100%;

@@ -180,7 +180,7 @@ async function renderEventMap(ev) {
         map,
         path: [userPos, center],
         strokeWeight: 3,
-        strokeColor: "#FF6F00",
+        strokeColor: "#FF6A00",
         strokeOpacity: 0.75,
         strokeStyle: "dashed",
       });

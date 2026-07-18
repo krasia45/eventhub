@@ -4,7 +4,7 @@ import os
 import urllib.request
 import urllib.error
 from urllib.parse import urlparse, parse_qs
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # 날씨 아이콘 매핑 (OpenWeatherMap 코드 → 이모지)
 ICON_MAP = {
@@ -13,6 +13,21 @@ ICON_MAP = {
 }
 
 WEEKDAY_KR = ["월", "화", "수", "목", "금", "토", "일"]
+
+# Vercel 서버리스 함수는 UTC로 돌아간다. datetime.now()를 그대로 쓰면
+# 실제 한국 시각보다 9시간 밀려서 "지금" 시간대나 오늘/내일 날짜 경계가 어긋난다.
+# 그래서 항상 이 헬퍼로 명시 변환해서 쓴다.
+KST = timezone(timedelta(hours=9))
+
+
+def now_kst():
+    """지금 이 순간을 한국시간 기준의 naive datetime으로 반환."""
+    return datetime.now(KST).replace(tzinfo=None)
+
+
+def to_kst(unix_ts):
+    """OpenWeatherMap이 주는 UTC epoch 타임스탬프를 한국시간 기준의 naive datetime으로 변환."""
+    return datetime.fromtimestamp(unix_ts, tz=KST).replace(tzinfo=None)
 
 class handler(BaseHTTPRequestHandler):
 
@@ -123,13 +138,13 @@ class handler(BaseHTTPRequestHandler):
         except Exception:
             return [], [{"label": "지금", "icon": current_icon, "tempC": current_temp_c}]
 
-        now = datetime.now()
+        now = now_kst()
         days = {}
         raw_list = data.get("list", [])
         today_key = now.strftime("%Y-%m-%d")
 
         for item in raw_list:
-            dt = datetime.fromtimestamp(item["dt"])
+            dt = to_kst(item["dt"])
             date_key = dt.strftime("%Y-%m-%d")
             temp = item["main"]["temp"]
             icon_code = item["weather"][0]["icon"][:2]
@@ -168,7 +183,7 @@ class handler(BaseHTTPRequestHandler):
         # (아이콘까지 보간하면 있지도 않은 '중간 날씨'를 지어내는 셈이라 그건 하지 않음)
         anchors = [(now, current_temp_c, current_icon, None)]
         for item in raw_list:
-            dt = datetime.fromtimestamp(item["dt"])
+            dt = to_kst(item["dt"])
             if dt <= now:
                 continue
             icon_code = item["weather"][0]["icon"][:2]

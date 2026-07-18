@@ -2,21 +2,31 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --accent: #FF6F00;
-  --accent-dark: #E56200;
-  --accent-light: #FFF1E0;
-  --bg: #F6F6F8;
+  --accent: #FF6A00;
+  --accent-dark: #E05A00;
+  --accent-light: #FFF1E6;
+  --mint: #79D8C5;
+  --mint-dark: #4FB89F;
+  --mint-light: #EAFAF5;
+  --bg: #F7F7F5;
   --card-bg: #FFFFFF;
-  --text-1: #1A1A1E;
+  --text-1: #1B1B1F;
   --text-2: #5C5C66;
   --text-3: #9A9AA5;
-  --border: #ECECF0;
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 10px;
-  --shadow-card: 0 4px 16px rgba(20, 20, 30, 0.06);
-  --shadow-lift: 0 12px 28px rgba(20, 20, 30, 0.14);
+  --border: #ECECE8;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 11px;
+  --shadow-card: 0 2px 10px rgba(27, 27, 31, 0.05);
+  --shadow-lift: 0 14px 32px rgba(27, 27, 31, 0.12);
   --max-page: 1280px;
+  /* Flame 아이콘 색상 (라이트) */
+  --flame-outer-1: #E8341C;
+  --flame-outer-2: #FF5A1F;
+  --flame-outer-3: #FF8A3D;
+  --flame-inner-1: #FF7A2E;
+  --flame-inner-2: #FFC24B;
+  --flame-core:    #FFF4D6;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", Roboto, sans-serif;
 }
 
@@ -39,6 +49,14 @@ html[data-theme="dark"] {
   --text-3: #75758A;
   --border: #2C2C38;
   --accent-light: #3A2A1A;
+  --mint-light: #16302B;
+  /* Flame 아이콘 색상 (다크: 채도↑ 발광감↑) */
+  --flame-outer-1: #FF3B1F;
+  --flame-outer-2: #FF6A24;
+  --flame-outer-3: #FFA24D;
+  --flame-inner-1: #FF8A34;
+  --flame-inner-2: #FFD05A;
+  --flame-core:    #FFFBEC;
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.35);
   --shadow-lift: 0 12px 28px rgba(0, 0, 0, 0.55);
 }
@@ -84,4 +102,3 @@ a { text-decoration: none; color: inherit; }
 @media (min-width: 900px) {
   .app-container { padding-bottom: 48px; } /* bottom nav hides on desktop */
 }
-

@@ -118,13 +118,23 @@ html[data-theme="dark"] .inquiry-status-badge.answered {
 .app-footer-links a { color: var(--text-3); text-decoration: underline; }
 
 /* ===================== 다녀왔어요 / 한줄평 (소셜 증거) ===================== */
-.visit-section { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
-.map-section { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
+.visit-section {
+  margin-top: 18px;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+}
+.map-section {
+  margin-top: 14px;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+}
 
 .visit-form { display: flex; gap: 8px; margin-bottom: 4px; }
 .visit-form input {
   flex: 1;
-  background: var(--bg);
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
@@ -148,7 +158,7 @@ html[data-theme="dark"] .inquiry-status-badge.answered {
 .visit-comment-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 12px; margin-bottom: 18px; }
 .visit-comment-item {
   padding: 10px 12px;
-  background: var(--bg);
+  background: var(--card-bg);
   border-radius: var(--radius-sm);
   font-size: 12.5px;
   color: var(--text-2);
@@ -191,4 +201,3 @@ html[data-theme="dark"] .skeleton-block {
 .skeleton-card { pointer-events: none; }
 .skeleton-media { width: 100%; aspect-ratio: 1 / 1; border-radius: 0; }
 .skeleton-line { height: 12px; }
-
