@@ -7,8 +7,10 @@ function openSheet(eventId) {
   if (!ev) return;
   activeEventId = eventId;
 
-  document.getElementById("sheetImage").src = ev.image;
-  document.getElementById("sheetImage").alt = ev.title;
+  const sheetImageEl = document.getElementById("sheetImage");
+  sheetImageEl.onerror = () => handleImageError(sheetImageEl);
+  sheetImageEl.src = ev.image;
+  sheetImageEl.alt = ev.title;
   const sheetLogoEl = document.getElementById("sheetBrandLogo");
   sheetLogoEl.src = getLogoUrl(ev.domain);
   sheetLogoEl.alt = `${ev.brand} 로고`;
@@ -16,7 +18,11 @@ function openSheet(eventId) {
   document.getElementById("sheetSubtitle").textContent = `${ev.brand} · ${getCategoryLabel(ev.category)}`;
   document.getElementById("sheetTitle").textContent = ev.title;
   document.getElementById("sheetDiscount").textContent = ev.discount;
-  document.getElementById("sheetDiscountRow").textContent = ev.discount;
+  // 혜택 칩: "최대 50% 할인 + 추가 10% 쿠폰"처럼 +로 이어진 혜택은 칩 여러 개로 분리
+  const benefitIc = `<span class="benefit-chip-ic"><svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M12.6 2.6 21 11a2 2 0 0 1 0 2.8L13.8 21a2 2 0 0 1-2.8 0L2.6 12.6A2 2 0 0 1 2 11.2V4a2 2 0 0 1 2-2h7.2c.5 0 1 .2 1.4.6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7.5" cy="7.5" r="1.3" fill="currentColor"/></svg></span>`;
+  document.getElementById("sheetBenefitRow").innerHTML = (ev.discount || "")
+    .split(/\s+\+\s+/).map(s => s.trim()).filter(Boolean)
+    .map(b => `<span class="benefit-chip">${benefitIc}${escapeHtml(b)}</span>`).join("");
   document.getElementById("sheetPeriod").textContent = ev.period;
   document.getElementById("sheetDesc").textContent = ev.desc;
 
@@ -33,7 +39,7 @@ function openSheet(eventId) {
   }
 
   // 이미지 위 태그 칩 (참고 디자인처럼 이미지 하단에 오버레이)
-  document.getElementById("sheetHeroTags").innerHTML = ev.tags.slice(0, 3).map((t, i) =>
+  document.getElementById("sheetHeroTags").innerHTML = (ev.tags || []).slice(0, 2).map((t, i) =>
     `<span class="hero-tag-chip ${i === 0 ? "hero-tag-primary" : ""}">${t}</span>`
   ).join("");
 

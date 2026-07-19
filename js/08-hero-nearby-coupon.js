@@ -33,7 +33,7 @@ function renderHeroCarousel() {
       <h2 class="hero-title">${s.event.brand}<br>${s.event.title}</h2>
       <p class="hero-sub">${s.event.discount}</p>
       <button class="hero-btn" data-event-id="${s.event.id}">지금 확인하기 →</button>
-      <img class="hero-slide-img" src="${s.event.image}" alt="${s.event.title}">
+      <img class="hero-slide-img" src="${s.event.image}" alt="${s.event.title}" onerror="handleImageError(this)">
     </div>
   `).join("");
 
@@ -79,7 +79,7 @@ async function renderNearbySection() {
     return `
       <div class="nearby-card" data-id="${ev.id}">
         <div class="nearby-card-media">
-          <img src="${ev.image}" alt="${ev.title}" loading="lazy">
+          <img src="${ev.image}" alt="${ev.title}" loading="lazy" onerror="handleImageError(this)">
           <span class="nearby-card-distance">📍 ${distLabel}</span>
         </div>
         <p class="nearby-card-brand">${ev.brand}</p>
@@ -115,8 +115,8 @@ document.querySelectorAll(".nav-item").forEach(btn => {
       openCouponWallet();
     } else if (btn.dataset.nav === "search") {
       openTravelPlanner();
-    } else if (btn.dataset.nav === "more") {
-      openMoreMenu();
+    } else if (btn.dataset.nav === "calendar") {
+      openCalendar();
     } else if (btn.dataset.nav === "profile") {
       openAuthModal();
     } else if (btn.dataset.nav !== "home") {
@@ -141,24 +141,45 @@ function closeCouponWallet() {
   document.querySelector('.nav-item[data-nav="home"]').classList.add("active");
 }
 
+let currentWalletTab = "all";
+
 function renderCouponWallet() {
   const listEl = document.getElementById("couponWalletList");
   const likedList = EVENTS.filter(ev => likedEvents.has(ev.id));
+
+  // 탭별 분류: 방문 예정 = 아직 안 끝난 것, 종료 = dday가 "종료"
+  const upcoming = likedList.filter(ev => ev.dday !== "종료");
+  const ended = likedList.filter(ev => ev.dday === "종료");
+  const shown = currentWalletTab === "upcoming" ? upcoming
+    : currentWalletTab === "ended" ? ended : likedList;
+
+  // 탭 라벨에 개수 반영
+  const tabRow = document.getElementById("walletTabRow");
+  tabRow.querySelector('[data-wallet-tab="all"]').textContent = `전체 ${likedList.length}`;
+  tabRow.querySelector('[data-wallet-tab="upcoming"]').textContent = `방문 예정 ${upcoming.length}`;
+  tabRow.querySelector('[data-wallet-tab="ended"]').textContent = `종료 ${ended.length}`;
 
   if (likedList.length === 0) {
     listEl.innerHTML = `<li class="empty-state">아직 관심 등록한 이벤트가 없어요. 이벤트 상세에서 ♡를 눌러보세요!</li>`;
     return;
   }
+  if (shown.length === 0) {
+    listEl.innerHTML = `<li class="empty-state">${currentWalletTab === "ended" ? "종료된 이벤트가 없어요." : "방문 예정인 이벤트가 없어요."}</li>`;
+    return;
+  }
 
-  listEl.innerHTML = likedList.map(ev => `
-    <li class="coupon-wallet-item" data-id="${ev.id}">
+  listEl.innerHTML = shown.map(ev => `
+    <li class="coupon-wallet-item ${ev.dday === "종료" ? "wallet-item-ended" : ""}" data-id="${ev.id}">
       <img class="coupon-wallet-logo" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고" data-domain="${ev.domain}" data-brand="${ev.brand}">
       <div class="coupon-wallet-info">
         <p class="coupon-wallet-brand">${ev.brand}</p>
         <p class="coupon-wallet-item-title">${ev.title}</p>
         <p class="coupon-wallet-period">${ev.period}</p>
       </div>
-      <span class="coupon-wallet-discount">${ev.discount}</span>
+      <div class="coupon-wallet-right">
+        ${ev.dday ? `<span class="wallet-dday ${ev.dday === "종료" ? "wallet-dday-ended" : ""}">${ev.dday}</span>` : ""}
+        <span class="coupon-wallet-discount">${ev.discount}</span>
+      </div>
     </li>
   `).join("");
 
@@ -172,6 +193,13 @@ function renderCouponWallet() {
 }
 
 document.getElementById("couponWalletClose").addEventListener("click", closeCouponWallet);
+document.getElementById("walletTabRow").addEventListener("click", (e) => {
+  const tab = e.target.closest(".wallet-tab");
+  if (!tab) return;
+  currentWalletTab = tab.dataset.walletTab;
+  document.querySelectorAll(".wallet-tab").forEach(t => t.classList.toggle("active", t === tab));
+  renderCouponWallet();
+});
 couponWalletOverlay.addEventListener("click", (e) => {
   if (e.target === couponWalletOverlay) closeCouponWallet();
 });

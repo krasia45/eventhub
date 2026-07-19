@@ -292,19 +292,41 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
   width: fit-content;
 }
 
-.sheet-body { padding: 20px 20px 28px; }
-
-.discount-hero-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--accent);
-  border-radius: var(--radius-md);
-  padding: 16px 18px;
-  margin-bottom: 14px;
+.sheet-body {
+  position: relative;
+  z-index: 2;
+  margin-top: -22px;              /* 히어로 이미지를 살짝 덮으며 */
+  background: var(--card-bg);
+  border-radius: 24px 24px 0 0;   /* 참고 디자인처럼 곡선으로 이어짐 */
+  padding: 26px 20px 28px;
 }
-.discount-hero-icon { font-size: 22px; flex-shrink: 0; }
-.discount-hero-text { font-size: 17px; font-weight: 800; color: #fff; line-height: 1.35; }
+
+/* ── 혜택 칩 (참고 디자인: 아이콘 + 텍스트, 깔끔한 가로 배치) ── */
+.benefit-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-bottom: 20px;
+}
+.benefit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+.benefit-chip-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--accent-light);
+  color: var(--accent);
+  flex-shrink: 0;
+}
 
 .info-summary-card {
   background: var(--bg);
@@ -415,6 +437,16 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
   box-shadow: 0 3px 10px rgba(0,0,0,0.2);
   opacity: 0.75;
   transition: opacity 0.15s ease, transform 0.15s ease;
+}
+/* 시각적 크기(32px)는 유지하되, 실제 터치 판정 영역만 44px 근접까지 투명하게 확장
+   (모바일 권장 최소 터치 타겟 대응 — 디자인은 전혀 안 바뀌고 누르기만 더 쉬워짐) */
+.card-like-btn::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
 }
 .card-like-btn.liked,
 .card-like-btn:hover {

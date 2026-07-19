@@ -87,7 +87,7 @@ function renderAiFeedCards(events) {
     return `
       <div class="ai-result-card" data-id="${ev.id}">
         <div class="ai-result-card-media">
-          <img class="ai-result-card-img" src="${ev.image}" alt="${ev.title}" loading="lazy">
+          <img class="ai-result-card-img" src="${ev.image}" alt="${ev.title}" loading="lazy" onerror="handleImageError(this)">
           ${badge ? `<span class="ai-result-card-badge">${badge}</span>` : ""}
         </div>
         <p class="ai-result-card-brand">${ev.brand}</p>

@@ -29,102 +29,87 @@
 .ranking-list {
   list-style: none;
   display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 4px;
-  scrollbar-width: none;
+  flex-direction: column;
 }
-.ranking-list::-webkit-scrollbar { display: none; }
 
-.rank-card {
-  position: relative;
-  flex: 0 0 150px;
-  scroll-snap-align: start;
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.12s ease;
-}
-.rank-card:active { transform: scale(0.97); }
-
-.rank-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 2;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.75);
-  color: #fff;
-  font-size: 12.5px;
-  font-weight: 800;
-  font-style: italic;
+/* ── 실시간 급상승 TOP 5: 세로 리스트 (참고 시안 반영) ── */
+.rank-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 12px;
+  padding: 13px 2px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
 }
-.rank-card:nth-child(1) .rank-badge { background: var(--accent); }
-.rank-card:nth-child(2) .rank-badge { background: #FF9640; }
-.rank-card:nth-child(3) .rank-badge { background: #FFB56B; }
+.rank-row:last-child { border-bottom: none; }
+.rank-row:active { background: var(--bg); }
 
-.rank-card-media { position: relative; width: 100%; aspect-ratio: 1 / 1; background: #f0f0f2; }
-.rank-card-photo { width: 100%; height: 100%; object-fit: cover; }
-.rank-card-discount {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 999px;
-}
-
-.rank-card-body { display: flex; align-items: center; gap: 8px; padding: 10px; }
-.rank-card-logo {
+.rank-num {
   flex-shrink: 0;
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  object-fit: contain;
-  background: #fff;
-  border: 1px solid var(--border);
-  padding: 2px;
-}
-.rank-card-info { min-width: 0; }
-.rank-card-brand { font-size: 10.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
-.rank-card-live-tag {
-  display: inline-block;
-  background: #FFEBEE;
-  color: #E5484D;
-  font-size: 8.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
   font-weight: 800;
-  padding: 1.5px 5px;
-  border-radius: 4px;
-  text-transform: none;
-  letter-spacing: 0;
-  margin-right: 3px;
-  vertical-align: middle;
 }
-.rank-card-title {
-  font-size: 12px;
-  font-weight: 700;
+.rank-num-hot { background: var(--accent); }
+.rank-num-alt { background: var(--mint-dark); }
+
+.rank-thumb {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: #f0f0f2;
+}
+
+.rank-row-info { flex: 1; min-width: 0; }
+.rank-row-title {
+  font-size: 14px;
+  font-weight: 800;
   color: var(--text-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 3px;
 }
-
-@media (min-width: 640px) {
-  .rank-card { flex: 0 0 180px; }
+.rank-row-sub {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 6px;
 }
+.rank-interest {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mint-dark);
+  background: var(--mint-light);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.rank-interest-flame { width: 11px; height: auto; }
 
-/* ===================== Hero Banner ===================== */
+.rank-like {
+  flex-shrink: 0;
+  font-size: 18px;
+  padding: 6px;
+  line-height: 1;
+  background: none;
+  border: none;
+}
+.rank-like:active { transform: scale(0.88); }
+
 .hero-carousel-wrap { position: relative; }
 
 .hero-carousel {
@@ -240,7 +225,7 @@
 .card-media {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
   background: #f0f0f2;
   overflow: hidden;
 }
@@ -274,6 +259,10 @@
   position: absolute;
   top: 8px;
   right: 8px;
+  max-width: calc(100% - 64px); /* 좌상단 로고배지(40px+여백)와 항상 안 겹치도록 절대 안전거리 확보 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   background: var(--accent);
   color: #fff;
   font-size: 12px;
@@ -344,6 +333,56 @@
   color: var(--text-3);
   font-weight: 700;
 }
+
+/* ── 서브카테고리 칩 + 피드 정렬 칩 (시안 6번) ── */
+.subcat-row {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 10px;
+}
+.subcat-row::-webkit-scrollbar { display: none; }
+.subcat-chip {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.subcat-chip.active { background: var(--text-1); border-color: var(--text-1); color: #fff; }
+
+.feed-sort-row {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 14px;
+}
+.feed-sort-row::-webkit-scrollbar { display: none; }
+.feed-sort-chip {
+  flex-shrink: 0;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.feed-sort-chip.active {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+.card-stats span { display: inline-flex; align-items: center; gap: 3px; }
+.card-stats .stat-heart { color: var(--accent); }
+.meta-ic { flex-shrink: 0; vertical-align: -1.5px; }
 
 .empty-state {
   grid-column: 1 / -1;

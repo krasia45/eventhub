@@ -12,6 +12,24 @@ const CATEGORIES = [
 // (DB에는 그대로 남아있고, 프론트에서만 숨김 처리 — 나중에 필요하면 되살리기 쉽도록)
 const ACTIVE_CATEGORY_IDS = CATEGORIES.filter(c => c.id !== "all").map(c => c.id);
 
+/* ---------- 이벤트 대표 이미지 로드 실패 안전망 ----------
+   브랜드 로고와 달리 이벤트 이미지는 외부 서비스 폴백이 없어서, 깨지면
+   그대로 브라우저 기본 '깨진 이미지' 아이콘이 노출되던 문제.
+   EventHub 브랜드 톤(연한 오렌지 배경 + 사진 아이콘)의 로컬 SVG로 대체해서
+   카드/상세/캐러셀 어디서 실패해도 항상 자연스러운 모습을 유지한다. */
+const EVENT_IMAGE_FALLBACK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<rect width="200" height="200" fill="#FFF1E6"/>
+<rect x="52" y="62" width="96" height="76" rx="8" fill="none" stroke="#FF6A00" stroke-width="5" opacity="0.4"/>
+<circle cx="74" cy="84" r="7" fill="#FF6A00" opacity="0.4"/>
+<path d="M52 124 L82 98 L104 116 L126 92 L148 124 Z" fill="#FF6A00" opacity="0.4"/>
+</svg>`;
+const EVENT_IMAGE_FALLBACK_SRC = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(EVENT_IMAGE_FALLBACK_SVG);
+
+function handleImageError(imgEl) {
+  imgEl.onerror = null; // 폴백 자체가 또 실패해서 무한루프 도는 것 방지
+  imgEl.src = EVENT_IMAGE_FALLBACK_SRC;
+}
+
 /* ---------- Event Dataset — Supabase(/api/events)에서 비동기로 로드 ---------- */
 let EVENTS = [];
 let eventsLoaded = false;
@@ -43,11 +61,12 @@ function renderFeedSkeleton(count = 6) {
 
 function renderRankingSkeleton(count = 5) {
   return Array.from({ length: count }).map(() => `
-    <li class="rank-card skeleton-card">
-      <div class="skeleton-block skeleton-media"></div>
-      <div class="rank-card-body">
-        <div class="skeleton-block" style="width:26px;height:26px;border-radius:50%;"></div>
-        <div class="skeleton-block skeleton-line" style="width:70%;"></div>
+    <li class="rank-row skeleton-card" style="pointer-events:none;">
+      <div class="skeleton-block" style="width:26px;height:26px;border-radius:50%;flex-shrink:0;"></div>
+      <div class="skeleton-block" style="width:64px;height:64px;border-radius:14px;flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div class="skeleton-block skeleton-line" style="width:70%;margin-bottom:8px;"></div>
+        <div class="skeleton-block skeleton-line" style="width:45%;"></div>
       </div>
     </li>
   `).join("");
@@ -127,4 +146,3 @@ function getEventScore(eventId) {
   //    이번 단계에는 포함 안 함 (다음 단계로 별도 예정)
   return s.views * 0.6 + s.likes * 0.4;
 }
-

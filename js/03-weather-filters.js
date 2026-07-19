@@ -162,6 +162,11 @@ function getFilteredEvents() {
 
   list = list.filter(ev => matchesDiscountFilter(ev, currentDiscountFilter));
 
+  // 서브카테고리(태그) 필터 — 카테고리 안에서 태그로 한 번 더 좁히기
+  if (currentSubTag) {
+    list = list.filter(ev => (ev.tags || []).includes(currentSubTag));
+  }
+
   if (gpsFilterActive && userLocation) {
     list = list.filter(ev => haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng) <= 20);
   }
@@ -169,6 +174,13 @@ function getFilteredEvents() {
   if (endingSoonFilterActive) {
     list = [...list].sort((a, b) => new Date(a.periodEnd) - new Date(b.periodEnd));
   }
+
+  // 피드 정렬 칩 적용
+  const pct = ev => { const m = (ev.discount || "").match(/(\d+)\s*%/); return m ? parseInt(m[1], 10) : 0; };
+  if (currentFeedSort === "new") list = [...list].sort((a, b) => (b.periodStart || "").localeCompare(a.periodStart || ""));
+  else if (currentFeedSort === "discount") list = [...list].sort((a, b) => pct(b) - pct(a));
+  else if (currentFeedSort === "closing") list = [...list].sort((a, b) => (a.periodEnd || "9999").localeCompare(b.periodEnd || "9999"));
+  else list = [...list].sort((a, b) => getEventScore(b.id) - getEventScore(a.id)); // 인기순
 
   return list;
 }
@@ -243,8 +255,12 @@ function attachLogoFallback(imgEl, brandName, domain) {
       imgEl.dataset.fallbackStage = "1";
       imgEl.src = getFaviconFallbackUrl(domain);
     } else {
-      const initial = brandName.trim().charAt(0).toUpperCase();
-      imgEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(initial)}&background=FF6F00&color=fff&bold=true&size=128`;
+      // 최종 폴백: 외부 서비스 없이 로컬에서 즉시 생성하는 이니셜 배지.
+      // (기존 ui-avatars.com도 외부 의존이라 그것마저 실패하면 빈 원이 남았음)
+      const initial = ((brandName || "?").trim().charAt(0) || "?").toUpperCase()
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" rx="64" fill="#FF6A00"/><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="-apple-system,sans-serif" font-size="58" font-weight="700" fill="#fff">${initial}</text></svg>`;
+      imgEl.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     }
   });
 }
