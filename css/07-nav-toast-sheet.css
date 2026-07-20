@@ -466,5 +466,5 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
   transform: none;
 }
 .rank-like:active { transform: scale(0.88); }
-.rank-like .card-like-icon { color: var(--mint-dark); }
-.rank-like.liked .card-like-icon svg path { fill: var(--mint-dark); }
+.rank-like .card-like-icon { color: var(--accent); }
+.rank-like.liked .card-like-icon svg path { fill: var(--accent); }
