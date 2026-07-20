@@ -80,19 +80,13 @@ function openSheet(eventId) {
     mapSection.hidden = true;
   }
 
-  // 하단 고정 CTA: 팝업 → 길찾기+공유 / 그 외 → 브랜드사이트이동+공유 (참고 디자인 반영)
+  // 하단 고정 CTA: 위쪽 위치안내에 이미 길찾기/지도 버튼이 있으므로,
+  // 하단 CTA는 팝업 여부와 상관없이 항상 '공식 사이트로 이동'을 담당 (역할 중복 방지)
   const primaryBtn = document.getElementById("stickyCtaPrimaryBtn");
-  if (isPopup) {
-    document.getElementById("stickyCtaPrimaryIcon").textContent = "🗺";
-    document.getElementById("stickyCtaPrimaryLabel").textContent = "길찾기";
-    primaryBtn.href = getKakaoRouteLink(ev);
-    primaryBtn.target = "_blank";
-  } else {
-    document.getElementById("stickyCtaPrimaryIcon").textContent = "🔗";
-    document.getElementById("stickyCtaPrimaryLabel").textContent = "브랜드 사이트 이동";
-    primaryBtn.href = ev.link;
-    primaryBtn.target = "_blank";
-  }
+  document.getElementById("stickyCtaPrimaryIcon").textContent = "🔗";
+  document.getElementById("stickyCtaPrimaryLabel").textContent = isPopup ? "공식 사이트 확인하기" : "브랜드 사이트 이동";
+  primaryBtn.href = ev.link;
+  primaryBtn.target = "_blank";
 
   updateLikeButton();
   renderBrandFollowButton(ev);

@@ -128,7 +128,7 @@
   .ai-card-row { grid-template-columns: 1fr; }
 }
 .ai-result-card {
-  background: #fff;
+  background: var(--mint-light);
   border-radius: var(--radius-sm);
   padding: 10px;
   border: 1px solid #D1FAE5;
@@ -142,7 +142,7 @@
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 8px;
-  background: #f0f0f2;
+  background: #E8F8F1;
   display: block;
 }
 .ai-result-card-badge {
