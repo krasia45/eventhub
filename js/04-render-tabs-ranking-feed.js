@@ -12,6 +12,7 @@ function renderCategoryTabs() {
       currentCategory = btn.dataset.cat;
       selectedBrands.clear(); // 카테고리 바뀌면 이전 카테고리의 브랜드 선택은 초기화
       currentSubTag = null;   // 서브카테고리도 초기화
+      rankingShowCount = 5;   // 카테고리 바뀌면 더보기 상태도 초기화
       renderCategoryTabs();
       renderBrandFilter();
       renderSubcatRow();
@@ -161,9 +162,12 @@ function bindDiscountTabs() {
 document.getElementById("gpsFilterChip").addEventListener("click", toggleGpsFilter);
 
 /* ---------- Render: Ranking (조회수·좋아요 기반 실제 랭킹, 카테고리별) ---------- */
+let rankingShowCount = 5;
+
 function renderRanking() {
   const list = document.getElementById("rankingList");
   const titleEl = document.getElementById("rankingTitle");
+  const moreBtn = document.getElementById("rankingMoreBtn");
 
   const pool = getFilteredEvents();
 
@@ -174,6 +178,7 @@ function renderRanking() {
 
   if (pool.length === 0) {
     list.innerHTML = `<li class="empty-state">아직 랭킹에 표시할 이벤트가 없어요.</li>`;
+    moreBtn.hidden = true;
     return;
   }
 
@@ -183,7 +188,8 @@ function renderRanking() {
     ? [...pool].sort((a, b) => getEventScore(b.id) - getEventScore(a.id))
     : shuffleArray(pool);
 
-  const rankedEvents = sorted.slice(0, 5);
+  const rankedEvents = sorted.slice(0, rankingShowCount);
+  moreBtn.hidden = !(sorted.length > rankingShowCount && rankingShowCount < 10);
 
   list.innerHTML = rankedEvents.map((ev, idx) => `
     <li class="rank-row" data-id="${ev.id}">
@@ -207,6 +213,11 @@ function renderRanking() {
     btn.addEventListener("click", (e) => { e.stopPropagation(); toggleLike(btn.dataset.id); });
   });
 }
+
+document.getElementById("rankingMoreBtn").addEventListener("click", () => {
+  rankingShowCount = Math.min(10, rankingShowCount + 5);
+  renderRanking();
+});
 
 /* ---------- Render: Feed Grid ---------- */
 function renderEventCardHtml(ev) {

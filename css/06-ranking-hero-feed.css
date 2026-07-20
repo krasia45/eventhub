@@ -26,6 +26,16 @@
   box-shadow: 0 2px 6px rgba(255,106,0,0.3);
 }
 
+.ranking-head-right { display: flex; align-items: center; gap: 8px; }
+.ranking-more-btn {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  background: none;
+  border: none;
+}
+.ranking-more-btn:active { opacity: 0.6; }
+
 .ranking-list {
   list-style: none;
   display: flex;
