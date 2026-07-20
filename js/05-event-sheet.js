@@ -126,17 +126,12 @@ function closeSheet() {
 
 function updateLikeButton() {
   const likeBtn = document.getElementById("likeBtn");
-  const likeIcon = document.getElementById("likeIcon");
   const isLiked = likedEvents.has(activeEventId);
 
   likeBtn.classList.toggle("liked", isLiked);
   likeBtn.setAttribute("aria-label", isLiked ? "관심 이벤트에서 삭제" : "관심 이벤트로 등록");
-  likeIcon.textContent = isLiked ? "❤️" : "🤍";
 
   // 카드 그리드에 노출된 동일 이벤트의 하트 아이콘도 함께 동기화
-  document.querySelectorAll(`.card-like-btn[data-id="${activeEventId}"] .card-like-icon`).forEach(el => {
-    el.textContent = isLiked ? "❤️" : "🤍";
-  });
   document.querySelectorAll(`.card-like-btn[data-id="${activeEventId}"]`).forEach(el => {
     el.classList.toggle("liked", isLiked);
   });
@@ -145,13 +140,10 @@ function updateLikeButton() {
 /* ---------- 다녀왔어요 / 한줄평 (소셜 증거) ---------- */
 async function renderBrandFollowButton(ev) {
   const btn = document.getElementById("brandFollowBtn");
-  document.getElementById("brandFollowBox").querySelector(".brand-follow-text").textContent =
-    `${ev.brand}을(를) 팔로우하고 새로운 이벤트 알림을 받아보세요`;
 
   if (!currentUser || !supabaseClient) {
-    btn.textContent = "+ 팔로우";
-    btn.classList.remove("following");
-    btn.onclick = () => showToast("로그인하시면 브랜드를 팔로우할 수 있어요.");
+    updateFollowBtnUI(btn, false);
+    btn.onclick = () => showToast("로그인하시면 브랜드 알림을 받을 수 있어요.");
     return;
   }
 
@@ -187,7 +179,8 @@ async function renderBrandFollowButton(ev) {
 }
 
 function updateFollowBtnUI(btn, isFollowing) {
-  btn.textContent = isFollowing ? "✓ 팔로잉" : "+ 팔로우";
+  const label = btn.querySelector("#followBtnLabel");
+  if (label) label.textContent = isFollowing ? "알림중" : "알림신청";
   btn.classList.toggle("following", isFollowing);
 }
 
@@ -297,9 +290,7 @@ function toggleLike(eventId) {
 
   // 카드 그리드의 하트 아이콘 동기화
   document.querySelectorAll(`.card-like-btn[data-id="${eventId}"]`).forEach(btn => {
-    const isLiked = likedEvents.has(eventId);
-    btn.classList.toggle("liked", isLiked);
-    btn.querySelector(".card-like-icon").textContent = isLiked ? "❤️" : "🤍";
+    btn.classList.toggle("liked", likedEvents.has(eventId));
   });
 
   // 상세 시트가 같은 이벤트를 보고 있다면 그쪽 하트도 동기화

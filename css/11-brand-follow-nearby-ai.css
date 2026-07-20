@@ -1,30 +1,17 @@
-/* ===================== 브랜드 팔로우 박스 (상세페이지) ===================== */
-.brand-follow-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--accent-light);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  margin-bottom: 16px;
-}
-.brand-follow-text { flex: 1; font-size: 12px; font-weight: 600; color: var(--accent-dark); line-height: 1.4; }
-.brand-follow-btn {
-  flex-shrink: 0;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.brand-follow-btn.following { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
-
 /* 좋아요 하트가 폰트에 따라 검정으로 보이는 경우 대비, 명시적으로 빨간색 지정 */
 .stat-heart { color: #FF3B30; font-weight: 700; }
 
 /* ===================== 내 주변 인기 이벤트 ===================== */
+.nearby-title-ic {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: var(--mint-dark);
+  vertical-align: -3px;
+  margin-right: 2px;
+}
+.nearby-title-ic svg { width: 100%; height: 100%; }
+
 .nearby-scroll {
   display: flex;
   gap: 12px;
@@ -46,7 +33,7 @@
   position: absolute;
   bottom: 8px;
   left: 8px;
-  background: rgba(0,0,0,0.6);
+  background: var(--mint-dark);
   color: #fff;
   font-size: 10.5px;
   font-weight: 700;

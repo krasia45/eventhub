@@ -3,7 +3,7 @@ function renderCategoryTabs() {
   const nav = document.getElementById("categoryTabs");
   nav.innerHTML = CATEGORIES.map(cat => `
     <button class="tab-pill ${cat.id === currentCategory ? "active" : ""}" data-cat="${cat.id}">
-      <span class="tab-emoji">${cat.emoji}</span>${cat.label}
+      <span class="tab-icon">${cat.icon}</span><span class="tab-label">${cat.label}</span>
     </button>
   `).join("");
 
@@ -195,7 +195,7 @@ function renderRanking() {
         <span class="rank-interest"><img class="rank-interest-flame" src="assets/flame-icon.png?v20260718d" alt=""> ${formatCount((eventStatsCache[ev.id] || {}).views || 0)}명 관심중</span>
       </div>
       <button class="card-like-btn rank-like ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
-        <span class="card-like-icon">${likedEvents.has(ev.id) ? "❤️" : "🤍"}</span>
+        <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
       </button>
     </li>
   `).join("");
@@ -234,7 +234,7 @@ function renderEventCardHtml(ev) {
       <div class="card-media">
         <img class="card-photo" src="${ev.image}" alt="${ev.title}" loading="lazy" onerror="handleImageError(this)">
         <button class="card-like-btn ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
-          <span class="card-like-icon">${likedEvents.has(ev.id) ? "❤️" : "🤍"}</span>
+          <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
         </button>
         <span class="card-logo-badge">
           <img data-domain="${ev.domain}" data-brand="${ev.brand}" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고">

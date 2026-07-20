@@ -23,6 +23,8 @@
 
 .ai-feed-section { margin-top: 4px; }
 
+.ai-title-mint { color: var(--mint-dark); }
+
 .ai-feed-more-btn { font-size: 12.5px; font-weight: 700; color: var(--mint-dark); flex-shrink: 0; }
 
 .ai-feed-grid {
@@ -129,7 +131,7 @@
   background: #fff;
   border-radius: var(--radius-sm);
   padding: 10px;
-  border: 1px solid #CFF0E6;
+  border: 1px solid #D1FAE5;
   cursor: pointer;
   transition: transform 0.12s ease;
 }

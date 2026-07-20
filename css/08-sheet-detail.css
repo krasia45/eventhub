@@ -1,39 +1,39 @@
-/* ===================== 상세 시트: 보조 액션 아이콘 2개 (찜/캘린더) — 길찾기·공유하기는 하단 고정 CTA에서 처리 ===================== */
+/* ===================== 상세 시트: 액션 버튼 3개 (찜하기/공유하기/알림신청) — 이미지 바로 아래, 테두리 없이 아이콘+텍스트만 ===================== */
 .sheet-icon-actions {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 4px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin: 2px 0 22px;
 }
 .sheet-icon-action {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px 4px 14px;
-  border-radius: var(--radius-md);
-  background: var(--bg);
-  border: 1.5px solid var(--border);
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--text-2);
-  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  gap: 7px;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  transition: transform 0.12s ease;
 }
-.sheet-icon-action:active { transform: scale(0.96); }
-.sheet-icon-action:hover { border-color: var(--accent); background: var(--accent-light); }
-.sheet-icon-action-emoji {
+.sheet-icon-action:active { transform: scale(0.94); }
+.sheet-icon-action-ic {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--card-bg);
-  font-size: 18px;
+  width: 26px;
+  height: 26px;
+  color: var(--mint-dark);
 }
-.sheet-icon-action.liked .sheet-icon-action-emoji { background: #FFEAEA; }
-.sheet-icon-action.liked { border-color: #FF6B6B; color: #E5484D; }
+.sheet-icon-action-ic svg { width: 100%; height: 100%; }
+/* 찜한 상태: 하트를 채우고 오렌지로 강조 */
+.sheet-icon-action.liked .sheet-icon-action-ic { color: var(--accent); }
+.sheet-icon-action.liked .sheet-icon-action-ic svg path { fill: var(--accent); }
+/* 알림신청 중: 벨을 채우고 민트 진하게 */
+.sheet-icon-action.following .sheet-icon-action-ic { color: var(--mint-dark); }
+.sheet-icon-action.following .sheet-icon-action-ic svg path { fill: var(--mint-dark); fill-opacity: 0.18; }
 
 /* ---------- 참여방법 번호 목록 ---------- */
 .channel-steps { list-style: none; counter-reset: step; padding: 0; }

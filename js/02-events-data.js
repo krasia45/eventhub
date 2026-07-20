@@ -1,11 +1,17 @@
 /* ---------- Category Definitions ---------- */
 const CATEGORIES = [
-  { id: "all",     label: "전체",       emoji: "🏠" },
-  { id: "fashion", label: "패션",       emoji: "👗" },
-  { id: "beauty",  label: "뷰티",       emoji: "💄" },
-  { id: "food",    label: "카페·디저트", emoji: "🍰" },
-  { id: "popup",   label: "팝업·컬처",   emoji: "🎪" },
-  { id: "living",  label: "라이프스타일", emoji: "🛋️" },
+  { id: "all",     label: "전체",       emoji: "🏠",
+    icon: `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>` },
+  { id: "fashion", label: "패션",       emoji: "👗",
+    icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M9 4h6l1.5 2.5L21 9l-2.5 2-1-1.5V20a1 1 0 0 1-1 1H7.5a1 1 0 0 1-1-1V9.5l-1 1.5L3 9l4.5-2.5L9 4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="4" r="1.4" stroke="currentColor" stroke-width="1.4"/></svg>` },
+  { id: "beauty",  label: "뷰티",       emoji: "💄",
+    icon: `<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="10" width="6" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M10 10V7a2 2 0 0 1 4 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M11 3.5h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>` },
+  { id: "food",    label: "카페·디저트", emoji: "🍰",
+    icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M17 10.5h1.5a2.5 2.5 0 0 1 0 5H17" stroke="currentColor" stroke-width="1.6"/><path d="M8 3c0 1-1.2 1-1.2 2S8 6 8 7M12 3c0 1-1.2 1-1.2 2S12 6 12 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>` },
+  { id: "popup",   label: "팝업·컬처",   emoji: "🎪",
+    icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 3v4M12 7 5 20h14L12 7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="3" r="1.3" stroke="currentColor" stroke-width="1.4"/><path d="M8.5 14.5h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>` },
+  { id: "living",  label: "라이프스타일", emoji: "🛋️",
+    icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 12v6M20 12v6M4 12a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2H4v-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 10V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.6"/></svg>` },
 ];
 
 // BRD 확정 사항: 구매 주기가 긴 전자기기/숙박/배달/리빙은 이번 개편에서 제외
