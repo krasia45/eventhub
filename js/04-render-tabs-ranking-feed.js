@@ -189,7 +189,9 @@ function renderRanking() {
     : shuffleArray(pool);
 
   const rankedEvents = sorted.slice(0, rankingShowCount);
-  moreBtn.hidden = !(sorted.length > rankingShowCount && rankingShowCount < 10);
+  const isExpanded = rankingShowCount > 5;
+  moreBtn.hidden = sorted.length <= 5;
+  moreBtn.textContent = isExpanded ? "접기 ‹" : "더보기 ›";
 
   list.innerHTML = rankedEvents.map((ev, idx) => `
     <li class="rank-row" data-id="${ev.id}">
@@ -215,7 +217,7 @@ function renderRanking() {
 }
 
 document.getElementById("rankingMoreBtn").addEventListener("click", () => {
-  rankingShowCount = Math.min(10, rankingShowCount + 5);
+  rankingShowCount = rankingShowCount > 5 ? 5 : Math.min(10, getFilteredEvents().length);
   renderRanking();
 });
 
