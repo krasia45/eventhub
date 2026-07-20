@@ -243,6 +243,33 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
   object-fit: cover;
 }
 
+.sheet-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.sheet-brand-row-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 2px;
+  flex-shrink: 0;
+}
+.sheet-brand-row span {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.sheet-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
 .sheet-title {
   font-size: 20px;
   font-weight: 800;
@@ -324,6 +351,7 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
 #sheetConditionsRow .info-row-icon { color: #C05621; }
 .info-row-save-btn {
   flex-shrink: 0;
+  white-space: nowrap;
   font-size: 11.5px;
   font-weight: 700;
   color: var(--mint-dark);
@@ -348,7 +376,7 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
 }
 .sheet-h3:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
 
-.sheet-desc { font-size: 14px; font-weight: 400; color: #374151; line-height: 1.75; }
+.sheet-desc { font-size: 14px; font-weight: 400; color: #374151; line-height: 1.75; white-space: pre-line; }
 
 .sheet-tags {
   display: flex;
@@ -377,6 +405,7 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
   margin-left: 6px;
   vertical-align: middle;
 }
+.sheet-dday-inline:empty { display: none; }
 
 /* ---------- 히어로 이미지 좌측 상단: 브랜드 로고만 작고 깔끔하게 ---------- */
 .sheet-hero-topleft {

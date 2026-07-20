@@ -86,6 +86,34 @@ async function checkNewFollowedEvents() {
 }
 
 // 더보기 시트를 열 때(=사용자가 알림을 실제로 확인하는 시점) 목록을 그려줌
+let currentNotifTab = "all";
+
+function buildLocalNotifications() {
+  const notifs = [];
+  // [이벤트] 알림신청한 이벤트 중 마감 임박 (D-3 이내) — 브랜드 팔로우와는 별개인 '이벤트 단위' 알림
+  EVENTS.filter(ev => notifiedEvents.has(ev.id)).forEach(ev => {
+    const m = (ev.dday || "").match(/^D-(\d+)$/);
+    if (ev.dday === "D-Day" || (m && parseInt(m[1], 10) <= 3)) {
+      notifs.push({ type: "event", emoji: "🔔", brand: "알림신청한 이벤트", title: `'${ev.title}'이(가) 곧 마감돼요 (${ev.dday})`, id: ev.id });
+    }
+  });
+  // [혜택] 찜한 이벤트 중 마감 임박 (D-3 이내)
+  EVENTS.filter(ev => likedEvents.has(ev.id)).forEach(ev => {
+    const m = (ev.dday || "").match(/^D-(\d+)$/);
+    if (ev.dday === "D-Day" || (m && parseInt(m[1], 10) <= 3)) {
+      notifs.push({ type: "benefit", emoji: "⏰", brand: "이벤트 마감 임박", title: `찜한 '${ev.title}'이(가) 곧 마감돼요 (${ev.dday})`, id: ev.id });
+    }
+  });
+  // [혜택] 실시간 인기 1위 안내
+  if (EVENTS.length > 0 && Object.keys(eventStatsCache).length > 0) {
+    const top = [...EVENTS].sort((a, b) => getEventScore(b.id) - getEventScore(a.id))[0];
+    if (top) notifs.push({ type: "benefit", emoji: "🔥", brand: "실시간 인기 이벤트", title: `지금 '${top.title}'이(가) 가장 인기예요!`, id: top.id });
+  }
+  // [시스템] AI 추천 안내
+  notifs.push({ type: "system", emoji: "✨", brand: "AI 추천 업데이트", title: "새로운 맞춤 추천 이벤트를 확인해보세요!", id: null });
+  return notifs;
+}
+
 async function renderNotificationList() {
   const listEl = document.getElementById("notifList");
   const emptyEl = document.getElementById("notifEmpty");
@@ -97,46 +125,57 @@ async function renderNotificationList() {
   loginEl.hidden = true;
   markAllBtn.hidden = true;
 
-  if (!currentUser || !supabaseClient) {
-    loginEl.hidden = false;
-    return;
-  }
+  let notifs = buildLocalNotifications();
 
-  try {
-    const followedBrands = await getFollowedBrands();
-    if (!followedBrands || followedBrands.length === 0) {
-      emptyEl.hidden = false;
-      return;
-    }
-
-    const matches = getNewFollowedMatches(followedBrands);
-    if (matches.length === 0) {
-      emptyEl.hidden = false;
-    } else {
-      listEl.innerHTML = matches.map(ev => `
-        <li class="notif-item" data-id="${ev.id}">
-          <span class="notif-item-emoji">🔔</span>
-          <div class="notif-item-body">
-            <p class="notif-item-brand">${escapeHtml(ev.brand)}</p>
-            <p class="notif-item-title">${escapeHtml(ev.title)}</p>
-          </div>
-        </li>
-      `).join("");
-      listEl.querySelectorAll(".notif-item").forEach(el => {
-        el.addEventListener("click", () => {
-          closeMoreMenu();
-          openSheet(el.dataset.id);
+  // [이벤트] 팔로우한 브랜드의 신규 이벤트 (로그인 시에만)
+  if (currentUser && supabaseClient) {
+    try {
+      const followedBrands = await getFollowedBrands();
+      if (followedBrands && followedBrands.length > 0) {
+        getNewFollowedMatches(followedBrands).forEach(ev => {
+          notifs.unshift({ type: "event", emoji: "🔔", brand: ev.brand, title: ev.title, id: ev.id });
         });
-      });
-      markAllBtn.hidden = false;
-    }
-
-    // 목록을 실제로 봤으니 지금을 "확인함"으로 기록하고 벨의 점을 지움
-    markNotifSeenNow();
-  } catch (err) {
-    console.error("알림 목록 조회 오류:", err);
+      }
+    } catch (err) { console.error("알림 목록 조회 오류:", err); }
+  } else if (currentNotifTab === "event" || currentNotifTab === "all") {
+    // 비로그인이면 이벤트 탭에 로그인 안내를 함께 노출
+    loginEl.hidden = false;
   }
+
+  const shown = currentNotifTab === "all" ? notifs : notifs.filter(n => n.type === currentNotifTab);
+
+  if (shown.length === 0) {
+    emptyEl.hidden = false;
+  } else {
+    listEl.innerHTML = shown.map(n => `
+      <li class="notif-item ${n.id ? "" : "notif-item-static"}" ${n.id ? `data-id="${n.id}"` : ""}>
+        <span class="notif-item-emoji">${n.emoji}</span>
+        <div class="notif-item-body">
+          <p class="notif-item-brand">${escapeHtml(n.brand)}</p>
+          <p class="notif-item-title">${escapeHtml(n.title)}</p>
+        </div>
+      </li>
+    `).join("");
+    listEl.querySelectorAll(".notif-item[data-id]").forEach(el => {
+      el.addEventListener("click", () => {
+        closeMoreMenu();
+        openSheet(el.dataset.id);
+      });
+    });
+    markAllBtn.hidden = false;
+  }
+
+  // 목록을 실제로 봤으니 지금을 "확인함"으로 기록하고 벨의 점을 지움
+  markNotifSeenNow();
 }
+
+document.getElementById("notifTabRow").addEventListener("click", (e) => {
+  const tab = e.target.closest(".notif-tab");
+  if (!tab) return;
+  currentNotifTab = tab.dataset.notifTab;
+  document.querySelectorAll(".notif-tab").forEach(t => t.classList.toggle("active", t === tab));
+  renderNotificationList();
+});
 
 document.getElementById("notifMarkAllBtn").addEventListener("click", () => {
   renderNotificationList();

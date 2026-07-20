@@ -198,6 +198,7 @@ function renderRanking() {
       <span class="rank-num ${idx < 3 ? "rank-num-hot" : "rank-num-alt"}">${idx + 1}</span>
       <img class="rank-thumb" src="${ev.image}" alt="" loading="lazy" onerror="handleImageError(this)">
       <div class="rank-row-info">
+        <p class="rank-row-brand"><img class="rank-row-brand-logo" src="${getLogoUrl(ev.domain)}" alt="" data-domain="${ev.domain}" data-brand="${ev.brand}"> ${ev.brand}</p>
         <p class="rank-row-title">${ev.title}</p>
         <p class="rank-row-sub">${ev.discount}</p>
         <span class="rank-interest"><img class="rank-interest-flame" src="assets/flame-icon.png?v20260718d" alt=""> ${formatCount((eventStatsCache[ev.id] || {}).views || 0)}명 관심중</span>
@@ -207,6 +208,8 @@ function renderRanking() {
       </button>
     </li>
   `).join("");
+
+  list.querySelectorAll(".rank-row-brand-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 
   list.querySelectorAll(".rank-row").forEach(item => {
     item.addEventListener("click", () => openSheet(item.dataset.id));
@@ -278,7 +281,8 @@ function renderFeed() {
 
   const filtered = getFilteredEvents();
 
-  title.textContent = currentCategory === "all" ? "전체 이벤트" : `${getCategoryLabel(currentCategory)} 이벤트`;
+  const currentCat = CATEGORIES.find(c => c.id === currentCategory);
+  title.innerHTML = `<span class="feed-title-ic">${currentCat.icon}</span>${currentCategory === "all" ? "전체 이벤트" : `${getCategoryLabel(currentCategory)} 이벤트`}`;
   count.textContent = `${filtered.length}개`;
 
   if (filtered.length === 0) {

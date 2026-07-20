@@ -32,8 +32,11 @@
 .sheet-icon-action.liked .sheet-icon-action-ic { color: var(--accent); }
 .sheet-icon-action.liked .sheet-icon-action-ic svg path { fill: var(--accent); }
 /* 알림신청 중: 벨을 채우고 민트 진하게 */
-.sheet-icon-action.following .sheet-icon-action-ic { color: var(--mint-dark); }
-.sheet-icon-action.following .sheet-icon-action-ic svg path { fill: var(--mint-dark); fill-opacity: 0.18; }
+.sheet-icon-action.following .sheet-icon-action-ic { color: var(--accent); }
+.sheet-icon-action.following .sheet-icon-action-ic svg path { fill: var(--accent); }
+/* 이벤트 알림 신청됨: 벨을 채우고 민트로 */
+.sheet-icon-action.notified .sheet-icon-action-ic { color: var(--mint-dark); }
+.sheet-icon-action.notified .sheet-icon-action-ic svg path { fill: var(--mint-dark); }
 
 /* ---------- 참여방법 번호 목록 ---------- */
 .channel-steps { list-style: none; counter-reset: step; padding: 0; }
@@ -90,8 +93,12 @@
   transition: transform 0.12s ease;
 }
 .sticky-cta-btn:active { transform: scale(0.98); }
-.sticky-cta-primary { flex: 1; background: var(--accent); color: #fff; box-shadow: 0 8px 20px rgba(255,106,0,0.26); }
-.sticky-cta-secondary { flex: 0 0 auto; padding-left: 22px; padding-right: 22px; background: var(--card-bg); color: var(--text-1); border: 1.5px solid var(--border); }
+.sticky-cta-primary { flex: 6; background: var(--accent); color: #fff; box-shadow: 0 8px 20px rgba(255,106,0,0.26); }
+.sticky-cta-secondary { flex: 4; background: var(--card-bg); color: var(--text-1); border: 1.5px solid var(--border); }
+.sticky-cta-follow-ic { display: inline-flex; width: 16px; height: 16px; }
+.sticky-cta-follow-ic svg { width: 100%; height: 100%; }
+#brandFollowBtn.following { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); }
+#brandFollowBtn.following .sticky-cta-follow-ic svg path { fill: var(--accent); }
 
 .calendar-btn {
   width: 100%;

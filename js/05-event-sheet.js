@@ -7,6 +7,8 @@ function openSheet(eventId) {
   if (!ev) return;
   activeEventId = eventId;
 
+  recordRecentlyViewed(eventId);
+
   const sheetImageEl = document.getElementById("sheetImage");
   sheetImageEl.onerror = () => handleImageError(sheetImageEl);
   sheetImageEl.src = ev.image;
@@ -15,16 +17,22 @@ function openSheet(eventId) {
   sheetLogoEl.src = getLogoUrl(ev.domain);
   sheetLogoEl.alt = `${ev.brand} 로고`;
   attachLogoFallback(sheetLogoEl, ev.brand, ev.domain);
+
+  const brandRowLogoEl = document.getElementById("sheetBrandRowLogo");
+  brandRowLogoEl.src = getLogoUrl(ev.domain);
+  brandRowLogoEl.alt = `${ev.brand} 로고`;
+  attachLogoFallback(brandRowLogoEl, ev.brand, ev.domain);
+  document.getElementById("sheetBrandRowName").textContent = ev.brand;
+
   document.getElementById("sheetTitle").textContent = ev.title;
+  document.getElementById("sheetDdayInline").textContent = ev.dday || "";
   document.getElementById("sheetDiscount").textContent = ev.discount;
   // 혜택 칩: "최대 50% 할인 + 추가 10% 쿠폰"처럼 +로 이어진 혜택은 칩 여러 개로 분리
   const benefitIc = `<span class="benefit-chip-ic"><svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M12.6 2.6 21 11a2 2 0 0 1 0 2.8L13.8 21a2 2 0 0 1-2.8 0L2.6 12.6A2 2 0 0 1 2 11.2V4a2 2 0 0 1 2-2h7.2c.5 0 1 .2 1.4.6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7.5" cy="7.5" r="1.3" fill="currentColor"/></svg></span>`;
   document.getElementById("sheetBenefitRow").innerHTML = (ev.discount || "")
     .split(/\s+\+\s+/).map(s => s.trim()).filter(Boolean)
     .map(b => `<span class="benefit-chip">${benefitIc}${escapeHtml(b)}</span>`).join("");
-  document.getElementById("sheetPeriod").innerHTML = ev.dday
-    ? `${escapeHtml(ev.period)} <span class="sheet-dday-inline">${escapeHtml(ev.dday)}</span>`
-    : escapeHtml(ev.period || "");
+  document.getElementById("sheetPeriod").textContent = ev.period || "";
   document.getElementById("sheetDesc").textContent = ev.desc;
 
   // 참여방법: 텍스트에 줄바꿈이 있으면 번호 목록으로, 없으면 그냥 한 줄로 표시
@@ -90,6 +98,7 @@ function openSheet(eventId) {
 
   updateLikeButton();
   renderBrandFollowButton(ev);
+  updateEventNotifyButton();
 
   // 조회수 집계 (백그라운드로 전송, 화면 동작 차단 안 함)
   eventStatsCache[eventId] = eventStatsCache[eventId] || { views: 0, likes: 0 };
@@ -128,6 +137,26 @@ function updateLikeButton() {
     el.classList.toggle("liked", isLiked);
   });
 }
+
+function updateEventNotifyButton() {
+  const btn = document.getElementById("eventNotifyBtn");
+  const label = document.getElementById("eventNotifyLabel");
+  const isNotified = notifiedEvents.has(activeEventId);
+  btn.classList.toggle("notified", isNotified);
+  label.textContent = isNotified ? "알림 신청됨" : "알림신청";
+}
+
+function toggleEventNotify(eventId) {
+  const nowOn = !notifiedEvents.has(eventId);
+  if (nowOn) notifiedEvents.add(eventId); else notifiedEvents.delete(eventId);
+  localStorage.setItem("eventhub-notified", JSON.stringify([...notifiedEvents]));
+  if (activeEventId === eventId) updateEventNotifyButton();
+  showToast(nowOn ? "이 이벤트의 알림을 신청했어요" : "이벤트 알림을 해제했어요");
+}
+
+document.getElementById("eventNotifyBtn").addEventListener("click", () => {
+  if (activeEventId) toggleEventNotify(activeEventId);
+});
 
 /* ---------- 다녀왔어요 / 한줄평 (소셜 증거) ---------- */
 async function renderBrandFollowButton(ev) {
@@ -172,7 +201,7 @@ async function renderBrandFollowButton(ev) {
 
 function updateFollowBtnUI(btn, isFollowing) {
   const label = btn.querySelector("#followBtnLabel");
-  if (label) label.textContent = isFollowing ? "알림중" : "알림신청";
+  if (label) label.textContent = isFollowing ? "팔로우 중" : "브랜드 팔로우";
   btn.classList.toggle("following", isFollowing);
 }
 

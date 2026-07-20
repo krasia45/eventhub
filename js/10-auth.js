@@ -146,11 +146,9 @@ document.getElementById("profileSavedMenuBtn").addEventListener("click", () => {
   closeAuthModal();
   openCouponWallet();
 });
-document.getElementById("profileJoinedMenuBtn").addEventListener("click", () => {
-  showToast("준비 중인 기능이에요");
-});
 document.getElementById("profileRecentMenuBtn").addEventListener("click", () => {
-  showToast("준비 중인 기능이에요");
+  closeAuthModal();
+  openRecentView();
 });
 document.getElementById("profileNotifSettingBtn").addEventListener("click", () => {
   closeAuthModal();

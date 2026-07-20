@@ -193,6 +193,66 @@ function renderCouponWallet() {
 }
 
 document.getElementById("couponWalletClose").addEventListener("click", closeCouponWallet);
+
+/* ---------- 최근 본 이벤트 (상세페이지 열 때마다 자동 기록, 최신순 최대 20개) ---------- */
+const recentViewOverlay = document.getElementById("recentViewOverlay");
+
+function recordRecentlyViewed(eventId) {
+  recentlyViewed = recentlyViewed.filter(id => id !== eventId); // 중복 제거(다시 보면 맨 위로)
+  recentlyViewed.unshift(eventId);
+  recentlyViewed = recentlyViewed.slice(0, 20);
+  localStorage.setItem("eventhub-recent", JSON.stringify(recentlyViewed));
+}
+
+function openRecentView() {
+  renderRecentView();
+  recentViewOverlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeRecentView() {
+  recentViewOverlay.classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function renderRecentView() {
+  const listEl = document.getElementById("recentViewList");
+  // 기록 순서(최신순) 그대로, 실제 이벤트 데이터와 매칭되는 것만
+  const recentList = recentlyViewed.map(id => EVENTS.find(ev => ev.id === id)).filter(Boolean);
+
+  if (recentList.length === 0) {
+    listEl.innerHTML = `<li class="empty-state">아직 확인한 이벤트가 없어요. 이벤트를 열어보면 여기에 기록돼요!</li>`;
+    return;
+  }
+
+  listEl.innerHTML = recentList.map(ev => `
+    <li class="coupon-wallet-item" data-id="${ev.id}">
+      <img class="coupon-wallet-logo" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고" data-domain="${ev.domain}" data-brand="${ev.brand}">
+      <div class="coupon-wallet-info">
+        <p class="coupon-wallet-brand">${ev.brand}</p>
+        <p class="coupon-wallet-item-title">${ev.title}</p>
+        <p class="coupon-wallet-period">${ev.period}</p>
+      </div>
+      <div class="coupon-wallet-right">
+        ${ev.dday ? `<span class="wallet-dday ${ev.dday === "종료" ? "wallet-dday-ended" : ""}">${ev.dday}</span>` : ""}
+        <span class="coupon-wallet-discount">${ev.discount}</span>
+      </div>
+    </li>
+  `).join("");
+
+  listEl.querySelectorAll(".coupon-wallet-item").forEach(item => {
+    item.addEventListener("click", () => {
+      closeRecentView();
+      openSheet(item.dataset.id);
+    });
+  });
+  listEl.querySelectorAll(".coupon-wallet-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+}
+
+document.getElementById("recentViewClose").addEventListener("click", closeRecentView);
+recentViewOverlay.addEventListener("click", (e) => {
+  if (e.target === recentViewOverlay) closeRecentView();
+});
 document.getElementById("walletTabRow").addEventListener("click", (e) => {
   const tab = e.target.closest(".wallet-tab");
   if (!tab) return;

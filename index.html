@@ -14,17 +14,17 @@
     } catch (e) {}
   })();
 </script>
-<link rel="stylesheet" href="css/01-base.css?v20260720g">
-<link rel="stylesheet" href="css/02-header-nav.css?v20260720g">
-<link rel="stylesheet" href="css/03-ai-section.css?v20260720g">
-<link rel="stylesheet" href="css/04-filters-weather.css?v20260720g">
-<link rel="stylesheet" href="css/05-account-modals.css?v20260720g">
-<link rel="stylesheet" href="css/06-ranking-hero-feed.css?v20260720g">
-<link rel="stylesheet" href="css/07-nav-toast-sheet.css?v20260720g">
-<link rel="stylesheet" href="css/08-sheet-detail.css?v20260720g">
-<link rel="stylesheet" href="css/09-inquiry-footer-social.css?v20260720g">
-<link rel="stylesheet" href="css/10-search-share-menu.css?v20260720g">
-<link rel="stylesheet" href="css/11-brand-follow-nearby-ai.css?v20260720g">
+<link rel="stylesheet" href="css/01-base.css?v20260720k">
+<link rel="stylesheet" href="css/02-header-nav.css?v20260720k">
+<link rel="stylesheet" href="css/03-ai-section.css?v20260720k">
+<link rel="stylesheet" href="css/04-filters-weather.css?v20260720k">
+<link rel="stylesheet" href="css/05-account-modals.css?v20260720k">
+<link rel="stylesheet" href="css/06-ranking-hero-feed.css?v20260720k">
+<link rel="stylesheet" href="css/07-nav-toast-sheet.css?v20260720k">
+<link rel="stylesheet" href="css/08-sheet-detail.css?v20260720k">
+<link rel="stylesheet" href="css/09-inquiry-footer-social.css?v20260720k">
+<link rel="stylesheet" href="css/10-search-share-menu.css?v20260720k">
+<link rel="stylesheet" href="css/11-brand-follow-nearby-ai.css?v20260720k">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FF6F00">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -88,13 +88,13 @@
     <!-- ===== Realtime Ranking ===== -->
     <section class="ranking-section">
       <div class="section-head">
-        <h2 id="rankingTitle"><img class="flame-icon-img" src="assets/flame-icon.png?v20260720g" alt="" aria-hidden="true"> 실시간 인기 이벤트</h2>
+        <h2 id="rankingTitle"><img class="flame-icon-img" src="assets/flame-icon.png?v20260720k" alt="" aria-hidden="true"> 실시간 인기 이벤트</h2>
         <div class="ranking-head-right">
           <span class="live-dot">LIVE</span>
-          <button class="ranking-more-btn" id="rankingMoreBtn" hidden>더보기 ›</button>
         </div>
       </div>
       <ul class="ranking-list" id="rankingList"></ul>
+      <button class="ranking-more-btn" id="rankingMoreBtn" hidden>더보기 ›</button>
     </section>
 
     <!-- ===== AI 추천 · 나만을 위한 이벤트 (로그인 키워드 기반 상시 노출 피드) ===== -->
@@ -258,7 +258,14 @@
 
       <div class="sheet-body">
         <div class="sheet-hero-tags" id="sheetHeroTags"></div>
-        <h2 class="sheet-title" id="sheetTitle"></h2>
+        <div class="sheet-brand-row" id="sheetBrandRow">
+          <img class="sheet-brand-row-logo" id="sheetBrandRowLogo" src="" alt="">
+          <span id="sheetBrandRowName"></span>
+        </div>
+        <div class="sheet-title-row">
+          <h2 class="sheet-title" id="sheetTitle"></h2>
+          <span class="sheet-dday-inline" id="sheetDdayInline"></span>
+        </div>
         <span class="sheet-discount" id="sheetDiscount"></span>
 
         <div class="sheet-icon-actions" id="sheetIconActions">
@@ -268,8 +275,8 @@
           <button class="sheet-icon-action" id="stickyCtaShareBtn">
             <span class="sheet-icon-action-ic"><svg viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="2.6" stroke="currentColor" stroke-width="1.7"/><circle cx="6" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="19" r="2.6" stroke="currentColor" stroke-width="1.7"/><path d="m8.3 10.7 7.4-4.4M8.3 13.3l7.4 4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span><span>공유하기</span>
           </button>
-          <button class="sheet-icon-action" id="brandFollowBtn">
-            <span class="sheet-icon-action-ic" id="followIcon"><svg viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-1.5 2.5h15L18 16Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.5 21a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span><span id="followBtnLabel">알림신청</span>
+          <button class="sheet-icon-action" id="eventNotifyBtn">
+            <span class="sheet-icon-action-ic" id="eventNotifyIcon"><svg viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-1.5 2.5h15L18 16Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.5 21a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span><span id="eventNotifyLabel">알림신청</span>
           </button>
         </div>
 
@@ -283,7 +290,7 @@
             <span class="info-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
             <span class="info-row-label">기간</span>
             <span class="info-row-value" id="sheetPeriod"></span>
-            <button class="info-row-save-btn" id="calendarBtn" aria-label="캘린더에 저장">📅 저장</button>
+            <button class="info-row-save-btn" id="calendarBtn" aria-label="캘린더에 추가">📅 캘린더에 추가</button>
           </div>
           <div class="info-row" id="sheetTargetRow" hidden>
             <span class="info-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.7"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
@@ -336,6 +343,10 @@
       </div>
 
       <div class="sheet-sticky-cta" id="sheetStickyCta">
+        <button class="sticky-cta-btn sticky-cta-secondary" id="brandFollowBtn">
+          <span class="sticky-cta-follow-ic" id="followIcon"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 2.5 15 9l7 1-5 5 1.3 7-6.3-3.5L5.7 22 7 15 2 10l7-1 3-6.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+          <span id="followBtnLabel">브랜드 팔로우</span>
+        </button>
         <a class="sticky-cta-btn sticky-cta-primary" id="stickyCtaPrimaryBtn" href="#" target="_blank" rel="noopener noreferrer">
           <span id="stickyCtaPrimaryIcon">🗺</span> <span id="stickyCtaPrimaryLabel">길찾기</span>
         </a>
@@ -369,6 +380,18 @@
           <button class="wallet-tab" data-wallet-tab="ended">종료된 이벤트</button>
         </div>
         <ul class="coupon-wallet-list" id="couponWalletList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-overlay" id="recentViewOverlay">
+    <div class="bottom-sheet coupon-wallet-sheet" id="recentViewSheet">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" id="recentViewClose" aria-label="닫기">✕</button>
+      <div class="coupon-wallet-body">
+        <h2 class="coupon-wallet-title">🕐 최근 본 이벤트</h2>
+        <p class="coupon-wallet-sub">최근에 확인한 이벤트를 다시 볼 수 있어요</p>
+        <ul class="coupon-wallet-list" id="recentViewList"></ul>
       </div>
     </div>
   </div>
@@ -444,9 +467,6 @@
         <div class="profile-menu-list">
           <button class="profile-menu-item" id="profileSavedMenuBtn">
             <span>🔖 저장한 이벤트</span><span class="profile-menu-chevron">›</span>
-          </button>
-          <button class="profile-menu-item" id="profileJoinedMenuBtn">
-            <span>✅ 참여한 이벤트</span><span class="profile-menu-chevron">›</span>
           </button>
           <button class="profile-menu-item" id="profileRecentMenuBtn">
             <span>🕐 최근 본 이벤트</span><span class="profile-menu-chevron">›</span>
@@ -679,17 +699,17 @@
 
 </div>
 
-<script src="js/01-bootstrap-map-share.js?v20260720g"></script>
-<script src="js/02-events-data.js?v20260720g"></script>
-<script src="js/03-weather-filters.js?v20260720g"></script>
-<script src="js/04-render-tabs-ranking-feed.js?v20260720g"></script>
-<script src="js/05-event-sheet.js?v20260720g"></script>
-<script src="js/06-ai-recommend.js?v20260720g"></script>
-<script src="js/07-search.js?v20260720g"></script>
-<script src="js/08-hero-nearby-coupon.js?v20260720g"></script>
-<script src="js/09-calendar.js?v20260720g"></script>
-<script src="js/10-auth.js?v20260720g"></script>
-<script src="js/11-init-misc.js?v20260720g"></script>
-<script src="js/12-inquiry-pwa.js?v20260720g"></script>
+<script src="js/01-bootstrap-map-share.js?v20260720k"></script>
+<script src="js/02-events-data.js?v20260720k"></script>
+<script src="js/03-weather-filters.js?v20260720k"></script>
+<script src="js/04-render-tabs-ranking-feed.js?v20260720k"></script>
+<script src="js/05-event-sheet.js?v20260720k"></script>
+<script src="js/06-ai-recommend.js?v20260720k"></script>
+<script src="js/07-search.js?v20260720k"></script>
+<script src="js/08-hero-nearby-coupon.js?v20260720k"></script>
+<script src="js/09-calendar.js?v20260720k"></script>
+<script src="js/10-auth.js?v20260720k"></script>
+<script src="js/11-init-misc.js?v20260720k"></script>
+<script src="js/12-inquiry-pwa.js?v20260720k"></script>
 </body>
 </html>

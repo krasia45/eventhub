@@ -134,6 +134,11 @@ document.getElementById("logoHomeBtn").addEventListener("click", () => {
 let gpsFilterActive = false;
 let userLocation = null; // { lat, lng }
 let likedEvents = new Set(JSON.parse(localStorage.getItem("eventhub-liked") || "[]"));
+// 이벤트 단위 알림신청 — 브랜드 팔로우(user_follows)와는 별개 개념.
+// 별도 Supabase 테이블 신설 없이, 기존 likedEvents와 동일한 로컬 저장 패턴만 재사용(MVP 최소 구조).
+let notifiedEvents = new Set(JSON.parse(localStorage.getItem("eventhub-notified") || "[]"));
+// 최근 본 이벤트 — 최신순 배열(중복 없음, 최대 20개), 로컬 저장만(별도 테이블 없음)
+let recentlyViewed = JSON.parse(localStorage.getItem("eventhub-recent") || "[]");
 let eventStatsCache = {}; // { eventId: { views, likes } } — /api/events 응답에서 초기화됨 (loadEventsFromApi 참고)
 
 function sendEventStat(action, eventId) {
