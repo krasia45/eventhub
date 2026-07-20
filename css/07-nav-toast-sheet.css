@@ -457,5 +457,14 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
 .card-like-btn.liked .card-like-icon { color: #FF6B6B; }
 .card-like-btn.liked .card-like-icon svg path { fill: #FF6B6B; }
 /* TOP5 실시간 이벤트의 하트는 항상 민트 톤 (요청 스펙) */
+/* TOP5 리스트에서는 부모 .card-like-btn의 position:absolute를 무효화해야 함
+   (안 그러면 flex row 흐름을 벗어나 리스트 밖 엉뚱한 위치로 튕겨나가 화면에 하트가 안 보이게 됨) */
+.rank-like {
+  position: relative;
+  top: auto;
+  right: auto;
+  transform: none;
+}
+.rank-like:active { transform: scale(0.88); }
 .rank-like .card-like-icon { color: var(--mint-dark); }
 .rank-like.liked .card-like-icon svg path { fill: var(--mint-dark); }
