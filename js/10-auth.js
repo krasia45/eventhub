@@ -32,8 +32,6 @@ function openAuthModal() {
   if (currentUser) {
     document.getElementById("authFormBody").hidden = true;
     document.getElementById("authAccountBody").hidden = false;
-    document.getElementById("authUserEmail").textContent =
-      currentUser.email || "카카오 계정으로 로그인됨";
     renderProfileHub();
   } else {
     document.getElementById("authFormBody").hidden = false;
@@ -43,12 +41,41 @@ function openAuthModal() {
   document.body.style.overflow = "hidden";
 }
 
-/* ---------- 프로필 허브: 아바타/인사말/통계/팔로우 브랜드 관리 ---------- */
+/* ---------- 프로필 허브: 아바타/인사말/레벨·포인트/팔로우 브랜드 관리 ---------- */
+const PROFILE_LEVELS = [
+  { min: 0,   name: "Lv.1 Event Starter" },
+  { min: 100, name: "Lv.2 Trend Seeker" },
+  { min: 300, name: "Lv.3 Trendy Explorer" },
+  { min: 700, name: "Lv.4 Hotplace Master" },
+];
+
+function updateProfileLevel(followCount) {
+  // 포인트: 실제 활동 기반 (찜 1개 = 50P, 팔로우 1개 = 30P)
+  const points = likedEvents.size * 50 + followCount * 30;
+  let level = PROFILE_LEVELS[0], next = PROFILE_LEVELS[1];
+  for (let i = PROFILE_LEVELS.length - 1; i >= 0; i--) {
+    if (points >= PROFILE_LEVELS[i].min) { level = PROFILE_LEVELS[i]; next = PROFILE_LEVELS[i + 1] || null; break; }
+  }
+  document.getElementById("profileLevelBadge").textContent = level.name;
+  document.getElementById("profilePoints").textContent = `${points.toLocaleString()}P`;
+  const fill = document.getElementById("profileLevelFill");
+  const hint = document.getElementById("profileLevelHint");
+  if (next) {
+    const span = next.min - level.min;
+    fill.style.width = `${Math.min(100, Math.round(((points - level.min) / span) * 100))}%`;
+    hint.textContent = `다음 레벨까지 ${(next.min - points).toLocaleString()}P — 찜·팔로우로 포인트를 모아보세요!`;
+  } else {
+    fill.style.width = "100%";
+    hint.textContent = "최고 레벨이에요! 🎉";
+  }
+}
+
 function renderProfileHub() {
   const shortName = (currentUser.email || currentUser.user_metadata?.name || "회원").split("@")[0];
   document.getElementById("profileAvatar").textContent = shortName.charAt(0).toUpperCase();
   document.getElementById("profileGreeting").textContent = `👋 ${shortName}님, 안녕하세요!`;
   document.getElementById("profileSavedCount").textContent = likedEvents.size;
+  updateProfileLevel(profileFollowedBrands.length);
 
   // 팔로우 브랜드 목록은 매번 새로 불러와서 통계 숫자와 관리 리스트 둘 다에 반영
   document.getElementById("profileFollowList").hidden = true;
@@ -61,10 +88,15 @@ function renderProfileHub() {
       const brands = (data || []).map(f => f.brand);
       document.getElementById("profileFollowCount").textContent = brands.length;
       profileFollowedBrands = brands;
+      updateProfileLevel(brands.length);
     });
 }
 
 let profileFollowedBrands = [];
+
+document.getElementById("profileInviteQuick").addEventListener("click", () => {
+  document.getElementById("inviteBox").scrollIntoView({ behavior: "smooth", block: "center" });
+});
 
 function renderProfileFollowList() {
   const listEl = document.getElementById("profileFollowList");
