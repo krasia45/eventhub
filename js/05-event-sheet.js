@@ -15,7 +15,6 @@ function openSheet(eventId) {
   sheetLogoEl.src = getLogoUrl(ev.domain);
   sheetLogoEl.alt = `${ev.brand} 로고`;
   attachLogoFallback(sheetLogoEl, ev.brand, ev.domain);
-  document.getElementById("sheetSubtitle").textContent = `${ev.brand} · ${getCategoryLabel(ev.category)}`;
   document.getElementById("sheetTitle").textContent = ev.title;
   document.getElementById("sheetDiscount").textContent = ev.discount;
   // 혜택 칩: "최대 50% 할인 + 추가 10% 쿠폰"처럼 +로 이어진 혜택은 칩 여러 개로 분리
@@ -23,11 +22,10 @@ function openSheet(eventId) {
   document.getElementById("sheetBenefitRow").innerHTML = (ev.discount || "")
     .split(/\s+\+\s+/).map(s => s.trim()).filter(Boolean)
     .map(b => `<span class="benefit-chip">${benefitIc}${escapeHtml(b)}</span>`).join("");
-  document.getElementById("sheetPeriod").textContent = ev.period;
+  document.getElementById("sheetPeriod").innerHTML = ev.dday
+    ? `${escapeHtml(ev.period)} <span class="sheet-dday-inline">${escapeHtml(ev.dday)}</span>`
+    : escapeHtml(ev.period || "");
   document.getElementById("sheetDesc").textContent = ev.desc;
-
-  // D-day 배지 (이미지 우측 상단)
-  document.getElementById("sheetDdayBadge").textContent = ev.dday || "";
 
   // 참여방법: 텍스트에 줄바꿈이 있으면 번호 목록으로, 없으면 그냥 한 줄로 표시
   const channelEl = document.getElementById("sheetChannel");

@@ -86,17 +86,12 @@ function renderProfileHub() {
     .then(({ data, error }) => {
       if (error) { console.error("팔로우 목록 조회 오류:", error); return; }
       const brands = (data || []).map(f => f.brand);
-      document.getElementById("profileFollowCount").textContent = brands.length;
       profileFollowedBrands = brands;
       updateProfileLevel(brands.length);
     });
 }
 
 let profileFollowedBrands = [];
-
-document.getElementById("profileInviteQuick").addEventListener("click", () => {
-  document.getElementById("inviteBox").scrollIntoView({ behavior: "smooth", block: "center" });
-});
 
 function renderProfileFollowList() {
   const listEl = document.getElementById("profileFollowList");
@@ -117,7 +112,6 @@ function renderProfileFollowList() {
       const { error } = await supabaseClient.from("user_follows").delete().eq("user_id", currentUser.id).eq("brand", brand);
       if (error) { showToast("언팔로우 중 오류가 발생했어요."); return; }
       profileFollowedBrands = profileFollowedBrands.filter(b => b !== brand);
-      document.getElementById("profileFollowCount").textContent = profileFollowedBrands.length;
       renderProfileFollowList();
       showToast(`${brand} 팔로우를 취소했어요`);
     });
@@ -132,10 +126,6 @@ document.getElementById("profileFollowManageBtn").addEventListener("click", () =
   chevron.textContent = nowOpen ? "⌄" : "›";
   if (nowOpen) renderProfileFollowList();
 });
-document.getElementById("profileStatFollow").addEventListener("click", () => {
-  document.getElementById("profileFollowManageBtn").click();
-});
-
 document.getElementById("profileStatSaved").addEventListener("click", () => {
   closeAuthModal();
   openCouponWallet();
@@ -143,6 +133,32 @@ document.getElementById("profileStatSaved").addEventListener("click", () => {
 document.getElementById("profileCalendarBtn").addEventListener("click", () => {
   closeAuthModal();
   openCalendar();
+});
+document.getElementById("profileInfoBtn").addEventListener("click", () => {
+  showToast(`${currentUser.email || "카카오 계정으로 로그인됨"}`);
+});
+document.getElementById("profilePointsBtn").addEventListener("click", () => {
+  const savedP = likedEvents.size * 50;
+  const followP = profileFollowedBrands.length * 30;
+  showToast(`찜 ${likedEvents.size}개(${savedP}P) + 팔로우 ${profileFollowedBrands.length}개(${followP}P) = 총 ${savedP + followP}P`);
+});
+document.getElementById("profileSavedMenuBtn").addEventListener("click", () => {
+  closeAuthModal();
+  openCouponWallet();
+});
+document.getElementById("profileJoinedMenuBtn").addEventListener("click", () => {
+  showToast("준비 중인 기능이에요");
+});
+document.getElementById("profileRecentMenuBtn").addEventListener("click", () => {
+  showToast("준비 중인 기능이에요");
+});
+document.getElementById("profileNotifSettingBtn").addEventListener("click", () => {
+  closeAuthModal();
+  openMoreMenu();
+});
+document.getElementById("profileSupportBtn").addEventListener("click", () => {
+  closeAuthModal();
+  document.querySelector(".inquiry-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 function closeAuthModal() {

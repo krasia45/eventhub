@@ -14,17 +14,17 @@
     } catch (e) {}
   })();
 </script>
-<link rel="stylesheet" href="css/01-base.css?v20260720a">
-<link rel="stylesheet" href="css/02-header-nav.css?v20260720a">
-<link rel="stylesheet" href="css/03-ai-section.css?v20260720a">
-<link rel="stylesheet" href="css/04-filters-weather.css?v20260720a">
-<link rel="stylesheet" href="css/05-account-modals.css?v20260720a">
-<link rel="stylesheet" href="css/06-ranking-hero-feed.css?v20260720a">
-<link rel="stylesheet" href="css/07-nav-toast-sheet.css?v20260720a">
-<link rel="stylesheet" href="css/08-sheet-detail.css?v20260720a">
-<link rel="stylesheet" href="css/09-inquiry-footer-social.css?v20260720a">
-<link rel="stylesheet" href="css/10-search-share-menu.css?v20260720a">
-<link rel="stylesheet" href="css/11-brand-follow-nearby-ai.css?v20260720a">
+<link rel="stylesheet" href="css/01-base.css?v20260720b">
+<link rel="stylesheet" href="css/02-header-nav.css?v20260720b">
+<link rel="stylesheet" href="css/03-ai-section.css?v20260720b">
+<link rel="stylesheet" href="css/04-filters-weather.css?v20260720b">
+<link rel="stylesheet" href="css/05-account-modals.css?v20260720b">
+<link rel="stylesheet" href="css/06-ranking-hero-feed.css?v20260720b">
+<link rel="stylesheet" href="css/07-nav-toast-sheet.css?v20260720b">
+<link rel="stylesheet" href="css/08-sheet-detail.css?v20260720b">
+<link rel="stylesheet" href="css/09-inquiry-footer-social.css?v20260720b">
+<link rel="stylesheet" href="css/10-search-share-menu.css?v20260720b">
+<link rel="stylesheet" href="css/11-brand-follow-nearby-ai.css?v20260720b">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FF6F00">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -88,7 +88,7 @@
     <!-- ===== Realtime Ranking ===== -->
     <section class="ranking-section">
       <div class="section-head">
-        <h2 id="rankingTitle"><img class="flame-icon-img" src="assets/flame-icon.png?v20260720a" alt="" aria-hidden="true"> 실시간 인기 이벤트</h2>
+        <h2 id="rankingTitle"><img class="flame-icon-img" src="assets/flame-icon.png?v20260720b" alt="" aria-hidden="true"> 실시간 인기 이벤트</h2>
         <span class="live-dot">LIVE</span>
       </div>
       <ul class="ranking-list" id="rankingList"></ul>
@@ -246,7 +246,6 @@
 
       <div class="sheet-hero">
         <img id="sheetImage" class="sheet-photo" src="" alt="">
-        <span class="sheet-dday-badge" id="sheetDdayBadge"></span>
         <div class="sheet-hero-topleft">
           <div class="sheet-brand-logo-wrap">
             <img id="sheetBrandLogo" src="" alt="">
@@ -256,7 +255,6 @@
 
       <div class="sheet-body">
         <div class="sheet-hero-tags" id="sheetHeroTags"></div>
-        <p class="sheet-eyebrow" id="sheetSubtitle"></p>
         <h2 class="sheet-title" id="sheetTitle"></h2>
         <span class="sheet-discount" id="sheetDiscount"></span>
 
@@ -421,28 +419,43 @@
         </div>
 
         <div class="profile-quick-grid">
-          <button class="profile-quick-item" id="profileStatSaved">
-            <span class="profile-quick-emoji">🤍</span>
-            <span class="profile-quick-label">찜한 이벤트 <b id="profileSavedCount">0</b></span>
+          <button class="profile-quick-item" id="profileInfoBtn">
+            <span class="profile-quick-emoji">👤</span>
+            <span class="profile-quick-label">내 정보</span>
           </button>
-          <button class="profile-quick-item" id="profileStatFollow">
-            <span class="profile-quick-emoji">🔔</span>
-            <span class="profile-quick-label">팔로우 <b id="profileFollowCount">0</b></span>
+          <button class="profile-quick-item" id="profilePointsBtn">
+            <span class="profile-quick-emoji">💎</span>
+            <span class="profile-quick-label">포인트</span>
+          </button>
+          <button class="profile-quick-item" id="profileStatSaved">
+            <span class="profile-quick-emoji">🎟</span>
+            <span class="profile-quick-label">쿠폰함 <b id="profileSavedCount">0</b></span>
           </button>
           <button class="profile-quick-item" id="profileCalendarBtn">
             <span class="profile-quick-emoji">📅</span>
             <span class="profile-quick-label">이벤트 달력</span>
           </button>
-          <button class="profile-quick-item" id="profileInviteQuick">
-            <span class="profile-quick-emoji">🎁</span>
-            <span class="profile-quick-label">친구 초대</span>
-          </button>
         </div>
 
         <p class="profile-section-label">내 활동</p>
         <div class="profile-menu-list">
+          <button class="profile-menu-item" id="profileSavedMenuBtn">
+            <span>🔖 저장한 이벤트</span><span class="profile-menu-chevron">›</span>
+          </button>
+          <button class="profile-menu-item" id="profileJoinedMenuBtn">
+            <span>✅ 참여한 이벤트</span><span class="profile-menu-chevron">›</span>
+          </button>
+          <button class="profile-menu-item" id="profileRecentMenuBtn">
+            <span>🕐 최근 본 이벤트</span><span class="profile-menu-chevron">›</span>
+          </button>
           <button class="profile-menu-item" id="profileFollowManageBtn">
             <span>🔔 팔로우 브랜드 관리</span><span class="profile-menu-chevron" id="profileFollowChevron">›</span>
+          </button>
+          <button class="profile-menu-item" id="profileNotifSettingBtn">
+            <span>🔕 알림 설정</span><span class="profile-menu-chevron">›</span>
+          </button>
+          <button class="profile-menu-item" id="profileSupportBtn">
+            <span>💬 고객센터</span><span class="profile-menu-chevron">›</span>
           </button>
         </div>
 
@@ -663,17 +676,17 @@
 
 </div>
 
-<script src="js/01-bootstrap-map-share.js?v20260720a"></script>
-<script src="js/02-events-data.js?v20260720a"></script>
-<script src="js/03-weather-filters.js?v20260720a"></script>
-<script src="js/04-render-tabs-ranking-feed.js?v20260720a"></script>
-<script src="js/05-event-sheet.js?v20260720a"></script>
-<script src="js/06-ai-recommend.js?v20260720a"></script>
-<script src="js/07-search.js?v20260720a"></script>
-<script src="js/08-hero-nearby-coupon.js?v20260720a"></script>
-<script src="js/09-calendar.js?v20260720a"></script>
-<script src="js/10-auth.js?v20260720a"></script>
-<script src="js/11-init-misc.js?v20260720a"></script>
-<script src="js/12-inquiry-pwa.js?v20260720a"></script>
+<script src="js/01-bootstrap-map-share.js?v20260720b"></script>
+<script src="js/02-events-data.js?v20260720b"></script>
+<script src="js/03-weather-filters.js?v20260720b"></script>
+<script src="js/04-render-tabs-ranking-feed.js?v20260720b"></script>
+<script src="js/05-event-sheet.js?v20260720b"></script>
+<script src="js/06-ai-recommend.js?v20260720b"></script>
+<script src="js/07-search.js?v20260720b"></script>
+<script src="js/08-hero-nearby-coupon.js?v20260720b"></script>
+<script src="js/09-calendar.js?v20260720b"></script>
+<script src="js/10-auth.js?v20260720b"></script>
+<script src="js/11-init-misc.js?v20260720b"></script>
+<script src="js/12-inquiry-pwa.js?v20260720b"></script>
 </body>
 </html>
