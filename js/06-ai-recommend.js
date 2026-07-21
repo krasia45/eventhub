@@ -15,7 +15,7 @@ async function loadAiFeed(keywords) {
   grid.innerHTML = renderFeedSkeleton(6);
 
   try {
-    const eventsSummary = EVENTS.map(ev => ({
+    const eventsSummary = EVENTS.filter(isEventLive).map(ev => ({
       id: ev.id, brand: ev.brand, category: ev.category,
       title: ev.title, tags: ev.tags, discount: ev.discount
     }));
@@ -32,7 +32,7 @@ async function loadAiFeed(keywords) {
       return;
     }
 
-    const matched = data.ids.map(id => EVENTS.find(ev => ev.id === id)).filter(Boolean);
+    const matched = data.ids.map(id => EVENTS.find(ev => ev.id === id)).filter(ev => ev && isEventLive(ev));
     if (matched.length === 0) { renderAiFeedFallback(keywords); return; }
     renderAiFeedCards(matched);
 
@@ -46,11 +46,11 @@ async function loadAiFeed(keywords) {
 // (AI가 안 되더라도 화면이 비지 않게 하면서, 없는 데이터를 지어내지는 않음)
 function renderAiFeedFallback(keywords) {
   const kwLower = (keywords || []).map(k => k.toLowerCase());
-  let candidates = EVENTS.filter(ev =>
+  let candidates = EVENTS.filter(ev => isEventLive(ev) &&
     kwLower.some(kw => ev.tags.some(t => t.toLowerCase().includes(kw)) || ev.title.toLowerCase().includes(kw))
   );
   if (candidates.length === 0) {
-    candidates = [...EVENTS].sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
+    candidates = EVENTS.filter(isEventLive).sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
   }
   renderAiFeedCards(candidates.slice(0, 6));
 }
@@ -142,7 +142,7 @@ async function loadAiPageTab(tab) {
   if (tab === "recommend") {
     if (aiPageKeywords.length > 0) {
       try {
-        const eventsSummary = EVENTS.map(ev => ({ id: ev.id, brand: ev.brand, category: ev.category, title: ev.title, tags: ev.tags, discount: ev.discount }));
+        const eventsSummary = EVENTS.filter(isEventLive).map(ev => ({ id: ev.id, brand: ev.brand, category: ev.category, title: ev.title, tags: ev.tags, discount: ev.discount }));
         const res = await fetch("/api/recommend", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -150,13 +150,13 @@ async function loadAiPageTab(tab) {
         });
         const data = await res.json();
         if (res.ok && Array.isArray(data.ids)) {
-          events = data.ids.map(id => EVENTS.find(ev => ev.id === id)).filter(Boolean);
+          events = data.ids.map(id => EVENTS.find(ev => ev.id === id)).filter(ev => ev && isEventLive(ev));
         }
       } catch (err) { console.error("AI 추천 페이지 로드 오류:", err); }
     }
     if (events.length === 0) {
       // 키워드가 없거나 AI 호출이 실패하면 인기순 이벤트로 대체 (실제 데이터, 가짜 아님)
-      events = [...EVENTS].sort((a, b) => getEventScore(b.id) - getEventScore(a.id)).slice(0, 9);
+      events = EVENTS.filter(isEventLive).sort((a, b) => getEventScore(b.id) - getEventScore(a.id)).slice(0, 9);
     }
 
   } else if (tab === "similar") {
@@ -169,7 +169,7 @@ async function loadAiPageTab(tab) {
     const likedTags = new Set(liked.flatMap(ev => ev.tags));
     const likedCategories = new Set(liked.map(ev => ev.category));
     events = EVENTS
-      .filter(ev => !likedEvents.has(ev.id) && (likedCategories.has(ev.category) || ev.tags.some(t => likedTags.has(t))))
+      .filter(ev => isEventLive(ev) && !likedEvents.has(ev.id) && (likedCategories.has(ev.category) || ev.tags.some(t => likedTags.has(t))))
       .sort((a, b) => getEventScore(b.id) - getEventScore(a.id))
       .slice(0, 9);
 
@@ -186,7 +186,7 @@ async function loadAiPageTab(tab) {
         grid.innerHTML = `<p class="empty-state">아직 팔로우한 브랜드가 없어요. 이벤트 상세에서 브랜드를 팔로우해보세요!</p>`;
         return;
       }
-      events = EVENTS.filter(ev => brands.includes(ev.brand)).sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
+      events = EVENTS.filter(ev => isEventLive(ev) && brands.includes(ev.brand)).sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
     } catch (err) {
       console.error("관심 브랜드 조회 오류:", err);
       grid.innerHTML = `<p class="empty-state">불러오는 중 오류가 발생했어요.</p>`;

@@ -38,14 +38,14 @@ function openSheet(eventId) {
   const channelEl = document.getElementById("sheetChannel");
   const channelLines = (ev.channel || "").split("\n").map(s => s.trim()).filter(Boolean);
   if (channelLines.length > 1) {
-    channelEl.innerHTML = `<ol class="channel-steps">${channelLines.map(line => `<li>${line}</li>`).join("")}</ol>`;
+    channelEl.innerHTML = `<ol class="channel-steps">${channelLines.map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ol>`;
   } else {
     channelEl.textContent = ev.channel;
   }
 
   // 이미지 위 태그 칩 (참고 디자인처럼 이미지 하단에 오버레이)
   document.getElementById("sheetHeroTags").innerHTML = (ev.tags || []).slice(0, 2).map((t, i) =>
-    `<span class="hero-tag-chip ${i === 0 ? "hero-tag-primary" : ""}">${t}</span>`
+    `<span class="hero-tag-chip ${i === 0 ? "hero-tag-primary" : ""}">${escapeHtml(t)}</span>`
   ).join("");
 
   // 조건(예: "네이버페이 결제 시에만 적용") — 값이 있을 때만 노출
@@ -188,11 +188,13 @@ async function renderBrandFollowButton(ev) {
       if (error) { showToast("팔로우 해제 중 오류가 발생했어요."); return; }
       isFollowing = false;
       showToast(`${ev.brand} 팔로우를 해제했어요`);
+      supabaseClient.rpc("increment_nav_click", { p_tab: "brand_unfollow" }).then(() => {}, () => {}); // 실사용자 테스트 검증용 최소 계측, 실패해도 무시
     } else {
       const { error } = await supabaseClient.from("user_follows").insert({ user_id: currentUser.id, brand: ev.brand });
       if (error) { showToast("팔로우 중 오류가 발생했어요."); return; }
       isFollowing = true;
       showToast(`${ev.brand}을(를) 팔로우했어요! 🔔`);
+      supabaseClient.rpc("increment_nav_click", { p_tab: "brand_follow" }).then(() => {}, () => {});
     }
     updateFollowBtnUI(btn, isFollowing);
   };
@@ -235,7 +237,7 @@ async function loadEventVisits(eventId) {
       ? `<li class="empty-state">아직 한줄평이 없어요. 첫 방문 후기를 남겨보세요!</li>`
       : withComments.map(v => `
           <li class="visit-comment-item">
-            ${v.comment}
+            ${escapeHtml(v.comment)}
             <div class="visit-comment-time">${new Date(v.visited_at).toLocaleDateString("ko-KR")}</div>
           </li>
         `).join("");
@@ -328,6 +330,13 @@ document.getElementById("stickyCtaShareBtn").addEventListener("click", () => {
   const ev = EVENTS.find(e => e.id === activeEventId);
   if (!ev) return;
   openShareFlow(ev);
+});
+
+// 공식 사이트 이동 클릭 추적 (실사용자 테스트에서 "실제로 사이트까지 넘어가는가"를 보기 위한 최소 계측).
+// openSheet()가 열릴 때마다 리스너를 새로 걸면 안 되므로(중복 누적 버그), 여기서 1회만 등록하고
+// 클릭 시점의 activeEventId를 그때그때 참조한다.
+document.getElementById("stickyCtaPrimaryBtn").addEventListener("click", () => {
+  if (activeEventId) sendEventStat("visitOfficial", activeEventId);
 });
 
 /* ---------- 캘린더 등록 (EventHub 자체 캘린더 — 09-calendar.js가 찜한 이벤트를 자동으로 표시) ---------- */

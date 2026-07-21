@@ -123,6 +123,7 @@ class handler(BaseHTTPRequestHandler):
                 "desc": item.get("desc", ""),
                 "tags": [label],
                 "source_url": item.get("source_url"),
+                "source_type": "ai_scan",
                 "ai_confidence_note": item.get("confidence_note", ""),
                 "status": "pending",
             })

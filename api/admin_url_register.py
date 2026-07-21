@@ -118,6 +118,7 @@ class handler(BaseHTTPRequestHandler):
             "domain": domain,
             "link": url,
             "source_url": url,
+            "source_type": "url_auto",
             "ai_confidence_note": "관리자가 URL을 직접 등록했습니다. og:title/description/image를 자동 추출했으나, 할인 정보와 기간은 반드시 직접 확인 후 승인해주세요.",
             "status": "pending",
         }
@@ -156,13 +157,24 @@ class handler(BaseHTTPRequestHandler):
 [캡션 원문]
 {caption}
 
+먼저 이 이벤트가 아래 중 어떤 성격에 가장 가까운지 판단하고, 그에 맞게 discount/channel을 채워주세요
+(이 판단 결과 자체를 출력하는 건 아니고, 아래 필드를 더 적절하게 채우기 위한 내부 기준입니다):
+- 할인: 정가 대비 할인율/금액
+- 쿠폰: 발급되는 쿠폰의 금액·조건
+- 팝업/체험: 방문해서 체험하는 것 (체험 내용을 discount에)
+- 미션: 특정 행동을 완료하면 받는 보상
+- 응모: 응모 후 추첨으로 받는 경품
+- 대형 프로모션: 혜택이 여러 개면 "혜택A + 혜택B" 형식으로 +로 이어서 (상세페이지에서 자동으로 칩이 나뉘어 보여짐)
+
 규칙:
 - brand: 브랜드/매장명. 협업이면 "A X B" 형식으로.
 - title: 이벤트/팝업 제목이나 한 줄 소개.
 - category: 다음 중 하나만 — fashion, beauty, food, popup (애매하면 popup)
-- discount: 혜택/이벤트 내용 요약 (없으면 빈 문자열)
+- discount: 위 유형 판단에 맞는 혜택 요약 (없으면 빈 문자열)
 - period_start, period_end: YYYY-MM-DD 형식. 캡션에 기간이 명시 안 되어 있으면 둘 다 null.
-- channel: 운영시간/장소/참여방법 (캡션에 있는 만큼만, 없으면 빈 문자열)
+- channel: 운영시간/장소/참여방법 등 (캡션에 있는 만큼만, 없으면 빈 문자열).
+  ⚠️ 성격이 다른 정보(시간, 장소, 참여조건 등)가 두 가지 이상이면 반드시 줄바꿈(\\n)으로 구분해서 각각 한 줄씩 쓰세요.
+  한 줄에 이어붙이지 마세요 (예: "11:00-21:00\\n서울 성동구 연무장길 101\\n1인 1개 한정" ← 이렇게, "11:00-21:00, 서울 성동구..." ← 이렇게 하지 말 것)
 - confidence_note: 애매하게 추정한 부분이 있으면 한 문장으로 명시, 없으면 빈 문자열
 
 다른 설명 없이 JSON만 응답하세요."""
@@ -250,6 +262,7 @@ class handler(BaseHTTPRequestHandler):
             "domain": "",
             "link": source_url or "",
             "source_url": source_url or "",
+            "source_type": "manual",
             "ai_confidence_note": "관리자가 수동으로 입력했습니다. 이미지/도메인은 승인 시 직접 채워주세요.",
             "status": "pending",
         }

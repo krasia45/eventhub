@@ -128,7 +128,7 @@ function renderCalendarDayDetail(dateKey) {
     <li class="calendar-day-item event-type" data-event-id="${ev.id}">
       <span class="calendar-day-item-time">🎟 이벤트</span>
       <div class="calendar-day-item-body">
-        <p class="calendar-day-item-title">${ev.brand} · ${ev.title}</p>
+        <p class="calendar-day-item-title">${escapeHtml(ev.brand)} · ${escapeHtml(ev.title)}</p>
       </div>
     </li>
   `);

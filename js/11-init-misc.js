@@ -109,7 +109,7 @@ function buildLocalNotifications() {
   });
   // [혜택] 실시간 인기 1위 안내
   if (EVENTS.length > 0 && Object.keys(eventStatsCache).length > 0) {
-    const top = [...EVENTS].sort((a, b) => getEventScore(b.id) - getEventScore(a.id))[0];
+    const top = EVENTS.filter(isEventLive).sort((a, b) => getEventScore(b.id) - getEventScore(a.id))[0];
     if (top) notifs.push({ type: "benefit", emoji: "🔥", brand: "실시간 인기 이벤트", title: `지금 '${top.title}'이(가) 가장 인기예요!`, id: top.id });
   }
   // [시스템] AI 추천 안내

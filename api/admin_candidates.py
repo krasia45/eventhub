@@ -110,6 +110,8 @@ class handler(BaseHTTPRequestHandler):
                 "domain": data.get("domain", ""),
                 "link": data.get("link") or c.get("source_url"),
                 "source_url": c.get("source_url"),
+                "source_type": c.get("source_type", "unknown"),
+                "source_checked_at": "now()",  # 승인 = 관리자가 지금 이 정보를 확인했다는 뜻이므로 승인 시점을 재확인 시각으로 기록
             })
             sb_insert("event_stats", {"event_id": new_id, "views": 0, "likes": 0})
             sb_update("event_candidates", {"id": f"eq.{candidate_id}"}, {

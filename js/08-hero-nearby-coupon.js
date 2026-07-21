@@ -16,7 +16,7 @@ function renderHeroCarousel() {
   const slides = [];
   CATEGORIES.filter(c => c.id !== "all").forEach((cat, i) => {
     const top = [...EVENTS]
-      .filter(ev => ev.category === cat.id)
+      .filter(ev => ev.category === cat.id && isEventLive(ev))
       .sort((a, b) => getEventScore(b.id) - getEventScore(a.id))[0];
     if (top) slides.push({ event: top, category: cat, gradient: HERO_GRADIENTS[i % HERO_GRADIENTS.length] });
   });
@@ -24,20 +24,22 @@ function renderHeroCarousel() {
   if (slides.length === 0) {
     track.innerHTML = `<div class="hero-slide" style="background:${HERO_GRADIENTS[0]}"><p class="hero-eyebrow">EVENTHUB</p><h2 class="hero-title">흩어진 모든 할인,<br>하나의 앱</h2></div>`;
     counterEl.textContent = "1/1";
+    track.dataset.slideCount = 1;
     return;
   }
 
   track.innerHTML = slides.map(s => `
     <div class="hero-slide" data-cat="${s.category.id}" data-event-id="${s.event.id}" style="background:${s.gradient}">
       <p class="hero-eyebrow">${s.category.label.toUpperCase()}</p>
-      <h2 class="hero-title">${s.event.brand}<br>${s.event.title}</h2>
-      <p class="hero-sub">${s.event.discount}</p>
+      <h2 class="hero-title">${escapeHtml(s.event.brand)}<br>${escapeHtml(s.event.title)}</h2>
+      <p class="hero-sub">${escapeHtml(s.event.discount)}</p>
       <button class="hero-btn" data-event-id="${s.event.id}">지금 확인하기 →</button>
-      <img class="hero-slide-img" src="${s.event.image}" alt="${s.event.title}" onerror="handleImageError(this)">
+      <img class="hero-slide-img" src="${s.event.image}" alt="${escapeHtml(s.event.title)}" onerror="handleImageError(this)">
     </div>
   `).join("");
 
   counterEl.textContent = `1/${slides.length}`;
+  track.dataset.slideCount = slides.length; // 스크롤 리스너(함수 밖에서 1회만 등록됨)가 최신 슬라이드 개수를 읽을 수 있도록
 
   track.querySelectorAll(".hero-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
@@ -45,13 +47,19 @@ function renderHeroCarousel() {
       openSheet(btn.dataset.eventId);
     });
   });
-
-  // 스크롤 위치로 현재 슬라이드 번호 계산해서 카운터 갱신
-  track.addEventListener("scroll", () => {
-    const idx = Math.round(track.scrollLeft / track.clientWidth);
-    counterEl.textContent = `${Math.min(idx + 1, slides.length)}/${slides.length}`;
-  });
 }
+
+// 캐러셀 스크롤 카운터 갱신 리스너는 renderHeroCarousel() 안이 아니라 여기(모듈 로드 시 1회)에서만 등록한다.
+// renderHeroCarousel()은 향후 필터 변경 등으로 여러 번 재호출될 수 있는데, 그 함수 내부에서
+// track.addEventListener("scroll", ...)를 매번 호출하면 리스너가 계속 누적되어
+// 스크롤할 때마다 콜백이 중복 실행되는 버그가 생긴다(현재는 1회만 호출되어 우연히 문제가 없었음).
+document.getElementById("heroCarousel").addEventListener("scroll", function () {
+  const track = this;
+  const slideCount = parseInt(track.dataset.slideCount || "1", 10);
+  const counterEl = document.getElementById("heroCarouselCounter");
+  const idx = Math.round(track.scrollLeft / track.clientWidth);
+  counterEl.textContent = `${Math.min(idx + 1, slideCount)}/${slideCount}`;
+});
 
 /* ---------- 내 주변 인기 이벤트 (GPS 조용히 시도 → 실패 시 서울 기준으로 대체) ---------- */
 async function renderNearbySection() {
@@ -64,7 +72,7 @@ async function renderNearbySection() {
   const NEARBY_RADIUS_KM = 15;
 
   const nearby = EVENTS
-    .filter(ev => ev.lat != null && ev.lng != null) // 좌표 없는 온라인 전용 이벤트는 '내 주변'에서 애초에 제외
+    .filter(ev => ev.lat != null && ev.lng != null && isEventLive(ev)) // 좌표 없는 온라인 전용 이벤트, 종료된 이벤트는 '내 주변'에서 애초에 제외
     .map(ev => ({ ev, dist: haversineDistanceKm(loc.lat, loc.lng, ev.lat, ev.lng) }))
     .filter(x => x.dist <= NEARBY_RADIUS_KM)
     .sort((a, b) => getEventScore(b.ev.id) - getEventScore(a.ev.id))
@@ -78,23 +86,23 @@ async function renderNearbySection() {
   scroll.innerHTML = nearby.map(({ ev, dist }) => {
     const distLabel = dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`;
     const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
-    const cardDiscountText = (ev.discount || "").split(/\s+\+\s+/)[0].trim();
+    const cardDiscountText = escapeHtml((ev.discount || "").split(/\s+\+\s+/)[0].trim());
     return `
       <div class="nearby-card" data-id="${ev.id}">
         <div class="nearby-card-media">
-          <img src="${ev.image}" alt="${ev.title}" loading="lazy" onerror="handleImageError(this)">
+          <img src="${ev.image}" alt="${escapeHtml(ev.title)}" loading="lazy" onerror="handleImageError(this)">
           <button class="card-like-btn nearby-like ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
             <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
           </button>
           <span class="card-logo-badge nearby-logo-badge">
-            <img data-domain="${ev.domain}" data-brand="${ev.brand}" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고">
+            <img data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" src="${getLogoUrl(ev.domain)}" alt="${escapeHtml(ev.brand)} 로고">
           </span>
         </div>
         <div class="nearby-card-brand-row">
-          <p class="nearby-card-brand">${ev.brand}</p>
+          <p class="nearby-card-brand">${escapeHtml(ev.brand)}</p>
           <span class="nearby-card-distance">📍 ${distLabel}</span>
         </div>
-        <p class="nearby-card-title">${ev.title}</p>
+        <p class="nearby-card-title">${escapeHtml(ev.title)}</p>
         ${cardDiscountText ? `<p class="nearby-card-discount">${cardDiscountText}</p>` : ""}
         <div class="nearby-card-stats">
           <span>👁 ${formatCount(stats.views)}</span>
@@ -188,15 +196,15 @@ function renderCouponWallet() {
 
   listEl.innerHTML = shown.map(ev => `
     <li class="coupon-wallet-item ${ev.dday === "종료" ? "wallet-item-ended" : ""}" data-id="${ev.id}">
-      <img class="coupon-wallet-logo" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고" data-domain="${ev.domain}" data-brand="${ev.brand}">
+      <img class="coupon-wallet-logo" src="${getLogoUrl(ev.domain)}" alt="${escapeHtml(ev.brand)} 로고" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}">
       <div class="coupon-wallet-info">
-        <p class="coupon-wallet-brand">${ev.brand}</p>
-        <p class="coupon-wallet-item-title">${ev.title}</p>
-        <p class="coupon-wallet-period">${ev.period}</p>
+        <p class="coupon-wallet-brand">${escapeHtml(ev.brand)}</p>
+        <p class="coupon-wallet-item-title">${escapeHtml(ev.title)}</p>
+        <p class="coupon-wallet-period">${escapeHtml(ev.period)}</p>
       </div>
       <div class="coupon-wallet-right">
         ${ev.dday ? `<span class="wallet-dday ${ev.dday === "종료" ? "wallet-dday-ended" : ""}">${ev.dday}</span>` : ""}
-        <span class="coupon-wallet-discount">${ev.discount}</span>
+        <span class="coupon-wallet-discount">${escapeHtml(ev.discount)}</span>
       </div>
       <button class="wallet-item-remove" data-id="${ev.id}" aria-label="목록에서 삭제">✕</button>
     </li>
@@ -260,15 +268,15 @@ function renderRecentView() {
 
   listEl.innerHTML = recentList.map(ev => `
     <li class="coupon-wallet-item" data-id="${ev.id}">
-      <img class="coupon-wallet-logo" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고" data-domain="${ev.domain}" data-brand="${ev.brand}">
+      <img class="coupon-wallet-logo" src="${getLogoUrl(ev.domain)}" alt="${escapeHtml(ev.brand)} 로고" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}">
       <div class="coupon-wallet-info">
-        <p class="coupon-wallet-brand">${ev.brand}</p>
-        <p class="coupon-wallet-item-title">${ev.title}</p>
-        <p class="coupon-wallet-period">${ev.period}</p>
+        <p class="coupon-wallet-brand">${escapeHtml(ev.brand)}</p>
+        <p class="coupon-wallet-item-title">${escapeHtml(ev.title)}</p>
+        <p class="coupon-wallet-period">${escapeHtml(ev.period)}</p>
       </div>
       <div class="coupon-wallet-right">
         ${ev.dday ? `<span class="wallet-dday ${ev.dday === "종료" ? "wallet-dday-ended" : ""}">${ev.dday}</span>` : ""}
-        <span class="coupon-wallet-discount">${ev.discount}</span>
+        <span class="coupon-wallet-discount">${escapeHtml(ev.discount)}</span>
       </div>
       <button class="wallet-item-remove" data-id="${ev.id}" aria-label="기록에서 삭제">✕</button>
     </li>

@@ -10,6 +10,7 @@ function renderCategoryTabs() {
   nav.querySelectorAll(".tab-pill").forEach(btn => {
     btn.addEventListener("click", () => {
       currentCategory = btn.dataset.cat;
+      trackFilterUse(`category:${currentCategory}`);
       selectedBrands.clear(); // 카테고리 바뀌면 이전 카테고리의 브랜드 선택은 초기화
       currentSubTag = null;   // 서브카테고리도 초기화
       rankingShowCount = 5;   // 카테고리 바뀌면 더보기 상태도 초기화
@@ -35,7 +36,7 @@ function renderSubcatRow() {
   if (currentCategory === "all") { row.hidden = true; row.innerHTML = ""; return; }
   // 현재 카테고리 이벤트들의 태그를 빈도순으로 뽑아 서브카테고리로 사용 (데이터 기반이라 빈 칩이 없음)
   const tagCount = {};
-  EVENTS.filter(ev => ev.category === currentCategory)
+  EVENTS.filter(ev => ev.category === currentCategory && isEventLive(ev))
     .forEach(ev => (ev.tags || []).forEach(t => { tagCount[t] = (tagCount[t] || 0) + 1; }));
   const tags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([t]) => t);
   if (tags.length === 0) { row.hidden = true; row.innerHTML = ""; return; }
@@ -46,6 +47,7 @@ function renderSubcatRow() {
   row.querySelectorAll(".subcat-chip").forEach(chip => {
     chip.addEventListener("click", () => {
       currentSubTag = chip.dataset.subtag || null;
+      if (currentSubTag) trackFilterUse(`subtag:${currentSubTag}`);
       renderSubcatRow();
       renderFeed();
       updateDiscoverySectionsVisibility();
@@ -80,7 +82,7 @@ function renderBrandFilter() {
   // 현재 카테고리에 실제로 존재하는 브랜드만 중복 없이 추출
   const brandsInCategory = [];
   const seen = new Set();
-  EVENTS.filter(ev => ev.category === currentCategory).forEach(ev => {
+  EVENTS.filter(ev => ev.category === currentCategory && isEventLive(ev)).forEach(ev => {
     if (!seen.has(ev.brand)) {
       seen.add(ev.brand);
       brandsInCategory.push(ev);
@@ -99,9 +101,9 @@ function renderBrandFilter() {
   toggleBtn.hidden = true;
 
   wrap.innerHTML = brandsInCategory.map(ev => `
-    <button class="brand-filter-chip ${selectedBrands.has(ev.brand) ? "selected" : ""}" data-brand="${ev.brand}">
-      <img class="brand-filter-logo" src="${getLogoUrl(ev.domain)}" data-domain="${ev.domain}" data-brand="${ev.brand}" alt="${ev.brand}">
-      <span>${ev.brand}</span>
+    <button class="brand-filter-chip ${selectedBrands.has(ev.brand) ? "selected" : ""}" data-brand="${escapeHtml(ev.brand)}">
+      <img class="brand-filter-logo" src="${getLogoUrl(ev.domain)}" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" alt="${escapeHtml(ev.brand)}">
+      <span>${escapeHtml(ev.brand)}</span>
     </button>
   `).join("");
 
@@ -160,6 +162,7 @@ function bindDiscountTabs() {
         currentDiscountFilter = btn.dataset.discount;
         btn.classList.add("active");
       }
+      trackFilterUse(`discount:${currentDiscountFilter}`);
       renderFeed();
       renderRanking();
       updateDiscoverySectionsVisibility();
@@ -206,9 +209,9 @@ function renderRanking() {
       <span class="rank-num ${idx < 3 ? "rank-num-hot" : "rank-num-alt"}">${idx + 1}</span>
       <img class="rank-thumb" src="${ev.image}" alt="" loading="lazy" onerror="handleImageError(this)">
       <div class="rank-row-info">
-        <p class="rank-row-brand"><img class="rank-row-brand-logo" src="${getLogoUrl(ev.domain)}" alt="" data-domain="${ev.domain}" data-brand="${ev.brand}"> ${ev.brand}</p>
-        <p class="rank-row-title">${ev.title}</p>
-        <p class="rank-row-sub">${ev.discount}</p>
+        <p class="rank-row-brand"><img class="rank-row-brand-logo" src="${getLogoUrl(ev.domain)}" alt="" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}"> ${escapeHtml(ev.brand)}</p>
+        <p class="rank-row-title">${escapeHtml(ev.title)}</p>
+        <p class="rank-row-sub">${escapeHtml(ev.discount)}</p>
         <span class="rank-interest"><img class="rank-interest-flame" src="assets/flame-icon.png?v20260718d" alt=""> ${formatCount((eventStatsCache[ev.id] || {}).views || 0)}명 관심중</span>
       </div>
       <button class="card-like-btn rank-like ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
@@ -244,33 +247,33 @@ function renderEventCardHtml(ev) {
     ? `<span class="card-verified-badge">✓ 실제 진행중</span>`
     : "";
   const subtitleHtml = ev.subtitle
-    ? `<p class="card-sub">${ev.subtitle}</p>`
+    ? `<p class="card-sub">${escapeHtml(ev.subtitle)}</p>`
     : "";
   const channelHtml = ev.channel
-    ? `<p class="card-meta"><svg class="meta-ic" viewBox="0 0 24 24" width="11" height="11" fill="none"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.2" stroke="currentColor" stroke-width="2"/></svg> ${ev.channel}</p>`
+    ? `<p class="card-meta"><svg class="meta-ic" viewBox="0 0 24 24" width="11" height="11" fill="none"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.2" stroke="currentColor" stroke-width="2"/></svg> ${escapeHtml(ev.channel)}</p>`
     : "";
   // 카드의 할인 배지는 한 줄짜리 요약 공간이라, "A + B + C"처럼 여러 혜택이 이어진
   // 대형 프로모션이면 대표 혜택(첫 항목)만 보여준다. 전체 목록은 상세페이지 혜택칩에서
   // 그대로 다 보여주므로(ev.discount 원본은 안 건드림) 정보 손실은 없다.
-  const cardDiscountText = (ev.discount || "").split(/\s+\+\s+/)[0].trim();
+  const cardDiscountText = escapeHtml((ev.discount || "").split(/\s+\+\s+/)[0].trim());
   return `
     <div class="event-card" data-id="${ev.id}">
       <div class="card-media">
-        <img class="card-photo" src="${ev.image}" alt="${ev.title}" loading="lazy" onerror="handleImageError(this)">
+        <img class="card-photo" src="${ev.image}" alt="${escapeHtml(ev.title)}" loading="lazy" onerror="handleImageError(this)">
         <button class="card-like-btn ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
           <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
         </button>
         <span class="card-logo-badge">
-          <img data-domain="${ev.domain}" data-brand="${ev.brand}" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고">
+          <img data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" src="${getLogoUrl(ev.domain)}" alt="${escapeHtml(ev.brand)} 로고">
         </span>
         <span class="card-discount">${cardDiscountText}</span>
         <span class="card-dday">${ev.dday}</span>
         ${distanceLabel}
       </div>
       <div class="card-body">
-        <p class="card-brand-name">${ev.brand} ${merchantBadge}</p>
+        <p class="card-brand-name">${escapeHtml(ev.brand)} ${merchantBadge}</p>
         ${verifiedBadge}
-        <p class="card-title">${ev.title}</p>
+        <p class="card-title">${escapeHtml(ev.title)}</p>
         ${subtitleHtml}
         ${channelHtml}
         <div class="card-stats">

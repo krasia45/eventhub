@@ -173,6 +173,8 @@ function getFilteredEvents() {
     ? EVENTS
     : EVENTS.filter(ev => ev.category === currentCategory);
 
+  list = list.filter(isEventLive);
+
   if (selectedBrands.size > 0) {
     list = list.filter(ev => selectedBrands.has(ev.brand));
   }

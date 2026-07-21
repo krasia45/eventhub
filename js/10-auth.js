@@ -344,8 +344,8 @@ function renderAiKeywordChips(keywords) {
 
   const chips = (keywords || []).map(k => `
     <span class="ai-keyword-chip">
-      ${k}
-      <button type="button" class="ai-keyword-remove" data-kw="${k}" aria-label="${k} 삭제">✕</button>
+      ${escapeHtml(k)}
+      <button type="button" class="ai-keyword-remove" data-kw="${escapeHtml(k)}" aria-label="${escapeHtml(k)} 삭제">✕</button>
     </span>
   `).join("");
 

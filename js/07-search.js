@@ -37,7 +37,7 @@ const suggestionsEl = document.getElementById("searchSuggestions");
 function getTrendingBrands(limit = 6) {
   const seen = new Set();
   const uniqueBrandEvents = [];
-  [...EVENTS].sort((a, b) => getEventScore(b.id) - getEventScore(a.id)).forEach(ev => {
+  [...EVENTS].filter(isEventLive).sort((a, b) => getEventScore(b.id) - getEventScore(a.id)).forEach(ev => {
     if (!seen.has(ev.brand)) { seen.add(ev.brand); uniqueBrandEvents.push(ev); }
   });
   return uniqueBrandEvents.slice(0, limit);
@@ -58,24 +58,24 @@ function showSearchSuggestions() {
     const trending = getTrendingBrands();
     if (trending.length === 0) { hideSearchSuggestions(); return; }
     const tagCount = {};
-    EVENTS.forEach(ev => (ev.tags || []).forEach(t => { tagCount[t] = (tagCount[t] || 0) + 1; }));
+    EVENTS.filter(isEventLive).forEach(ev => (ev.tags || []).forEach(t => { tagCount[t] = (tagCount[t] || 0) + 1; }));
     const topTags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([t]) => t);
     const brandSeen = new Set();
     const topBrands = [];
-    for (const ev of EVENTS) {
+    for (const ev of EVENTS.filter(isEventLive)) {
       if (!brandSeen.has(ev.brand)) { brandSeen.add(ev.brand); topBrands.push(ev); }
       if (topBrands.length >= 6) break;
     }
     suggestionsEl.innerHTML = `
       <p class="search-suggestions-label">🔥 인기 검색어</p>
-      ${trending.map(ev => `<button type="button" class="search-suggestion-item" data-query="${ev.brand}">${ev.brand}</button>`).join("")}
+      ${trending.map(ev => `<button type="button" class="search-suggestion-item" data-query="${escapeHtml(ev.brand)}">${escapeHtml(ev.brand)}</button>`).join("")}
       ${topTags.length ? `<p class="search-suggestions-label search-label-gap">추천 검색어</p>
-      <div class="search-tag-row">${topTags.map(t => `<button type="button" class="search-tag-chip" data-query="${t}">#${t}</button>`).join("")}</div>` : ""}
+      <div class="search-tag-row">${topTags.map(t => `<button type="button" class="search-tag-chip" data-query="${escapeHtml(t)}">#${escapeHtml(t)}</button>`).join("")}</div>` : ""}
       ${topBrands.length ? `<p class="search-suggestions-label search-label-gap">브랜드</p>
       <div class="search-brand-row">${topBrands.map(ev => `
-        <button type="button" class="search-brand-item" data-query="${ev.brand}">
-          <img class="search-brand-logo" src="${getLogoUrl(ev.domain)}" alt="" data-domain="${ev.domain}" data-brand="${ev.brand}">
-          <span>${ev.brand}</span>
+        <button type="button" class="search-brand-item" data-query="${escapeHtml(ev.brand)}">
+          <img class="search-brand-logo" src="${getLogoUrl(ev.domain)}" alt="" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}">
+          <span>${escapeHtml(ev.brand)}</span>
         </button>`).join("")}</div>` : ""}
     `;
     suggestionsEl.hidden = false;
@@ -91,8 +91,8 @@ function showSearchSuggestions() {
   }
 
   // 타이핑 중인 자동완성 — 특정 이벤트를 정확히 짚어 고르는 목록이라 클릭 시 바로 그 이벤트로 이동
-  const matches = EVENTS.filter(ev =>
-    textMatchesQuery(ev.brand, q) || textMatchesQuery(ev.title, q)
+  const matches = EVENTS.filter(ev => isEventLive(ev) &&
+    (textMatchesQuery(ev.brand, q) || textMatchesQuery(ev.title, q))
   ).slice(0, 6);
 
   if (matches.length === 0) {
@@ -104,7 +104,7 @@ function showSearchSuggestions() {
           ${highlightMatch(ev.brand, q)} · ${highlightMatch(ev.title, q)}
         </button>
       `).join("")}
-      <button type="button" class="search-suggestion-viewall" data-query="${q}">"${q}" 전체 결과 보기 →</button>
+      <button type="button" class="search-suggestion-viewall" data-query="${escapeHtml(q)}">"${escapeHtml(q)}" 전체 결과 보기 →</button>
     `;
   }
 
@@ -161,11 +161,11 @@ function openSearchResults(query) {
   if (!q) return;
   lastSearchQuery = q;
 
-  const matches = EVENTS.filter(ev =>
+  const matches = EVENTS.filter(ev => isEventLive(ev) && (
     textMatchesQuery(ev.brand, q) ||
     textMatchesQuery(ev.title, q) ||
     ev.tags.some(t => textMatchesQuery(t, q))
-  );
+  ));
   sortSearchMatches(matches, currentSearchSort);
 
   document.getElementById("searchResultsQuery").textContent = `"${q}"`;

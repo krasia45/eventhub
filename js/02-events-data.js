@@ -45,8 +45,13 @@ function computeDday(periodEnd) {
   const end = new Date(periodEnd + "T23:59:59");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  // Date 객체를 먼저 직접 비교해서 종료 여부를 확정한다.
+  // (기존에는 diffDays < 0 으로만 판정했는데, 종료일 바로 다음날 자정 경계에서
+  //  Math.ceil() 결과가 정확히 -0이 되는 부동소수점 케이스가 있었다.
+  //  JS에서 -0 < 0은 false이면서 -0 === 0은 true라, 그 경우 "종료" 대신
+  //  "D-Day"로 잘못 표시되고, 그 결과 종료 이벤트 제외 필터도 무력화됐다.)
+  if (end < today) return "종료";
   const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return "종료";
   if (diffDays === 0) return "D-Day";
   return `D-${diffDays}`;
 }
@@ -143,6 +148,13 @@ let likedEvents = new Set(JSON.parse(localStorage.getItem("eventhub-liked") || "
 let notifiedEvents = new Set(JSON.parse(localStorage.getItem("eventhub-notified") || "[]"));
 // 최근 본 이벤트 — 최신순 배열(중복 없음, 최대 20개), 로컬 저장만(별도 테이블 없음)
 let recentlyViewed = JSON.parse(localStorage.getItem("eventhub-recent") || "[]");
+
+// 종료된 이벤트 판별 — "발견용" 화면(홈/카테고리/AI추천/내주변/실시간인기/검색)에서 제외할 때 사용.
+// 찜한 이벤트/최근 본 이벤트처럼 "내가 이미 참여·확인한 기록"을 보여주는 화면은 이 필터를 쓰지 않고
+// EVENTS를 그대로 사용해서, 종료된 뒤에도 "종료" 배지와 함께 계속 조회할 수 있게 한다(의도된 동작).
+function isEventLive(ev) {
+  return ev.dday !== "종료";
+}
 let eventStatsCache = {}; // { eventId: { views, likes } } — /api/events 응답에서 초기화됨 (loadEventsFromApi 참고)
 
 function sendEventStat(action, eventId) {
@@ -152,6 +164,15 @@ function sendEventStat(action, eventId) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action, eventId }),
   }).catch(err => console.error("통계 전송 오류:", err));
+}
+
+// 카테고리/할인유형/서브태그 필터 실사용 여부 추적 (실사용자 테스트 검증용 최소 계측)
+function trackFilterUse(filterKey) {
+  fetch("/api/stats", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "filterUse", filterKey }),
+  }).catch(() => {}); // 부가 계측이라 실패해도 조용히 무시
 }
 
 function getEventScore(eventId) {
