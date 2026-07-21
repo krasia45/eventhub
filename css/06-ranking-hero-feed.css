@@ -133,7 +133,7 @@
   padding: 3px 9px;
   border-radius: 999px;
 }
-.rank-interest-flame { width: 11px; height: auto; }
+.rank-interest-flame { width: 15px; height: auto; }
 
 .rank-like {
   flex-shrink: 0;

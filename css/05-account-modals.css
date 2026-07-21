@@ -48,7 +48,7 @@ html[data-theme="dark"] .sheet-verified-note { background: #163826; color: #4ADE
 .coupon-wallet-sheet { max-width: 520px; }
 .coupon-wallet-body { padding: 8px 4px 4px; }
 .coupon-wallet-title { font-size: 18px; font-weight: 800; color: var(--text-1); }
-.coupon-wallet-title-row { display: flex; align-items: center; justify-content: space-between; }
+.coupon-wallet-title-row { display: flex; align-items: center; justify-content: space-between; margin-top: 40px; }
 .wallet-clear-all-btn {
   font-size: 12px;
   font-weight: 700;
@@ -117,7 +117,7 @@ html[data-theme="dark"] .sheet-verified-note { background: #163826; color: #4ADE
 /* ===================== 로그인 / 회원가입 ===================== */
 .auth-sheet { max-width: 420px; }
 .auth-body { padding: 8px 4px 4px; }
-.auth-title { font-size: 19px; font-weight: 800; color: var(--text-1); }
+.auth-title { font-size: 19px; font-weight: 800; color: var(--text-1); margin-top: 22px; }
 .auth-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; margin-bottom: 18px; line-height: 1.5; }
 
 .auth-form { display: flex; flex-direction: column; gap: 10px; }
