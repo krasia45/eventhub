@@ -37,10 +37,17 @@
   scrollbar-width: none;
 }
 .ai-feed-grid::-webkit-scrollbar { display: none; }
-.ai-feed-grid .ai-result-card {
+.ai-feed-grid .event-card {
   flex: 0 0 auto;
   width: 136px;
   scroll-snap-align: start;
+  background: var(--mint-light);
+  border: 1px solid #D1FAE5;
+}
+.ai-feed-grid .event-card .card-media {
+  margin: 8px 8px 0;
+  width: calc(100% - 16px);
+  border-radius: 8px;
 }
 
 .ai-feed-setup-card {
@@ -126,53 +133,4 @@
 .ai-card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 @media (max-width: 640px) {
   .ai-card-row { grid-template-columns: 1fr; }
-}
-.ai-result-card {
-  background: var(--mint-light);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  border: 1px solid #D1FAE5;
-  cursor: pointer;
-  transition: transform 0.12s ease;
-}
-.ai-result-card:active { transform: scale(0.97); }
-.ai-result-card-media { position: relative; }
-.ai-result-card-img {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  border-radius: 8px;
-  background: #E8F8F1;
-  display: block;
-}
-.ai-result-card-badge {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 9.5px;
-  font-weight: 800;
-  padding: 3px 7px;
-  border-radius: 999px;
-}
-.ai-result-card-brand { font-size: 10.5px; color: var(--text-3); font-weight: 700; margin-top: 8px; }
-.ai-result-card-title { font-size: 12.5px; font-weight: 700; color: var(--text-1); margin-top: 2px; line-height: 1.35; }
-.ai-result-card-dday {
-  display: inline-block;
-  margin-top: 6px;
-  font-size: 10.5px;
-  font-weight: 800;
-  color: #fff;
-  background: var(--accent);
-  padding: 2px 8px;
-  border-radius: 6px;
-}
-.ai-result-card-stats {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--text-3);
-  font-weight: 600;
 }

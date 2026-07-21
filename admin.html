@@ -17,7 +17,8 @@
   .register-form input, .register-form select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
   .register-form button { padding: 10px 16px; border-radius: 8px; background: #FF6F00; color: #fff; border: none; font-weight: 700; }
   .manual-form { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .manual-form input, .manual-form select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+  .manual-form input, .manual-form select, .manual-form textarea { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-family: inherit; resize: vertical; }
+  .manual-form textarea#manualChannel { grid-column: 1 / -1; }
   .manual-form input#manualSourceUrl { grid-column: 1 / -1; }
   .manual-form button { grid-column: 1 / -1; padding: 10px 16px; border-radius: 8px; background: #1a1a1a; color: #fff; border: none; font-weight: 700; }
   .register-status { font-size: 12.5px; margin-top: 8px; }
@@ -83,10 +84,11 @@
     <option value="beauty">뷰티</option>
     <option value="food">카페·디저트</option>
   </select>
-  <input type="text" id="manualDiscount" placeholder="혜택 (예: 포토존 체험, 한정 굿즈 등)">
+  <input type="text" id="manualDiscount" placeholder="혜택 (예: 최대 50% 할인 / 5,000원 쿠폰 / 응모 시 스타벅스 기프티콘 / 참여 시 적립금 최대 1만원)">
   <input type="date" id="manualStart">
   <input type="date" id="manualEnd">
-  <input type="text" id="manualChannel" placeholder="참여방법/시간/주소 (예: 11:00-21:00, 서울 성동구 연무장길 101)">
+  <textarea id="manualChannel" rows="2" placeholder="참여방법/운영시간/주소 등 — 정보가 여러 개면 꼭 줄바꿈으로 구분해주세요&#10;예)&#10;서울 성동구 연무장길 101&#10;11:00-21:00&#10;구매 시 1인 1개 한정"></textarea>
+  <p style="font-size:11.5px;color:#999;margin:-6px 0 0;">💡 참여방법에 서로 다른 정보(시간/장소/조건 등)를 한 줄에 이어쓰면 상세페이지에 뭉쳐서 보여요. 꼭 줄마다 하나씩 나눠 입력해주세요.</p>
   <input type="text" id="manualSourceUrl" placeholder="출처 URL (인스타 게시물 링크 등, 검증용)">
   <button onclick="registerManual()">추가하기</button>
 </div>
@@ -256,6 +258,9 @@ async function loadCandidates() {
       <p style="font-size:13px;">${c.desc || ""}</p>
 
       <div class="approve-form">
+        <label style="grid-column: 1 / -1; display:flex; align-items:center; gap:6px; font-size:12.5px; color:#555;">
+          <input type="checkbox" class="f-online-only" onchange="toggleLocationInputs(this)"> 온라인 전용 이벤트 (매장 위치 없음 — 내 주변 섹션에서 자동 제외됨)
+        </label>
         <input type="number" step="0.00001" placeholder="위도(lat)" class="f-lat">
         <input type="number" step="0.00001" placeholder="경도(lng)" class="f-lng">
         <input type="text" placeholder="이미지 URL" class="f-image" style="grid-column: 1 / -1;" value="${c.image || ""}">
@@ -271,11 +276,24 @@ async function loadCandidates() {
   `).join("");
 }
 
+function toggleLocationInputs(checkbox) {
+  const card = checkbox.closest(".candidate-card");
+  const latInput = card.querySelector(".f-lat");
+  const lngInput = card.querySelector(".f-lng");
+  latInput.disabled = checkbox.checked;
+  lngInput.disabled = checkbox.checked;
+  if (checkbox.checked) { latInput.value = ""; lngInput.value = ""; }
+}
+
 async function approve(id) {
   const card = document.querySelector(`.candidate-card[data-id="${id}"]`);
+  const isOnlineOnly = card.querySelector(".f-online-only").checked;
   const lat = card.querySelector(".f-lat").value;
   const lng = card.querySelector(".f-lng").value;
-  if (!lat || !lng) { alert("위도/경도를 입력해주세요 (지도에서 대략적인 위치를 찾아 입력하시면 됩니다)."); return; }
+  if (!isOnlineOnly && (!lat || !lng)) {
+    alert("위도/경도를 입력해주세요 (지도에서 대략적인 위치를 찾아 입력하시면 됩니다). 매장 없이 온라인으로만 진행되는 이벤트라면 위의 '온라인 전용' 체크박스를 선택해주세요.");
+    return;
+  }
 
   const key = getKey();
   const res = await fetch("/api/admin_candidates", {
@@ -283,7 +301,8 @@ async function approve(id) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       key, action: "approve", candidateId: id,
-      lat: parseFloat(lat), lng: parseFloat(lng),
+      lat: isOnlineOnly ? null : parseFloat(lat),
+      lng: isOnlineOnly ? null : parseFloat(lng),
       image: card.querySelector(".f-image").value,
       domain: card.querySelector(".f-domain").value,
       link: card.querySelector(".f-link").value,

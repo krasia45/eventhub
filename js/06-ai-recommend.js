@@ -74,36 +74,20 @@ function renderAiFeedSetupPrompt() {
 
 function renderAiFeedCards(events) {
   const grid = document.getElementById("aiFeedGrid");
-  grid.innerHTML = events.map(ev => {
-    const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
-    // 배지는 실제 데이터(할인문구/카테고리)에서만 유도 — 없는 정보를 지어내지 않음
-    let badge = "";
-    if (ev.discount.includes("1+1")) badge = "1+1";
-    else if (ev.category === "popup") badge = "POPUP";
-    else {
-      const pct = ev.discount.match(/(\d+)\s*%/);
-      if (pct && parseInt(pct[1], 10) >= 50) badge = "SALE";
-    }
-    return `
-      <div class="ai-result-card" data-id="${ev.id}">
-        <div class="ai-result-card-media">
-          <img class="ai-result-card-img" src="${ev.image}" alt="${ev.title}" loading="lazy" onerror="handleImageError(this)">
-          ${badge ? `<span class="ai-result-card-badge">${badge}</span>` : ""}
-        </div>
-        <p class="ai-result-card-brand">${ev.brand}</p>
-        <p class="ai-result-card-title">${ev.title}</p>
-        <span class="ai-result-card-dday">${ev.dday}</span>
-        <div class="ai-result-card-stats">
-          <span>👁 ${formatCount(stats.views)}</span>
-          <span class="stat-heart">❤️ ${formatCount(stats.likes)}</span>
-        </div>
-      </div>
-    `;
-  }).join("");
+  // AI추천만의 별도 카드 디자인 대신 Standard 카드를 그대로 재사용한다.
+  // 차별점은 카드 내부가 아니라 섹션 컨테이너("✨ 나만을 위한 이벤트")로만 표현한다.
+  grid.innerHTML = events.map(ev => renderEventCardHtml(ev)).join("");
 
-  grid.querySelectorAll(".ai-result-card").forEach(card => {
+  grid.querySelectorAll(".event-card").forEach(card => {
     card.addEventListener("click", () => openSheet(card.dataset.id));
   });
+  grid.querySelectorAll(".card-like-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleLike(btn.dataset.id);
+    });
+  });
+  grid.querySelectorAll(".card-logo-badge img").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 }
 
 document.getElementById("aiFeedMoreBtn").addEventListener("click", openAiRecommendPage);

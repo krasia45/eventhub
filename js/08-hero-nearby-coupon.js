@@ -64,6 +64,7 @@ async function renderNearbySection() {
   const NEARBY_RADIUS_KM = 15;
 
   const nearby = EVENTS
+    .filter(ev => ev.lat != null && ev.lng != null) // 좌표 없는 온라인 전용 이벤트는 '내 주변'에서 애초에 제외
     .map(ev => ({ ev, dist: haversineDistanceKm(loc.lat, loc.lng, ev.lat, ev.lng) }))
     .filter(x => x.dist <= NEARBY_RADIUS_KM)
     .sort((a, b) => getEventScore(b.ev.id) - getEventScore(a.ev.id))
@@ -77,14 +78,24 @@ async function renderNearbySection() {
   scroll.innerHTML = nearby.map(({ ev, dist }) => {
     const distLabel = dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`;
     const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
+    const cardDiscountText = (ev.discount || "").split(/\s+\+\s+/)[0].trim();
     return `
       <div class="nearby-card" data-id="${ev.id}">
         <div class="nearby-card-media">
           <img src="${ev.image}" alt="${ev.title}" loading="lazy" onerror="handleImageError(this)">
+          <button class="card-like-btn nearby-like ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
+            <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+          </button>
+          <span class="card-logo-badge nearby-logo-badge">
+            <img data-domain="${ev.domain}" data-brand="${ev.brand}" src="${getLogoUrl(ev.domain)}" alt="${ev.brand} 로고">
+          </span>
+        </div>
+        <div class="nearby-card-brand-row">
+          <p class="nearby-card-brand">${ev.brand}</p>
           <span class="nearby-card-distance">📍 ${distLabel}</span>
         </div>
-        <p class="nearby-card-brand">${ev.brand}</p>
         <p class="nearby-card-title">${ev.title}</p>
+        ${cardDiscountText ? `<p class="nearby-card-discount">${cardDiscountText}</p>` : ""}
         <div class="nearby-card-stats">
           <span>👁 ${formatCount(stats.views)}</span>
           <span class="stat-heart">❤️ ${formatCount(stats.likes)}</span>
@@ -96,6 +107,10 @@ async function renderNearbySection() {
   scroll.querySelectorAll(".nearby-card").forEach(card => {
     card.addEventListener("click", () => openSheet(card.dataset.id));
   });
+  scroll.querySelectorAll(".nearby-like").forEach(btn => {
+    btn.addEventListener("click", (e) => { e.stopPropagation(); toggleLike(btn.dataset.id); });
+  });
+  scroll.querySelectorAll(".nearby-logo-badge img").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 
   updateDiscoverySectionsVisibility();
 }

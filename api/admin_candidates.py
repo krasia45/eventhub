@@ -77,12 +77,10 @@ class handler(BaseHTTPRequestHandler):
                 self._send_json(200, {"success": True})
                 return
 
-            # ── 승인: 위치정보(lat/lng)는 AI가 신뢰성 있게 알 수 없으므로 관리자가 직접 입력 ──
+            # ── 승인: 위치정보(lat/lng)는 AI가 신뢰성 있게 알 수 없으므로 관리자가 직접 입력.
+            # 단, 매장 없이 전국 온라인으로 진행되는 이벤트는 좌표가 없을 수 있으므로 선택사항으로 처리 ──
             lat = data.get("lat")
             lng = data.get("lng")
-            if lat is None or lng is None:
-                self._send_json(400, {"error": "승인 시 위치(lat, lng)를 입력해야 합니다."})
-                return
 
             candidate_rows = sb_select("event_candidates", {"select": "*", "id": f"eq.{candidate_id}"})
             if not candidate_rows:

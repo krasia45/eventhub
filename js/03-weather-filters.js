@@ -185,7 +185,7 @@ function getFilteredEvents() {
   }
 
   if (gpsFilterActive && userLocation) {
-    list = list.filter(ev => haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng) <= 20);
+    list = list.filter(ev => ev.lat != null && ev.lng != null && haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng) <= 20);
   }
 
   if (endingSoonFilterActive) {
