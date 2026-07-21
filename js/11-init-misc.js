@@ -87,6 +87,9 @@ async function checkNewFollowedEvents() {
 
 // 더보기 시트를 열 때(=사용자가 알림을 실제로 확인하는 시점) 목록을 그려줌
 let currentNotifTab = "all";
+// 사용자가 개별적으로 닫은(지운) 알림 — 새로고침해도 다시 안 뜨도록 로컬에 기록
+let dismissedNotifs = new Set(JSON.parse(localStorage.getItem("eventhub-dismissed-notifs") || "[]"));
+function notifKey(n) { return `${n.type}:${n.id || n.title}`; }
 
 function buildLocalNotifications() {
   const notifs = [];
@@ -142,7 +145,8 @@ async function renderNotificationList() {
     loginEl.hidden = false;
   }
 
-  const shown = currentNotifTab === "all" ? notifs : notifs.filter(n => n.type === currentNotifTab);
+  const shown = (currentNotifTab === "all" ? notifs : notifs.filter(n => n.type === currentNotifTab))
+    .filter(n => !dismissedNotifs.has(notifKey(n)));
 
   if (shown.length === 0) {
     emptyEl.hidden = false;
@@ -154,12 +158,22 @@ async function renderNotificationList() {
           <p class="notif-item-brand">${escapeHtml(n.brand)}</p>
           <p class="notif-item-title">${escapeHtml(n.title)}</p>
         </div>
+        <button class="notif-item-remove" data-key="${notifKey(n)}" aria-label="알림 지우기">✕</button>
       </li>
     `).join("");
     listEl.querySelectorAll(".notif-item[data-id]").forEach(el => {
-      el.addEventListener("click", () => {
+      el.addEventListener("click", (e) => {
+        if (e.target.closest(".notif-item-remove")) return;
         closeMoreMenu();
         openSheet(el.dataset.id);
+      });
+    });
+    listEl.querySelectorAll(".notif-item-remove").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dismissedNotifs.add(btn.dataset.key);
+        localStorage.setItem("eventhub-dismissed-notifs", JSON.stringify([...dismissedNotifs]));
+        renderNotificationList();
       });
     });
     markAllBtn.hidden = false;

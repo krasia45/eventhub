@@ -58,7 +58,7 @@ async function renderNearbySection() {
   const section = document.getElementById("nearbySection");
   const scroll = document.getElementById("nearbyScroll");
 
-  if (EVENTS.length === 0) { section.hidden = true; return; }
+  if (EVENTS.length === 0) { section.hidden = true; nearbyHasData = false; updateDiscoverySectionsVisibility(); return; }
 
   const loc = await getQuietLocation();
   const NEARBY_RADIUS_KM = 15;
@@ -69,8 +69,9 @@ async function renderNearbySection() {
     .sort((a, b) => getEventScore(b.ev.id) - getEventScore(a.ev.id))
     .slice(0, 8);
 
-  if (nearby.length === 0) { section.hidden = true; return; }
+  if (nearby.length === 0) { section.hidden = true; nearbyHasData = false; updateDiscoverySectionsVisibility(); return; }
 
+  nearbyHasData = true;
   section.hidden = false;
 
   scroll.innerHTML = nearby.map(({ ev, dist }) => {
@@ -95,6 +96,8 @@ async function renderNearbySection() {
   scroll.querySelectorAll(".nearby-card").forEach(card => {
     card.addEventListener("click", () => openSheet(card.dataset.id));
   });
+
+  updateDiscoverySectionsVisibility();
 }
 
 /* ---------- Bottom Nav (visual only, Home is functional) ---------- */
@@ -180,6 +183,7 @@ function renderCouponWallet() {
         ${ev.dday ? `<span class="wallet-dday ${ev.dday === "종료" ? "wallet-dday-ended" : ""}">${ev.dday}</span>` : ""}
         <span class="coupon-wallet-discount">${ev.discount}</span>
       </div>
+      <button class="wallet-item-remove" data-id="${ev.id}" aria-label="목록에서 삭제">✕</button>
     </li>
   `).join("");
 
@@ -190,6 +194,13 @@ function renderCouponWallet() {
     });
   });
   listEl.querySelectorAll(".coupon-wallet-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  listEl.querySelectorAll(".wallet-item-remove").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleLike(btn.dataset.id);
+      renderCouponWallet();
+    });
+  });
 }
 
 document.getElementById("couponWalletClose").addEventListener("click", closeCouponWallet);
@@ -237,6 +248,7 @@ function renderRecentView() {
         ${ev.dday ? `<span class="wallet-dday ${ev.dday === "종료" ? "wallet-dday-ended" : ""}">${ev.dday}</span>` : ""}
         <span class="coupon-wallet-discount">${ev.discount}</span>
       </div>
+      <button class="wallet-item-remove" data-id="${ev.id}" aria-label="기록에서 삭제">✕</button>
     </li>
   `).join("");
 
@@ -247,6 +259,18 @@ function renderRecentView() {
     });
   });
   listEl.querySelectorAll(".coupon-wallet-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  listEl.querySelectorAll(".wallet-item-remove").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      removeRecentlyViewed(btn.dataset.id);
+      renderRecentView();
+    });
+  });
+}
+
+function removeRecentlyViewed(eventId) {
+  recentlyViewed = recentlyViewed.filter(id => id !== eventId);
+  localStorage.setItem("eventhub-recent", JSON.stringify(recentlyViewed));
 }
 
 document.getElementById("recentViewClose").addEventListener("click", closeRecentView);

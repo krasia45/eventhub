@@ -151,6 +151,23 @@ function matchesDiscountFilter(ev, filter) {
 }
 
 /* 카테고리 + 할인유형 + GPS(선택) 필터를 모두 적용한 이벤트 목록 */
+/* 브랜드/할인유형/서브태그 중 하나라도 선택되어 있으면 "결과 모드"로 간주.
+   카테고리 선택 자체는 포함하지 않음 — "패션 카테고리만 보는 중"은 여전히 발견 모드에 가까움. */
+function isAnyFilterActive() {
+  return selectedBrands.size > 0 || currentDiscountFilter !== "all" || !!currentSubTag;
+}
+
+/* 필터가 활성화되면 필터를 반영 안 하는 발견형 콘텐츠(AI추천/히어로배너/내주변)와
+   실시간 인기 이벤트(전체 이벤트와 결과가 겹치는 중복 문제 방지)를 숨기고,
+   해제되면 각자의 원래 표시 조건으로 복원한다. 전체 이벤트만 항상 표시(필터 반영 + 인기순 기본정렬). */
+function updateDiscoverySectionsVisibility() {
+  const active = isAnyFilterActive();
+  document.getElementById("aiSection").hidden = active;
+  document.getElementById("heroCarouselWrap").hidden = active;
+  document.getElementById("nearbySection").hidden = active ? true : !nearbyHasData;
+  document.getElementById("rankingSection").hidden = active;
+}
+
 function getFilteredEvents() {
   let list = currentCategory === "all"
     ? EVENTS

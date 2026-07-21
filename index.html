@@ -14,17 +14,17 @@
     } catch (e) {}
   })();
 </script>
-<link rel="stylesheet" href="css/01-base.css?v20260720k">
-<link rel="stylesheet" href="css/02-header-nav.css?v20260720k">
-<link rel="stylesheet" href="css/03-ai-section.css?v20260720k">
-<link rel="stylesheet" href="css/04-filters-weather.css?v20260720k">
-<link rel="stylesheet" href="css/05-account-modals.css?v20260720k">
-<link rel="stylesheet" href="css/06-ranking-hero-feed.css?v20260720k">
-<link rel="stylesheet" href="css/07-nav-toast-sheet.css?v20260720k">
-<link rel="stylesheet" href="css/08-sheet-detail.css?v20260720k">
-<link rel="stylesheet" href="css/09-inquiry-footer-social.css?v20260720k">
-<link rel="stylesheet" href="css/10-search-share-menu.css?v20260720k">
-<link rel="stylesheet" href="css/11-brand-follow-nearby-ai.css?v20260720k">
+<link rel="stylesheet" href="css/01-base.css?v20260721c">
+<link rel="stylesheet" href="css/02-header-nav.css?v20260721c">
+<link rel="stylesheet" href="css/03-ai-section.css?v20260721c">
+<link rel="stylesheet" href="css/04-filters-weather.css?v20260721c">
+<link rel="stylesheet" href="css/05-account-modals.css?v20260721c">
+<link rel="stylesheet" href="css/06-ranking-hero-feed.css?v20260721c">
+<link rel="stylesheet" href="css/07-nav-toast-sheet.css?v20260721c">
+<link rel="stylesheet" href="css/08-sheet-detail.css?v20260721c">
+<link rel="stylesheet" href="css/09-inquiry-footer-social.css?v20260721c">
+<link rel="stylesheet" href="css/10-search-share-menu.css?v20260721c">
+<link rel="stylesheet" href="css/11-brand-follow-nearby-ai.css?v20260721c">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FF6F00">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -77,24 +77,24 @@
 
   <div class="filter-row">
     <div class="discount-tabs" id="discountTabs">
+      <button class="discount-pill active" data-discount="all">전체</button>
       <button class="discount-pill" data-discount="1+1">1+1</button>
       <button class="discount-pill" data-discount="50plus">50% 이상 할인</button>
     </div>
-    <button class="gps-chip" id="gpsFilterChip">📍 내 주변 20km</button>
   </div>
 
   <main class="main-scroll">
 
     <!-- ===== Realtime Ranking ===== -->
-    <section class="ranking-section">
+    <section class="ranking-section" id="rankingSection">
       <div class="section-head">
-        <h2 id="rankingTitle"><img class="flame-icon-img" src="assets/flame-icon.png?v20260720k" alt="" aria-hidden="true"> 실시간 인기 이벤트</h2>
+        <h2 id="rankingTitle"><img class="flame-icon-img" src="assets/flame-icon.png?v20260721c" alt="" aria-hidden="true"> 실시간 인기 이벤트</h2>
         <div class="ranking-head-right">
           <span class="live-dot">LIVE</span>
         </div>
       </div>
       <ul class="ranking-list" id="rankingList"></ul>
-      <button class="ranking-more-btn" id="rankingMoreBtn" hidden>더보기 ›</button>
+      <button class="ranking-more-btn" id="rankingMoreBtn" hidden>더보기 ⌄</button>
     </section>
 
     <!-- ===== AI 추천 · 나만을 위한 이벤트 (로그인 키워드 기반 상시 노출 피드) ===== -->
@@ -110,7 +110,7 @@
     </section>
 
     <!-- ===== Hero Banner Carousel (카테고리별 실제 인기 이벤트로 자동 구성) ===== -->
-    <section class="hero-carousel-wrap">
+    <section class="hero-carousel-wrap" id="heroCarouselWrap">
       <div class="hero-carousel" id="heroCarousel"></div>
       <span class="hero-carousel-counter" id="heroCarouselCounter">1/1</span>
     </section>
@@ -119,6 +119,7 @@
     <section class="nearby-section" id="nearbySection" hidden>
       <div class="section-head">
         <h2 id="nearbyTitle"><span class="nearby-title-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8"/></svg></span> 내 주변 인기 이벤트</h2>
+        <button class="gps-chip" id="gpsFilterChip">📍 내 주변 20km</button>
       </div>
       <div class="nearby-scroll" id="nearbyScroll"></div>
     </section>
@@ -266,7 +267,6 @@
           <h2 class="sheet-title" id="sheetTitle"></h2>
           <span class="sheet-dday-inline" id="sheetDdayInline"></span>
         </div>
-        <span class="sheet-discount" id="sheetDiscount"></span>
 
         <div class="sheet-icon-actions" id="sheetIconActions">
           <button class="sheet-icon-action" id="likeBtn" aria-label="관심 이벤트로 등록">
@@ -699,17 +699,17 @@
 
 </div>
 
-<script src="js/01-bootstrap-map-share.js?v20260720k"></script>
-<script src="js/02-events-data.js?v20260720k"></script>
-<script src="js/03-weather-filters.js?v20260720k"></script>
-<script src="js/04-render-tabs-ranking-feed.js?v20260720k"></script>
-<script src="js/05-event-sheet.js?v20260720k"></script>
-<script src="js/06-ai-recommend.js?v20260720k"></script>
-<script src="js/07-search.js?v20260720k"></script>
-<script src="js/08-hero-nearby-coupon.js?v20260720k"></script>
-<script src="js/09-calendar.js?v20260720k"></script>
-<script src="js/10-auth.js?v20260720k"></script>
-<script src="js/11-init-misc.js?v20260720k"></script>
-<script src="js/12-inquiry-pwa.js?v20260720k"></script>
+<script src="js/01-bootstrap-map-share.js?v20260721c"></script>
+<script src="js/02-events-data.js?v20260721c"></script>
+<script src="js/03-weather-filters.js?v20260721c"></script>
+<script src="js/04-render-tabs-ranking-feed.js?v20260721c"></script>
+<script src="js/05-event-sheet.js?v20260721c"></script>
+<script src="js/06-ai-recommend.js?v20260721c"></script>
+<script src="js/07-search.js?v20260721c"></script>
+<script src="js/08-hero-nearby-coupon.js?v20260721c"></script>
+<script src="js/09-calendar.js?v20260721c"></script>
+<script src="js/10-auth.js?v20260721c"></script>
+<script src="js/11-init-misc.js?v20260721c"></script>
+<script src="js/12-inquiry-pwa.js?v20260721c"></script>
 </body>
 </html>

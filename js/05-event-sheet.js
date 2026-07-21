@@ -26,7 +26,6 @@ function openSheet(eventId) {
 
   document.getElementById("sheetTitle").textContent = ev.title;
   document.getElementById("sheetDdayInline").textContent = ev.dday || "";
-  document.getElementById("sheetDiscount").textContent = ev.discount;
   // 혜택 칩: "최대 50% 할인 + 추가 10% 쿠폰"처럼 +로 이어진 혜택은 칩 여러 개로 분리
   const benefitIc = `<span class="benefit-chip-ic"><svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M12.6 2.6 21 11a2 2 0 0 1 0 2.8L13.8 21a2 2 0 0 1-2.8 0L2.6 12.6A2 2 0 0 1 2 11.2V4a2 2 0 0 1 2-2h7.2c.5 0 1 .2 1.4.6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7.5" cy="7.5" r="1.3" fill="currentColor"/></svg></span>`;
   document.getElementById("sheetBenefitRow").innerHTML = (ev.discount || "")

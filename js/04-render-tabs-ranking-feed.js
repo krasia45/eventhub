@@ -18,6 +18,7 @@ function renderCategoryTabs() {
       renderSubcatRow();
       renderFeed();
       renderRanking();
+      updateDiscoverySectionsVisibility();
     });
   });
 
@@ -47,6 +48,7 @@ function renderSubcatRow() {
       currentSubTag = chip.dataset.subtag || null;
       renderSubcatRow();
       renderFeed();
+      updateDiscoverySectionsVisibility();
     });
   });
 }
@@ -115,6 +117,7 @@ function renderBrandFilter() {
       }
       renderFeed();
       renderRanking();
+      updateDiscoverySectionsVisibility();
     });
   });
 
@@ -143,18 +146,23 @@ document.getElementById("brandFilterToggle").addEventListener("click", () => {
    (무신사·에이블리·지그재그 등 주요 커머스 앱의 보조필터 표준 패턴) */
 function bindDiscountTabs() {
   const wrap = document.getElementById("discountTabs");
+  const allBtn = wrap.querySelector('[data-discount="all"]');
   wrap.querySelectorAll(".discount-pill").forEach(btn => {
     btn.addEventListener("click", () => {
+      const isAllBtn = btn.dataset.discount === "all";
       const isActive = btn.classList.contains("active");
       wrap.querySelectorAll(".discount-pill").forEach(b => b.classList.remove("active"));
-      if (isActive) {
+      if (isAllBtn || isActive) {
+        // '전체'를 눌렀거나, 이미 선택된 칩을 다시 눌러 해제한 경우 → 전체로 복귀
         currentDiscountFilter = "all";
+        allBtn.classList.add("active");
       } else {
         currentDiscountFilter = btn.dataset.discount;
         btn.classList.add("active");
       }
       renderFeed();
       renderRanking();
+      updateDiscoverySectionsVisibility();
     });
   });
 }
@@ -191,7 +199,7 @@ function renderRanking() {
   const rankedEvents = sorted.slice(0, rankingShowCount);
   const isExpanded = rankingShowCount > 5;
   moreBtn.hidden = sorted.length <= 5;
-  moreBtn.textContent = isExpanded ? "접기 ‹" : "더보기 ›";
+  moreBtn.textContent = isExpanded ? "접기 ⌃" : "더보기 ⌄";
 
   list.innerHTML = rankedEvents.map((ev, idx) => `
     <li class="rank-row" data-id="${ev.id}">
@@ -282,7 +290,18 @@ function renderFeed() {
   const filtered = getFilteredEvents();
 
   const currentCat = CATEGORIES.find(c => c.id === currentCategory);
-  title.innerHTML = `<span class="feed-title-ic">${currentCat.icon}</span>${currentCategory === "all" ? "전체 이벤트" : `${getCategoryLabel(currentCategory)} 이벤트`}`;
+  const baseLabel = currentCategory === "all" ? "전체 이벤트" : `${getCategoryLabel(currentCategory)} 이벤트`;
+  const conditionParts = [];
+  if (selectedBrands.size === 1) conditionParts.push([...selectedBrands][0]);
+  else if (selectedBrands.size > 1) conditionParts.push(`${[...selectedBrands][0]} 외 ${selectedBrands.size - 1}곳`);
+  if (currentDiscountFilter === "1+1") conditionParts.push("1+1");
+  else if (currentDiscountFilter === "50plus") conditionParts.push("50%+ 할인");
+  if (currentSubTag) conditionParts.push(currentSubTag);
+  const titleIcon = conditionParts.length > 0 ? "🎯" : currentCat.icon;
+  const titleText = conditionParts.length > 0 ? `${conditionParts.join(" · ")} 이벤트` : baseLabel;
+  title.innerHTML = conditionParts.length > 0
+    ? `<span class="feed-title-ic feed-title-ic-target">${titleIcon}</span>${titleText}`
+    : `<span class="feed-title-ic">${titleIcon}</span>${titleText}`;
   count.textContent = `${filtered.length}개`;
 
   if (filtered.length === 0) {
