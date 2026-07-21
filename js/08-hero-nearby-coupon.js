@@ -204,6 +204,13 @@ function renderCouponWallet() {
 }
 
 document.getElementById("couponWalletClose").addEventListener("click", closeCouponWallet);
+document.getElementById("couponWalletClearBtn").addEventListener("click", () => {
+  const likedList = EVENTS.filter(ev => likedEvents.has(ev.id));
+  if (likedList.length === 0) return;
+  if (!confirm(`찜한 이벤트 ${likedList.length}개를 전부 삭제할까요?`)) return;
+  likedList.forEach(ev => toggleLike(ev.id));
+  renderCouponWallet();
+});
 
 /* ---------- 최근 본 이벤트 (상세페이지 열 때마다 자동 기록, 최신순 최대 20개) ---------- */
 const recentViewOverlay = document.getElementById("recentViewOverlay");
@@ -274,6 +281,13 @@ function removeRecentlyViewed(eventId) {
 }
 
 document.getElementById("recentViewClose").addEventListener("click", closeRecentView);
+document.getElementById("recentViewClearBtn").addEventListener("click", () => {
+  if (recentlyViewed.length === 0) return;
+  if (!confirm(`최근 본 이벤트 기록 ${recentlyViewed.length}개를 전부 삭제할까요?`)) return;
+  recentlyViewed = [];
+  localStorage.setItem("eventhub-recent", JSON.stringify(recentlyViewed));
+  renderRecentView();
+});
 recentViewOverlay.addEventListener("click", (e) => {
   if (e.target === recentViewOverlay) closeRecentView();
 });

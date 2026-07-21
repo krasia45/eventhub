@@ -192,6 +192,12 @@ document.getElementById("notifTabRow").addEventListener("click", (e) => {
 });
 
 document.getElementById("notifMarkAllBtn").addEventListener("click", () => {
+  const currentlyShown = (currentNotifTab === "all" ? buildLocalNotifications() : buildLocalNotifications().filter(n => n.type === currentNotifTab))
+    .filter(n => !dismissedNotifs.has(notifKey(n)));
+  if (currentlyShown.length === 0) return;
+  if (!confirm(`알림 ${currentlyShown.length}개를 전부 삭제할까요?`)) return;
+  currentlyShown.forEach(n => dismissedNotifs.add(notifKey(n)));
+  localStorage.setItem("eventhub-dismissed-notifs", JSON.stringify([...dismissedNotifs]));
   renderNotificationList();
 });
 

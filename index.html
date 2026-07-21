@@ -14,17 +14,17 @@
     } catch (e) {}
   })();
 </script>
-<link rel="stylesheet" href="css/01-base.css?v20260721c">
-<link rel="stylesheet" href="css/02-header-nav.css?v20260721c">
-<link rel="stylesheet" href="css/03-ai-section.css?v20260721c">
-<link rel="stylesheet" href="css/04-filters-weather.css?v20260721c">
-<link rel="stylesheet" href="css/05-account-modals.css?v20260721c">
-<link rel="stylesheet" href="css/06-ranking-hero-feed.css?v20260721c">
-<link rel="stylesheet" href="css/07-nav-toast-sheet.css?v20260721c">
-<link rel="stylesheet" href="css/08-sheet-detail.css?v20260721c">
-<link rel="stylesheet" href="css/09-inquiry-footer-social.css?v20260721c">
-<link rel="stylesheet" href="css/10-search-share-menu.css?v20260721c">
-<link rel="stylesheet" href="css/11-brand-follow-nearby-ai.css?v20260721c">
+<link rel="stylesheet" href="css/01-base.css?v20260721d">
+<link rel="stylesheet" href="css/02-header-nav.css?v20260721d">
+<link rel="stylesheet" href="css/03-ai-section.css?v20260721d">
+<link rel="stylesheet" href="css/04-filters-weather.css?v20260721d">
+<link rel="stylesheet" href="css/05-account-modals.css?v20260721d">
+<link rel="stylesheet" href="css/06-ranking-hero-feed.css?v20260721d">
+<link rel="stylesheet" href="css/07-nav-toast-sheet.css?v20260721d">
+<link rel="stylesheet" href="css/08-sheet-detail.css?v20260721d">
+<link rel="stylesheet" href="css/09-inquiry-footer-social.css?v20260721d">
+<link rel="stylesheet" href="css/10-search-share-menu.css?v20260721d">
+<link rel="stylesheet" href="css/11-brand-follow-nearby-ai.css?v20260721d">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FF6F00">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -88,7 +88,7 @@
     <!-- ===== Realtime Ranking ===== -->
     <section class="ranking-section" id="rankingSection">
       <div class="section-head">
-        <h2 id="rankingTitle"><img class="flame-icon-img" src="assets/flame-icon.png?v20260721c" alt="" aria-hidden="true"> 실시간 인기 이벤트</h2>
+        <h2 id="rankingTitle"><img class="flame-icon-img" src="assets/flame-icon.png?v20260721d" alt="" aria-hidden="true"> 실시간 인기 이벤트</h2>
         <div class="ranking-head-right">
           <span class="live-dot">LIVE</span>
         </div>
@@ -177,7 +177,7 @@
         <div class="notif-section" id="notifSection">
           <div class="notif-section-head">
             <h3 class="sheet-h3" style="margin:0;">🔔 알림</h3>
-            <button class="notif-mark-all-btn" id="notifMarkAllBtn" hidden>모두 읽음</button>
+            <button class="notif-mark-all-btn" id="notifMarkAllBtn" hidden>전체 삭제</button>
           </div>
           <div class="notif-tab-row" id="notifTabRow">
             <button class="notif-tab active" data-notif-tab="all">전체</button>
@@ -372,7 +372,10 @@
       <div class="sheet-handle"></div>
       <button class="sheet-close" id="couponWalletClose" aria-label="닫기">✕</button>
       <div class="coupon-wallet-body">
-        <h2 class="coupon-wallet-title">🎟 내 쿠폰함</h2>
+        <div class="coupon-wallet-title-row">
+          <h2 class="coupon-wallet-title">🎟 내 쿠폰함</h2>
+          <button class="wallet-clear-all-btn" id="couponWalletClearBtn">전체 삭제</button>
+        </div>
         <p class="coupon-wallet-sub">관심 등록한 이벤트의 쿠폰을 한눈에 모아봤어요</p>
         <div class="wallet-tab-row" id="walletTabRow">
           <button class="wallet-tab active" data-wallet-tab="all">전체</button>
@@ -389,7 +392,10 @@
       <div class="sheet-handle"></div>
       <button class="sheet-close" id="recentViewClose" aria-label="닫기">✕</button>
       <div class="coupon-wallet-body">
-        <h2 class="coupon-wallet-title">🕐 최근 본 이벤트</h2>
+        <div class="coupon-wallet-title-row">
+          <h2 class="coupon-wallet-title">🕐 최근 본 이벤트</h2>
+          <button class="wallet-clear-all-btn" id="recentViewClearBtn">전체 삭제</button>
+        </div>
         <p class="coupon-wallet-sub">최근에 확인한 이벤트를 다시 볼 수 있어요</p>
         <ul class="coupon-wallet-list" id="recentViewList"></ul>
       </div>
@@ -466,7 +472,7 @@
         <p class="profile-section-label">내 활동</p>
         <div class="profile-menu-list">
           <button class="profile-menu-item" id="profileSavedMenuBtn">
-            <span>🔖 저장한 이벤트</span><span class="profile-menu-chevron">›</span>
+            <span>❤️ 관심 이벤트</span><span class="profile-menu-chevron">›</span>
           </button>
           <button class="profile-menu-item" id="profileRecentMenuBtn">
             <span>🕐 최근 본 이벤트</span><span class="profile-menu-chevron">›</span>
@@ -699,17 +705,17 @@
 
 </div>
 
-<script src="js/01-bootstrap-map-share.js?v20260721c"></script>
-<script src="js/02-events-data.js?v20260721c"></script>
-<script src="js/03-weather-filters.js?v20260721c"></script>
-<script src="js/04-render-tabs-ranking-feed.js?v20260721c"></script>
-<script src="js/05-event-sheet.js?v20260721c"></script>
-<script src="js/06-ai-recommend.js?v20260721c"></script>
-<script src="js/07-search.js?v20260721c"></script>
-<script src="js/08-hero-nearby-coupon.js?v20260721c"></script>
-<script src="js/09-calendar.js?v20260721c"></script>
-<script src="js/10-auth.js?v20260721c"></script>
-<script src="js/11-init-misc.js?v20260721c"></script>
-<script src="js/12-inquiry-pwa.js?v20260721c"></script>
+<script src="js/01-bootstrap-map-share.js?v20260721d"></script>
+<script src="js/02-events-data.js?v20260721d"></script>
+<script src="js/03-weather-filters.js?v20260721d"></script>
+<script src="js/04-render-tabs-ranking-feed.js?v20260721d"></script>
+<script src="js/05-event-sheet.js?v20260721d"></script>
+<script src="js/06-ai-recommend.js?v20260721d"></script>
+<script src="js/07-search.js?v20260721d"></script>
+<script src="js/08-hero-nearby-coupon.js?v20260721d"></script>
+<script src="js/09-calendar.js?v20260721d"></script>
+<script src="js/10-auth.js?v20260721d"></script>
+<script src="js/11-init-misc.js?v20260721d"></script>
+<script src="js/12-inquiry-pwa.js?v20260721d"></script>
 </body>
 </html>

@@ -54,21 +54,39 @@ function showSearchSuggestions() {
   const q = searchInput.value.trim();
 
   if (!q) {
-    // 인기 검색어 칩 — 클릭하면 그 브랜드가 들어간 이벤트 모음 화면으로 이동 (단일 이벤트 아님)
+    // 빈 검색창: 인기 검색어 + 추천 태그 + 브랜드 로고 행 (시안 반영)
     const trending = getTrendingBrands();
     if (trending.length === 0) { hideSearchSuggestions(); return; }
+    const tagCount = {};
+    EVENTS.forEach(ev => (ev.tags || []).forEach(t => { tagCount[t] = (tagCount[t] || 0) + 1; }));
+    const topTags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([t]) => t);
+    const brandSeen = new Set();
+    const topBrands = [];
+    for (const ev of EVENTS) {
+      if (!brandSeen.has(ev.brand)) { brandSeen.add(ev.brand); topBrands.push(ev); }
+      if (topBrands.length >= 6) break;
+    }
     suggestionsEl.innerHTML = `
       <p class="search-suggestions-label">🔥 인기 검색어</p>
       ${trending.map(ev => `<button type="button" class="search-suggestion-item" data-query="${ev.brand}">${ev.brand}</button>`).join("")}
+      ${topTags.length ? `<p class="search-suggestions-label search-label-gap">추천 검색어</p>
+      <div class="search-tag-row">${topTags.map(t => `<button type="button" class="search-tag-chip" data-query="${t}">#${t}</button>`).join("")}</div>` : ""}
+      ${topBrands.length ? `<p class="search-suggestions-label search-label-gap">브랜드</p>
+      <div class="search-brand-row">${topBrands.map(ev => `
+        <button type="button" class="search-brand-item" data-query="${ev.brand}">
+          <img class="search-brand-logo" src="${getLogoUrl(ev.domain)}" alt="" data-domain="${ev.domain}" data-brand="${ev.brand}">
+          <span>${ev.brand}</span>
+        </button>`).join("")}</div>` : ""}
     `;
     suggestionsEl.hidden = false;
-    suggestionsEl.querySelectorAll(".search-suggestion-item[data-query]").forEach(btn => {
+    suggestionsEl.querySelectorAll("[data-query]").forEach(btn => {
       btn.addEventListener("click", () => {
         openSearchResults(btn.dataset.query);
         hideSearchSuggestions();
         searchInput.blur();
       });
     });
+    suggestionsEl.querySelectorAll(".search-brand-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
     return;
   }
 
@@ -119,18 +137,39 @@ document.addEventListener("click", (e) => {
 });
 
 /* ---------- 검색 결과 모음 화면 ---------- */
+let currentSearchSort = "hot";
+let lastSearchQuery = "";
+
+function sortSearchMatches(matches, mode) {
+  const pct = ev => { const m = (ev.discount || "").match(/(\d+)\s*%/); return m ? parseInt(m[1], 10) : 0; };
+  if (mode === "closing") matches.sort((a, b) => (a.periodEnd || "9999").localeCompare(b.periodEnd || "9999"));
+  else if (mode === "discount") matches.sort((a, b) => pct(b) - pct(a));
+  else if (mode === "new") matches.sort((a, b) => (b.periodStart || "").localeCompare(a.periodStart || ""));
+  else matches.sort((a, b) => getEventScore(b.id) - getEventScore(a.id)); // hot(급상승)
+}
+
+document.addEventListener("click", (e) => {
+  const chip = e.target.closest("#searchSortRow .search-sort-chip");
+  if (!chip) return;
+  currentSearchSort = chip.dataset.sort;
+  document.querySelectorAll("#searchSortRow .search-sort-chip").forEach(c => c.classList.toggle("active", c === chip));
+  if (lastSearchQuery) openSearchResults(lastSearchQuery);
+});
+
 function openSearchResults(query) {
   const q = query.trim();
   if (!q) return;
+  lastSearchQuery = q;
 
   const matches = EVENTS.filter(ev =>
     textMatchesQuery(ev.brand, q) ||
     textMatchesQuery(ev.title, q) ||
     ev.tags.some(t => textMatchesQuery(t, q))
-  ).sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
+  );
+  sortSearchMatches(matches, currentSearchSort);
 
   document.getElementById("searchResultsQuery").textContent = `"${q}"`;
-  document.getElementById("searchResultsCount").textContent = `${matches.length}개의 이벤트`;
+  document.getElementById("searchResultsCount").textContent = `총 ${matches.length}개의 이벤트`;
 
   const grid = document.getElementById("searchResultsGrid");
   if (matches.length === 0) {

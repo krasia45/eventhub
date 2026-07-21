@@ -9,9 +9,9 @@
 /* ── EventHub Flame Icon: 정적 이미지 (애니메이션 없이 심플하게) ── */
 .flame-icon-img {
   display: inline-block;
-  width: 30px;
+  width: 36px;
   height: auto;
-  vertical-align: -8px;
+  vertical-align: -10px;
   margin-right: 3px;
 }
 
