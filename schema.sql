@@ -10,8 +10,8 @@ create table events (
   brand text not null,
   merchant_type text not null default '브랜드',  -- '브랜드' | '소상공인'
   is_verified_real boolean not null default false,
-  lat double precision not null,
-  lng double precision not null,
+  lat double precision, -- nullable: 매장 없이 전국 온라인으로 진행되는 이벤트는 좌표 없음 (내 주변 섹션에서 자동 제외됨)
+  lng double precision, -- nullable: 위와 동일
   title text not null,
   subtitle text,
   discount text not null,
@@ -25,6 +25,8 @@ create table events (
   domain text,
   link text,
   source_url text,                        -- 실제 데이터 출처 (검증용)
+  source_type text default 'unknown',     -- 'url_auto' | 'manual' | 'ai_scan'
+  source_checked_at timestamptz,          -- 이 정보를 마지막으로 확인(승인)한 시각
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -43,7 +45,8 @@ alter table events add column if not exists link_last_checked timestamptz; -- ch
 create table event_stats (
   event_id text primary key references events(id) on delete cascade,
   views integer not null default 0,
-  likes integer not null default 0
+  likes integer not null default 0,
+  site_visits integer not null default 0  -- 공식 사이트 이동 클릭 수 (실사용자 테스트 검증용)
 );
 
 -- 3. 문의하기 (기존 Inquiries 시트 대체)
@@ -68,17 +71,24 @@ create table event_candidates (
   period_start date,
   period_end date,
   channel text,
-  desc text,
+  "desc" text,
   tags text[] default '{}',
   domain text,
   link text,
   source_url text not null,               -- AI가 참고한 출처 URL (검수 필수)
+  source_type text default 'unknown',     -- 'url_auto' | 'manual' | 'ai_scan' — 어떤 경로로 등록됐는지 자동 기록
+  source_checked_at timestamptz,          -- 이 정보를 마지막으로 확인(승인)한 시각 — 승인 시 자동 기록
   ai_confidence_note text,                -- AI가 스스로 남긴 확신도/주의사항
   status text not null default 'pending', -- 'pending' | 'approved' | 'rejected'
   found_at timestamptz default now(),
   reviewed_at timestamptz,
   reviewed_by text
 );
+-- 완전히 동일한(브랜드+제목+시작일) 후보가 실수로 중복 등록되는 것만 최소한으로 막는 안전장치.
+-- 대규모 유사도 매칭 시스템이 아니라 "리터럴하게 똑같은 것"만 막는 가벼운 제약.
+create unique index if not exists idx_candidates_no_exact_dup
+  on event_candidates (brand, title, period_start)
+  where status = 'pending';
 
 create index idx_candidates_status on event_candidates(status);
 
@@ -102,14 +112,16 @@ create policy "통계는 누구나 조회 가능" on event_stats for select usin
 create or replace function increment_event_stat(p_event_id text, p_field text, p_delta integer)
 returns void as $$
 begin
-  insert into event_stats (event_id, views, likes)
-  values (p_event_id, 0, 0)
+  insert into event_stats (event_id, views, likes, site_visits)
+  values (p_event_id, 0, 0, 0)
   on conflict (event_id) do nothing;
 
   if p_field = 'views' then
     update event_stats set views = greatest(0, views + p_delta) where event_id = p_event_id;
   elsif p_field = 'likes' then
     update event_stats set likes = greatest(0, likes + p_delta) where event_id = p_event_id;
+  elsif p_field = 'site_visits' then
+    update event_stats set site_visits = greatest(0, site_visits + p_delta) where event_id = p_event_id;
   end if;
 end;
 $$ language plpgsql;

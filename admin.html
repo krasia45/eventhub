@@ -36,6 +36,11 @@
   .note { background: #FFF6E0; border: 1px solid #FCE3A0; border-radius: 6px; padding: 8px 10px; font-size: 12px; color: #9A6B00; margin-bottom: 10px; }
   .approve-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
   .approve-form input { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+  .address-row { grid-column: 1 / -1; display: flex; gap: 8px; }
+  .address-row .f-address { flex: 1; }
+  .btn-geocode { padding: 8px 12px; border-radius: 6px; background: #1a1a1a; color: #fff; border: none; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+  .btn-geocode:disabled { background: #ccc; }
+  .geocode-status { grid-column: 1 / -1; font-size: 12px; color: #888; margin: -2px 0 2px; }
   .btn-row { display: flex; gap: 8px; margin-top: 10px; grid-column: 1 / -1; }
   .btn-approve { flex: 1; padding: 10px; background: #1E8A4C; color: #fff; border: none; border-radius: 8px; font-weight: 700; }
   .btn-reject { flex: 1; padding: 10px; background: #f1f1f1; color: #333; border: none; border-radius: 8px; font-weight: 700; }
@@ -66,7 +71,7 @@
 <p class="register-status" id="registerStatus"></p>
 
 <h2>✍️ 수동으로 이벤트 등록</h2>
-<p style="font-size:12.5px;color:#666;">인스타그램 큐레이션 게시물처럼 URL 자동 가져오기가 안 되는 경우, 이미 알고 있는 정보를 직접 입력하세요. (주소는 승인 단계에서 지도로 위도/경도를 찾아 입력하시면 돼요)</p>
+<p style="font-size:12.5px;color:#666;">인스타그램 큐레이션 게시물처럼 URL 자동 가져오기가 안 되는 경우, 이미 알고 있는 정보를 직접 입력하세요. (주소는 승인 단계에서 입력하면 자동으로 좌표를 찾아드려요)</p>
 
 <div class="caption-parse-box">
   <p style="font-size:12.5px;color:#666;margin-bottom:6px;">💡 인스타그램 캡션을 그대로 복사해서 붙여넣으면 AI가 아래 칸을 자동으로 채워줘요. (채워진 내용은 꼭 확인 후 등록하세요)</p>
@@ -102,6 +107,93 @@
 <script>
 function getKey() {
   return document.getElementById("adminKey").value.trim() || localStorage.getItem("eventhub-admin-key") || "";
+}
+
+/* ── 주소 → 좌표 변환 (카카오맵 JS SDK, 메인 사이트(index.html)와 동일한 공개용 JS 키 재사용) ── */
+const KAKAO_JS_KEY = "2a4211503ca5201a29e348b22957fba4";
+
+let kakaoGeocoderSdkPromise = null;
+function loadKakaoGeocoderSdk() {
+  if (kakaoGeocoderSdkPromise) return kakaoGeocoderSdkPromise;
+  kakaoGeocoderSdkPromise = new Promise((resolve, reject) => {
+    if (window.kakao && window.kakao.maps && window.kakao.maps.services) { resolve(); return; }
+    const script = document.createElement("script");
+    // libraries=services 를 붙여야 Geocoder/Places(주소·장소 검색) 기능을 쓸 수 있습니다.
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&autoload=false&libraries=services`;
+    script.onload = () => window.kakao.maps.load(resolve);
+    script.onerror = () => reject(new Error("카카오맵 SDK 로드 실패"));
+    document.head.appendChild(script);
+  });
+  return kakaoGeocoderSdkPromise;
+}
+
+/* 주소 문자열을 { lat, lng }로 변환. 정확한 도로명/지번 주소는 주소 검색으로,
+   "티팩토리 성수"처럼 상호명·장소명인 경우는 장소 검색으로 한 번 더 시도합니다. */
+function geocodeAddress(query) {
+  return new Promise((resolve, reject) => {
+    loadKakaoGeocoderSdk().then(() => {
+      const geocoder = new kakao.maps.services.Geocoder();
+      geocoder.addressSearch(query, (result, status) => {
+        if (status === kakao.maps.services.Status.OK && result.length > 0) {
+          resolve({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
+          return;
+        }
+        const places = new kakao.maps.services.Places();
+        places.keywordSearch(query, (placeResult, placeStatus) => {
+          if (placeStatus === kakao.maps.services.Status.OK && placeResult.length > 0) {
+            resolve({ lat: parseFloat(placeResult[0].y), lng: parseFloat(placeResult[0].x) });
+          } else {
+            reject(new Error("주소/장소를 찾을 수 없습니다."));
+          }
+        });
+      });
+    }).catch(reject);
+  });
+}
+
+/* '🔍 좌표 확인' 버튼: 승인 전에 미리 좌표를 확인하고 싶을 때 사용 (승인 시 자동 재시도도 되므로 필수는 아님) */
+async function geocodeAndFill(btn) {
+  const card = btn.closest(".candidate-card");
+  const address = card.querySelector(".f-address").value.trim();
+  const statusEl = card.querySelector(".geocode-status");
+  if (!address) { alert("주소를 먼저 입력해주세요."); return; }
+
+  btn.disabled = true;
+  statusEl.style.color = "#888";
+  statusEl.textContent = "🔍 좌표 확인 중...";
+  try {
+    const { lat, lng } = await geocodeAddress(address);
+    card.querySelector(".f-lat").value = lat;
+    card.querySelector(".f-lng").value = lng;
+    statusEl.style.color = "#1E8A4C";
+    statusEl.textContent = `✅ 위도 ${lat}, 경도 ${lng} 확인됨`;
+  } catch (err) {
+    card.querySelector(".f-lat").value = "";
+    card.querySelector(".f-lng").value = "";
+    statusEl.style.color = "#c0392b";
+    statusEl.textContent = "❌ 주소를 찾지 못했어요. 도로명 주소나 장소명으로 다시 입력해보세요 (예: 서울 성동구 연무장길 62).";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* 후보의 '이용방법(channel)' 텍스트 첫 줄에서 주소로 보이는 부분을 뽑아 미리 채워주는 보조 함수.
+   (승인자가 반드시 확인 후 필요하면 수정해야 함 — 참고용 추정치일 뿐) */
+function guessAddress(channel) {
+  if (!channel) return "";
+  let firstLine = channel.split("\n")[0].trim();
+  firstLine = firstLine.replace(/\([^)]*\)/g, "").trim(); // "(정확한 주소는 승인 시 재확인 필요)" 같은 괄호 설명 제거
+  // ⚠️ 한글은 JS 정규식의 \b(단어 경계)가 인식하지 못해 (공백|문자열 끝)으로 대체 처리함
+  const looksLikeAddress =
+    /[가-힣]+(구|군)(\s|$)/.test(firstLine) ||   // "성동구", "강남구"처럼 구/군 단위가 보이는 경우
+    /\d+(길|로)(\s|$)/.test(firstLine);          // "연무장길 62"처럼 도로명 주소가 보이는 경우
+  return looksLikeAddress ? firstLine : "";
+}
+
+/* HTML 속성(value="...")에 안전하게 끼워넣기 위한 이스케이프 */
+function escapeAttr(str) {
+  if (str === null || str === undefined) return "";
+  return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 async function registerUrl() {
@@ -261,8 +353,13 @@ async function loadCandidates() {
         <label style="grid-column: 1 / -1; display:flex; align-items:center; gap:6px; font-size:12.5px; color:#555;">
           <input type="checkbox" class="f-online-only" onchange="toggleLocationInputs(this)"> 온라인 전용 이벤트 (매장 위치 없음 — 내 주변 섹션에서 자동 제외됨)
         </label>
-        <input type="number" step="0.00001" placeholder="위도(lat)" class="f-lat">
-        <input type="number" step="0.00001" placeholder="경도(lng)" class="f-lng">
+        <div class="address-row">
+          <input type="text" placeholder="주소 또는 장소명 (예: 서울 성동구 연무장길 62 / 더현대 서울)" class="f-address" value="${escapeAttr(guessAddress(c.channel))}">
+          <button type="button" class="btn-geocode" onclick="geocodeAndFill(this)">🔍 좌표 확인</button>
+        </div>
+        <p class="geocode-status"></p>
+        <input type="hidden" class="f-lat">
+        <input type="hidden" class="f-lng">
         <input type="text" placeholder="이미지 URL" class="f-image" style="grid-column: 1 / -1;" value="${c.image || ""}">
         <input type="text" placeholder="도메인 (예: oliveyoung.co.kr)" class="f-domain" value="${c.domain || ""}">
         <input type="text" placeholder="링크 (비우면 출처 URL 사용)" class="f-link" value="${c.link || ""}">
@@ -278,21 +375,51 @@ async function loadCandidates() {
 
 function toggleLocationInputs(checkbox) {
   const card = checkbox.closest(".candidate-card");
-  const latInput = card.querySelector(".f-lat");
-  const lngInput = card.querySelector(".f-lng");
-  latInput.disabled = checkbox.checked;
-  lngInput.disabled = checkbox.checked;
-  if (checkbox.checked) { latInput.value = ""; lngInput.value = ""; }
+  const addressInput = card.querySelector(".f-address");
+  const geocodeBtn = card.querySelector(".btn-geocode");
+  const statusEl = card.querySelector(".geocode-status");
+  addressInput.disabled = checkbox.checked;
+  geocodeBtn.disabled = checkbox.checked;
+  if (checkbox.checked) {
+    addressInput.value = "";
+    card.querySelector(".f-lat").value = "";
+    card.querySelector(".f-lng").value = "";
+    statusEl.textContent = "";
+  }
 }
 
 async function approve(id) {
   const card = document.querySelector(`.candidate-card[data-id="${id}"]`);
   const isOnlineOnly = card.querySelector(".f-online-only").checked;
-  const lat = card.querySelector(".f-lat").value;
-  const lng = card.querySelector(".f-lng").value;
-  if (!isOnlineOnly && (!lat || !lng)) {
-    alert("위도/경도를 입력해주세요 (지도에서 대략적인 위치를 찾아 입력하시면 됩니다). 매장 없이 온라인으로만 진행되는 이벤트라면 위의 '온라인 전용' 체크박스를 선택해주세요.");
-    return;
+  let lat = card.querySelector(".f-lat").value;
+  let lng = card.querySelector(".f-lng").value;
+
+  if (!isOnlineOnly) {
+    const address = card.querySelector(".f-address").value.trim();
+    if (!address) {
+      alert("주소를 입력해주세요. 매장 없이 온라인으로만 진행되는 이벤트라면 위의 '온라인 전용' 체크박스를 선택해주세요.");
+      return;
+    }
+    // '🔍 좌표 확인'을 안 누르고 바로 승인을 눌렀다면, 승인 시점에 한 번 더 자동으로 시도
+    if (!lat || !lng) {
+      const statusEl = card.querySelector(".geocode-status");
+      statusEl.style.color = "#888";
+      statusEl.textContent = "🔍 좌표 확인 중...";
+      try {
+        const coords = await geocodeAddress(address);
+        lat = coords.lat;
+        lng = coords.lng;
+        card.querySelector(".f-lat").value = lat;
+        card.querySelector(".f-lng").value = lng;
+        statusEl.style.color = "#1E8A4C";
+        statusEl.textContent = `✅ 위도 ${lat}, 경도 ${lng} 확인됨`;
+      } catch (err) {
+        statusEl.style.color = "#c0392b";
+        statusEl.textContent = "❌ 주소를 찾지 못했어요. 도로명 주소나 장소명으로 다시 입력해보세요.";
+        alert("주소로 좌표를 찾지 못했어요. 주소를 더 정확하게 입력한 뒤 '🔍 좌표 확인' 버튼으로 확인하고 다시 승인해주세요.");
+        return;
+      }
+    }
   }
 
   const key = getKey();
