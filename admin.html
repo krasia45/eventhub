@@ -45,6 +45,16 @@
   .btn-approve { flex: 1; padding: 10px; background: #1E8A4C; color: #fff; border: none; border-radius: 8px; font-weight: 700; }
   .btn-reject { flex: 1; padding: 10px; background: #f1f1f1; color: #333; border: none; border-radius: 8px; font-weight: 700; }
   .empty { text-align: center; color: #999; padding: 40px 0; }
+  .inquiry-card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid #eee; }
+  .inquiry-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .inquiry-name { font-size: 13px; font-weight: 700; }
+  .inquiry-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; flex-shrink: 0; }
+  .inquiry-badge.pending { background: #f1f1f1; color: #666; }
+  .inquiry-badge.answered { background: #E1F6EA; color: #1E8A4C; }
+  .inquiry-email { font-size: 12px; color: #888; margin: 0 0 6px; }
+  .inquiry-message { font-size: 13px; white-space: pre-line; margin: 0 0 6px; }
+  .inquiry-time { font-size: 11px; color: #aaa; margin: 0 0 8px; }
+  .btn-mark-answered { padding: 8px 12px; border-radius: 6px; background: #1a1a1a; color: #fff; border: none; font-size: 12.5px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -104,6 +114,13 @@
 
 <div id="list"></div>
 
+<h2>📩 문의 관리</h2>
+<p style="font-size:13px;color:#666;">위 관리자 키로 접속자들이 남긴 문의를 확인하고, 처리한 건은 답변완료로 표시해주세요.</p>
+<div class="key-bar">
+  <button onclick="loadInquiries()">문의 불러오기</button>
+</div>
+<div id="inquiryList"></div>
+
 <script>
 function getKey() {
   return document.getElementById("adminKey").value.trim() || localStorage.getItem("eventhub-admin-key") || "";
@@ -121,7 +138,15 @@ async function geocodeAddress(query) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, query }),
   });
-  const data = await res.json();
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (err) {
+    // JSON이 아닌 응답(예: geocode.py가 배포 안 됐을 때 뜨는 404 HTML 페이지)이 오면
+    // "Unexpected token..." 같은 알아보기 힘든 에러 대신 원인을 바로 알 수 있게 안내
+    throw new Error(`서버가 올바른 응답을 주지 않았어요 (status ${res.status}). api/geocode.py 파일이 배포됐는지 확인해주세요.`);
+  }
   if (!res.ok || data.error) {
     throw new Error(data.error || "주소/장소를 찾을 수 없습니다.");
   }
@@ -423,12 +448,64 @@ async function approve(id) {
 
 async function reject(id) {
   const key = getKey();
-  await fetch("/api/admin_candidates", {
+  const res = await fetch("/api/admin_candidates", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, action: "reject", candidateId: id }),
   });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { alert("반려 실패: " + (data.error || "")); return; }
+  alert("반려 완료! 목록에서 제외했어요.");
   loadCandidates();
+}
+
+async function loadInquiries() {
+  const key = getKey();
+  if (!key) { alert("관리자 키를 입력해주세요."); return; }
+  localStorage.setItem("eventhub-admin-key", key);
+
+  const listEl = document.getElementById("inquiryList");
+  listEl.innerHTML = `<p class="empty">불러오는 중...</p>`;
+
+  const res = await fetch(`/api/inquiries?key=${encodeURIComponent(key)}`);
+  const data = await res.json();
+
+  if (!res.ok) {
+    listEl.innerHTML = `<p class="empty">인증 실패: ${escapeAttr(data.error || "알 수 없는 오류")}</p>`;
+    return;
+  }
+  if (!data.length) {
+    listEl.innerHTML = `<p class="empty">문의가 없어요.</p>`;
+    return;
+  }
+
+  // ⚠️ 문의 내용은 관리자가 아닌 외부인이 자유롭게 입력한 값이라, 반드시 escapeAttr로
+  //    이스케이프한 뒤 innerHTML에 넣습니다 (안 그러면 문의 내용에 스크립트를 심어
+  //    관리자 세션/키를 탈취하는 저장형 XSS가 가능해짐).
+  listEl.innerHTML = data.map(inq => `
+    <div class="inquiry-card" data-id="${inq.id}">
+      <div class="inquiry-head">
+        <span class="inquiry-name">${escapeAttr(inq.name)}</span>
+        <span class="inquiry-badge ${inq.status === "답변완료" ? "answered" : "pending"}">${escapeAttr(inq.status)}</span>
+      </div>
+      <p class="inquiry-email">${escapeAttr(inq.email)}</p>
+      <p class="inquiry-message">${escapeAttr(inq.message)}</p>
+      <p class="inquiry-time">${escapeAttr(inq.time)}</p>
+      ${inq.status !== "답변완료" ? `<button class="btn-mark-answered" onclick="markAnswered('${inq.id}')">✓ 답변완료로 표시</button>` : ""}
+    </div>
+  `).join("");
+}
+
+async function markAnswered(id) {
+  const key = getKey();
+  const res = await fetch("/api/inquiries", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "markAnswered", key, inquiryId: id }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { alert("처리 실패: " + (data.error || "")); return; }
+  loadInquiries();
 }
 
 // 저장된 키가 있으면 자동으로 채워넣기

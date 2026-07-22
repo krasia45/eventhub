@@ -39,7 +39,8 @@ create index idx_events_period_end on events(period_end);
 alter table events add column if not exists is_active boolean not null default true;
 alter table events add column if not exists conditions text;      -- 참여 조건 (나이/수량 제한 등)
 alter table events add column if not exists target_audience text; -- 참여 대상
-alter table events add column if not exists link_last_checked timestamptz; -- check_broken_links.py가 마지막으로 확인한 시각
+alter table events add column if not exists link_last_checked timestamptz; -- check_broken_links.py가 마지막으로 확인한 시각 (성공/실패 무관하게 매번 갱신)
+alter table events add column if not exists link_fail_count integer not null default 0; -- 연속 링크 확인 실패 횟수. 일시적 오탐(사이트 점검/봇 차단 등)으로 바로 비활성화되는 걸 막기 위해, 이 값이 임계치(2)에 도달해야만 is_active=false 처리함. 성공하면 0으로 리셋.
 
 -- 2. 이벤트 통계 (조회수/좋아요 — 기존 EventStats 시트 대체)
 create table event_stats (

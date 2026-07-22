@@ -22,6 +22,7 @@ if (inquiryForm) {
     const name = document.getElementById("inquiryName").value.trim();
     const email = document.getElementById("inquiryEmail").value.trim();
     const message = document.getElementById("inquiryMessage").value.trim();
+    const website = document.getElementById("inquiryWebsite").value; // 허니팟 — 사람은 못 보니 항상 빈 값이어야 정상
 
     // ── 예외처리 1: 이메일 형식 오류
     if (!email || !isValidEmail(email)) {
@@ -42,7 +43,7 @@ if (inquiryForm) {
       const res = await fetch("/api/inquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message }),
+        body: JSON.stringify({ name, email, message, website }),
       });
 
       const result = await res.json();

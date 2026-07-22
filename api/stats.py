@@ -14,7 +14,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(__file__))
-from api._supabase_client import sb_rpc
+from _supabase_client import sb_rpc
 
 VALID_TABS = ("home", "search", "saved", "more", "profile")
 

@@ -149,6 +149,8 @@
         <input type="text" id="inquiryName" placeholder="이름 (선택)">
         <input type="email" id="inquiryEmail" placeholder="이메일" required>
         <textarea id="inquiryMessage" placeholder="문의 내용을 입력해주세요" rows="3" required></textarea>
+        <!-- 스팸봇 감지용 허니팟 필드 — 실제 사람에게는 안 보이고, 자동입력 봇만 채우는 함정 필드 -->
+        <input type="text" id="inquiryWebsite" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">
         <button type="submit" class="inquiry-submit-btn" id="inquirySubmitBtn">문의 등록하기</button>
         <p class="inquiry-status" id="inquiryStatus" hidden></p>
       </form>
