@@ -127,27 +127,62 @@ function loadKakaoGeocoderSdk() {
   return kakaoGeocoderSdkPromise;
 }
 
-/* 주소 문자열을 { lat, lng }로 변환. 정확한 도로명/지번 주소는 주소 검색으로,
-   "티팩토리 성수"처럼 상호명·장소명인 경우는 장소 검색으로 한 번 더 시도합니다. */
+/* 주소 뒤에 붙은 "1층", "지하1층", "302호" 같은 상세 정보는 지오코딩 정확도를 떨어뜨리는 경우가 많아,
+   원본으로 실패하면 이 정보를 뗀 버전으로 한 번 더 시도합니다. */
+function stripDetailSuffix(address) {
+  return address
+    .replace(/\s*(지하)?\s*\d+\s*층\s*$/, "")
+    .replace(/\s*\d+\s*호\s*$/, "")
+    .replace(/,\s*$/, "")
+    .trim();
+}
+
+/* 주소 문자열을 { lat, lng }로 변환.
+   1) 원본 그대로 주소 검색 → 2) 층/호 등을 뗀 버전으로 주소 검색 →
+   3) 원본으로 장소(상호명) 검색 → 4) 뗀 버전으로 장소 검색, 순서로 시도합니다.
+   (예: "티팩토리 성수"처럼 정확한 지번이 아닌 상호명인 경우는 3~4단계에서 잡힙니다) */
 function geocodeAddress(query) {
   return new Promise((resolve, reject) => {
     loadKakaoGeocoderSdk().then(() => {
+      if (!window.kakao || !kakao.maps.services) {
+        reject(new Error("카카오맵 services 라이브러리를 불러오지 못했어요 (도메인 미등록 가능성 — F12 개발자도구 콘솔을 확인해주세요)"));
+        return;
+      }
       const geocoder = new kakao.maps.services.Geocoder();
-      geocoder.addressSearch(query, (result, status) => {
-        if (status === kakao.maps.services.Status.OK && result.length > 0) {
-          resolve({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
-          return;
-        }
-        const places = new kakao.maps.services.Places();
-        places.keywordSearch(query, (placeResult, placeStatus) => {
-          if (placeStatus === kakao.maps.services.Status.OK && placeResult.length > 0) {
-            resolve({ lat: parseFloat(placeResult[0].y), lng: parseFloat(placeResult[0].x) });
-          } else {
-            reject(new Error("주소/장소를 찾을 수 없습니다."));
-          }
+      const places = new kakao.maps.services.Places();
+
+      const tryAddress = (q) => new Promise((res) => {
+        geocoder.addressSearch(q, (result, status) => {
+          res(status === kakao.maps.services.Status.OK && result.length > 0
+            ? { lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) }
+            : null);
         });
       });
-    }).catch(reject);
+      const tryKeyword = (q) => new Promise((res) => {
+        places.keywordSearch(q, (result, status) => {
+          res(status === kakao.maps.services.Status.OK && result.length > 0
+            ? { lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) }
+            : null);
+        });
+      });
+
+      const cleaned = stripDetailSuffix(query);
+      const candidates = [query, cleaned].filter((v, i, arr) => v && arr.indexOf(v) === i);
+
+      (async () => {
+        for (const q of candidates) {
+          const r = await tryAddress(q);
+          if (r) { resolve(r); return; }
+        }
+        for (const q of candidates) {
+          const r = await tryKeyword(q);
+          if (r) { resolve(r); return; }
+        }
+        reject(new Error(`주소/장소를 찾을 수 없습니다. (시도한 검색어: ${candidates.join(" / ")})`));
+      })();
+    }).catch(err => {
+      reject(new Error("카카오맵 SDK 로드 실패: " + err.message + " (배포 도메인이 카카오 개발자 콘솔에 등록되어 있는지 확인해주세요)"));
+    });
   });
 }
 
@@ -171,7 +206,8 @@ async function geocodeAndFill(btn) {
     card.querySelector(".f-lat").value = "";
     card.querySelector(".f-lng").value = "";
     statusEl.style.color = "#c0392b";
-    statusEl.textContent = "❌ 주소를 찾지 못했어요. 도로명 주소나 장소명으로 다시 입력해보세요 (예: 서울 성동구 연무장길 62).";
+    statusEl.textContent = "❌ " + err.message;
+    console.error("지오코딩 실패:", err);
   } finally {
     btn.disabled = false;
   }
@@ -415,8 +451,9 @@ async function approve(id) {
         statusEl.textContent = `✅ 위도 ${lat}, 경도 ${lng} 확인됨`;
       } catch (err) {
         statusEl.style.color = "#c0392b";
-        statusEl.textContent = "❌ 주소를 찾지 못했어요. 도로명 주소나 장소명으로 다시 입력해보세요.";
-        alert("주소로 좌표를 찾지 못했어요. 주소를 더 정확하게 입력한 뒤 '🔍 좌표 확인' 버튼으로 확인하고 다시 승인해주세요.");
+        statusEl.textContent = "❌ " + err.message;
+        console.error("지오코딩 실패:", err);
+        alert("주소로 좌표를 찾지 못했어요.\n\n" + err.message + "\n\n주소를 더 정확하게 입력한 뒤 '🔍 좌표 확인' 버튼으로 확인하고 다시 승인해주세요.");
         return;
       }
     }
