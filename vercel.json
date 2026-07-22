@@ -34,6 +34,10 @@
       "dest": "/api/admin_candidates.py"
     },
     {
+      "src": "/api/geocode",
+      "dest": "/api/geocode.py"
+    },
+    {
       "src": "/api/candidates_scan",
       "dest": "/api/candidates_scan.py"
     },

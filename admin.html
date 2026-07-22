@@ -109,81 +109,23 @@ function getKey() {
   return document.getElementById("adminKey").value.trim() || localStorage.getItem("eventhub-admin-key") || "";
 }
 
-/* ── 주소 → 좌표 변환 (카카오맵 JS SDK, 메인 사이트(index.html)와 동일한 공개용 JS 키 재사용) ── */
-const KAKAO_JS_KEY = "2a4211503ca5201a29e348b22957fba4";
-
-let kakaoGeocoderSdkPromise = null;
-function loadKakaoGeocoderSdk() {
-  if (kakaoGeocoderSdkPromise) return kakaoGeocoderSdkPromise;
-  kakaoGeocoderSdkPromise = new Promise((resolve, reject) => {
-    if (window.kakao && window.kakao.maps && window.kakao.maps.services) { resolve(); return; }
-    const script = document.createElement("script");
-    // libraries=services 를 붙여야 Geocoder/Places(주소·장소 검색) 기능을 쓸 수 있습니다.
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&autoload=false&libraries=services`;
-    script.onload = () => window.kakao.maps.load(resolve);
-    script.onerror = () => reject(new Error("카카오맵 SDK 로드 실패"));
-    document.head.appendChild(script);
+/* ── 주소 → 좌표 변환 ──
+   기존엔 브라우저에서 카카오맵 JS SDK를 직접 불러와 처리했는데, 이 방식은 카카오
+   개발자 콘솔에 배포 도메인이 정확히 등록돼 있어야만 동작해서 "SDK 로드 실패"가
+   났었습니다. 대신 서버(/api/geocode)에서 카카오 REST API를 호출하도록 바꿔서
+   도메인 등록 여부와 무관하게 안정적으로 동작하게 했습니다. */
+async function geocodeAddress(query) {
+  const key = getKey();
+  const res = await fetch("/api/geocode", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key, query }),
   });
-  return kakaoGeocoderSdkPromise;
-}
-
-/* 주소 뒤에 붙은 "1층", "지하1층", "302호" 같은 상세 정보는 지오코딩 정확도를 떨어뜨리는 경우가 많아,
-   원본으로 실패하면 이 정보를 뗀 버전으로 한 번 더 시도합니다. */
-function stripDetailSuffix(address) {
-  return address
-    .replace(/\s*(지하)?\s*\d+\s*층\s*$/, "")
-    .replace(/\s*\d+\s*호\s*$/, "")
-    .replace(/,\s*$/, "")
-    .trim();
-}
-
-/* 주소 문자열을 { lat, lng }로 변환.
-   1) 원본 그대로 주소 검색 → 2) 층/호 등을 뗀 버전으로 주소 검색 →
-   3) 원본으로 장소(상호명) 검색 → 4) 뗀 버전으로 장소 검색, 순서로 시도합니다.
-   (예: "티팩토리 성수"처럼 정확한 지번이 아닌 상호명인 경우는 3~4단계에서 잡힙니다) */
-function geocodeAddress(query) {
-  return new Promise((resolve, reject) => {
-    loadKakaoGeocoderSdk().then(() => {
-      if (!window.kakao || !kakao.maps.services) {
-        reject(new Error("카카오맵 services 라이브러리를 불러오지 못했어요 (도메인 미등록 가능성 — F12 개발자도구 콘솔을 확인해주세요)"));
-        return;
-      }
-      const geocoder = new kakao.maps.services.Geocoder();
-      const places = new kakao.maps.services.Places();
-
-      const tryAddress = (q) => new Promise((res) => {
-        geocoder.addressSearch(q, (result, status) => {
-          res(status === kakao.maps.services.Status.OK && result.length > 0
-            ? { lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) }
-            : null);
-        });
-      });
-      const tryKeyword = (q) => new Promise((res) => {
-        places.keywordSearch(q, (result, status) => {
-          res(status === kakao.maps.services.Status.OK && result.length > 0
-            ? { lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) }
-            : null);
-        });
-      });
-
-      const cleaned = stripDetailSuffix(query);
-      const candidates = [query, cleaned].filter((v, i, arr) => v && arr.indexOf(v) === i);
-
-      (async () => {
-        for (const q of candidates) {
-          const r = await tryAddress(q);
-          if (r) { resolve(r); return; }
-        }
-        for (const q of candidates) {
-          const r = await tryKeyword(q);
-          if (r) { resolve(r); return; }
-        }
-        reject(new Error(`주소/장소를 찾을 수 없습니다. (시도한 검색어: ${candidates.join(" / ")})`));
-      })();
-    }).catch(err => {
-      reject(new Error("카카오맵 SDK 로드 실패: " + err.message + " (배포 도메인이 카카오 개발자 콘솔에 등록되어 있는지 확인해주세요)"));
-    });
-  });
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error || "주소/장소를 찾을 수 없습니다.");
+  }
+  return { lat: data.lat, lng: data.lng };
 }
 
 /* '🔍 좌표 확인' 버튼: 승인 전에 미리 좌표를 확인하고 싶을 때 사용 (승인 시 자동 재시도도 되므로 필수는 아님) */
