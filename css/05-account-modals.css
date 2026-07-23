@@ -4,8 +4,8 @@
 .card-distance {
   display: inline-flex;
   align-items: center;
-  background: var(--mint);
-  color: #fff;
+  background: var(--mint-light);
+  color: var(--text-1);
   font-size: 10.5px;
   font-weight: 700;
   padding: 3px 9px;
