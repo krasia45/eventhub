@@ -114,26 +114,23 @@
   margin-bottom: 3px;
 }
 .rank-row-sub {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--accent-dark);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 .rank-interest {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--text-1);
-  background: var(--mint);
-  padding: 3px 9px;
-  border-radius: 999px;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-3);
 }
-.rank-interest-flame { width: 15px; height: auto; }
+.rank-interest-flame { width: 12px; height: auto; }
 
 .rank-like {
   flex-shrink: 0;
