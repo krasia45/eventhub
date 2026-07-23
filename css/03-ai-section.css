@@ -42,7 +42,7 @@
   width: 136px;
   scroll-snap-align: start;
   background: var(--mint-light);
-  border: 1px solid #D1FAE5;
+  border: 1px solid #CDEAEC;
 }
 .ai-feed-grid .event-card .card-media {
   margin: 8px 8px 0;
@@ -54,8 +54,8 @@
   width: 100%;
   flex: 1 1 auto;
   text-align: center;
-  background: linear-gradient(135deg, #F1FBF8 0%, var(--mint-light) 100%);
-  border: 1px solid #CFF0E6;
+  background: linear-gradient(135deg, #fff 0%, var(--mint-light) 100%);
+  border: 1px solid #CDEAEC;
   border-radius: var(--radius-lg);
   padding: 28px 20px;
 }
@@ -100,7 +100,7 @@
 .ai-spinner {
   width: 18px;
   height: 18px;
-  border: 3px solid #CFF0E6;
+  border: 3px solid #CDEAEC;
   border-top-color: var(--mint-dark);
   border-radius: 50%;
   animation: ai-spin 0.7s linear infinite;

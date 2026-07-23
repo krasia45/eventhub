@@ -13,10 +13,6 @@ function openSheet(eventId) {
   sheetImageEl.onerror = () => handleImageError(sheetImageEl);
   sheetImageEl.src = ev.image;
   sheetImageEl.alt = ev.title;
-  const sheetLogoEl = document.getElementById("sheetBrandLogo");
-  sheetLogoEl.src = getLogoUrl(ev.domain);
-  sheetLogoEl.alt = `${ev.brand} 로고`;
-  attachLogoFallback(sheetLogoEl, ev.brand, ev.domain);
 
   const brandRowLogoEl = document.getElementById("sheetBrandRowLogo");
   brandRowLogoEl.src = getLogoUrl(ev.domain);
