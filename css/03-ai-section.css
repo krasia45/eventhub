@@ -41,8 +41,8 @@
   flex: 0 0 auto;
   width: 136px;
   scroll-snap-align: start;
-  background: #EAFAF5;
-  border: 1px solid #CDEAEC;
+  background: #CFEAED;
+  border: 1px solid #BEDEE1;
 }
 .ai-feed-grid .event-card .card-media {
   margin: 8px 8px 0;
@@ -54,8 +54,8 @@
   width: 100%;
   flex: 1 1 auto;
   text-align: center;
-  background: linear-gradient(135deg, #F1FBF8 0%, #EAFAF5 100%);
-  border: 1px solid #CDEAEC;
+  background: linear-gradient(135deg, #fff 0%, #CFEAED 100%);
+  border: 1px solid #BEDEE1;
   border-radius: var(--radius-lg);
   padding: 28px 20px;
 }
