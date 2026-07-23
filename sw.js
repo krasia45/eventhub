@@ -8,7 +8,7 @@
    수정된 전략: "네트워크 우선(Network First)" — 온라인이면 항상 서버의 최신 파일을
    먼저 받아오고, 그 요청이 실패했을 때(오프라인 등)만 캐시된 화면을 보여줍니다. */
 
-const CACHE_NAME = "eventhub-shell-v5";
+const CACHE_NAME = "eventhub-shell-v6";
 const APP_SHELL = [
   "/",
   "/index.html",
