@@ -87,7 +87,7 @@ function renderAiFeedCards(events) {
       toggleLike(btn.dataset.id);
     });
   });
-  grid.querySelectorAll(".card-logo-badge img").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  grid.querySelectorAll(".card-brand-logo-sm").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 }
 
 document.getElementById("aiFeedMoreBtn").addEventListener("click", openAiRecommendPage);
@@ -206,7 +206,7 @@ async function loadAiPageTab(tab) {
   grid.querySelectorAll(".card-like-btn").forEach(btn => {
     btn.addEventListener("click", (e) => { e.stopPropagation(); toggleLike(btn.dataset.id); });
   });
-  grid.querySelectorAll(".card-logo-badge img").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  grid.querySelectorAll(".card-brand-logo-sm").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 }
 
 document.getElementById("aiRecommendPageClose").addEventListener("click", () => {

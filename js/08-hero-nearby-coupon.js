@@ -87,6 +87,12 @@ async function renderNearbySection() {
     const distLabel = dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`;
     const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
     const cardDiscountText = escapeHtml((ev.discount || "").split(/\s+\+\s+/)[0].trim());
+    const conditionsHtml = ev.conditions
+      ? `<p class="card-conditions-row">${escapeHtml(ev.conditions)}</p>`
+      : "";
+    const logoHtml = ev.domain
+      ? `<img class="card-brand-logo-sm" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" src="${getLogoUrl(ev.domain)}" alt="">`
+      : "";
     return `
       <div class="nearby-card" data-id="${ev.id}">
         <div class="nearby-card-media">
@@ -94,16 +100,21 @@ async function renderNearbySection() {
           <button class="card-like-btn nearby-like ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
             <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
           </button>
-          <span class="card-logo-badge nearby-logo-badge">
-            <img data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" src="${getLogoUrl(ev.domain)}" alt="${escapeHtml(ev.brand)} 로고">
-          </span>
         </div>
         <div class="nearby-card-brand-row">
-          <p class="nearby-card-brand">${escapeHtml(ev.brand)}</p>
-          <span class="nearby-card-distance">📍 ${distLabel}</span>
+          <span class="card-brand-left">
+            ${logoHtml}
+            <p class="nearby-card-brand">${escapeHtml(ev.brand)}</p>
+          </span>
+          <span class="card-dday-inline">${ev.dday}</span>
         </div>
         <p class="nearby-card-title">${escapeHtml(ev.title)}</p>
         ${cardDiscountText ? `<p class="nearby-card-discount">${cardDiscountText}</p>` : ""}
+        ${conditionsHtml}
+        <div class="nearby-card-mode-row">
+          <span class="card-mode-row">${getChannelMode(ev)}</span>
+          <span class="card-distance">${distLabel}</span>
+        </div>
         <div class="nearby-card-stats">
           <span>👁 ${formatCount(stats.views)}</span>
           <span class="stat-heart">❤️ ${formatCount(stats.likes)}</span>
@@ -118,7 +129,7 @@ async function renderNearbySection() {
   scroll.querySelectorAll(".nearby-like").forEach(btn => {
     btn.addEventListener("click", (e) => { e.stopPropagation(); toggleLike(btn.dataset.id); });
   });
-  scroll.querySelectorAll(".nearby-logo-badge img").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  scroll.querySelectorAll(".card-brand-logo-sm").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 
   updateDiscoverySectionsVisibility();
 }

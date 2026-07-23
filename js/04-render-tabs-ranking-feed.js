@@ -236,6 +236,18 @@ document.getElementById("rankingMoreBtn").addEventListener("click", () => {
 });
 
 /* ---------- Render: Feed Grid ---------- */
+/* 이벤트의 channel 텍스트(또는 좌표 유무)로부터 온라인/오프라인/온오프라인 여부를 판단.
+   별도 DB 컬럼이 없어서, 이미 있는 channel 문구를 최대한 활용하고 애매하면 좌표 유무로 최종 판단한다. */
+function getChannelMode(ev) {
+  const text = ev.channel || "";
+  const hasOnline = /온라인/.test(text);
+  const hasOffline = /오프라인|매장|현장|방문/.test(text);
+  if (hasOnline && hasOffline) return "온오프라인";
+  if (hasOnline) return "온라인";
+  if (hasOffline) return "오프라인";
+  return (ev.lat != null && ev.lng != null) ? "오프라인" : "온라인";
+}
+
 function renderEventCardHtml(ev) {
   const distanceLabel = (gpsFilterActive && userLocation)
     ? `<span class="card-distance">${haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng).toFixed(1)}km</span>`
@@ -243,14 +255,15 @@ function renderEventCardHtml(ev) {
   const merchantBadge = ev.merchantType === "소상공인"
     ? `<span class="card-merchant-badge">소상공인</span>`
     : "";
-  const verifiedBadge = ev.isVerifiedReal
-    ? `<span class="card-verified-badge">✓ 실제 진행중</span>`
-    : "";
   const subtitleHtml = ev.subtitle
     ? `<p class="card-sub">${escapeHtml(ev.subtitle)}</p>`
     : "";
-  const channelHtml = ev.channel
-    ? `<p class="card-meta"><svg class="meta-ic" viewBox="0 0 24 24" width="11" height="11" fill="none"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.2" stroke="currentColor" stroke-width="2"/></svg> ${escapeHtml(ev.channel)}</p>`
+  const conditionsHtml = ev.conditions
+    ? `<p class="card-conditions-row">${escapeHtml(ev.conditions)}</p>`
+    : "";
+  // 브랜드 로고: 없으면(도메인 정보 없음) 그냥 생략 — 빈 자리를 억지로 채우지 않는다.
+  const logoHtml = ev.domain
+    ? `<img class="card-brand-logo-sm" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" src="${getLogoUrl(ev.domain)}" alt="">`
     : "";
   // 카드의 할인 배지는 한 줄짜리 요약 공간이라, "A + B + C"처럼 여러 혜택이 이어진
   // 대형 프로모션이면 대표 혜택(첫 항목)만 보여준다. 전체 목록은 상세페이지 혜택칩에서
@@ -263,19 +276,22 @@ function renderEventCardHtml(ev) {
         <button class="card-like-btn ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
           <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
         </button>
-        <span class="card-logo-badge">
-          <img data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" src="${getLogoUrl(ev.domain)}" alt="${escapeHtml(ev.brand)} 로고">
-        </span>
-        <span class="card-discount">${cardDiscountText}</span>
-        <span class="card-dday">${ev.dday}</span>
-        ${distanceLabel}
       </div>
       <div class="card-body">
-        <p class="card-brand-name">${escapeHtml(ev.brand)} ${merchantBadge}</p>
-        ${verifiedBadge}
+        <div class="card-brand-row">
+          <span class="card-brand-left">
+            ${logoHtml}
+            <span class="card-brand-name">${escapeHtml(ev.brand)}</span>
+            ${merchantBadge}
+          </span>
+          <span class="card-dday-inline">${ev.dday}</span>
+        </div>
         <p class="card-title">${escapeHtml(ev.title)}</p>
         ${subtitleHtml}
-        ${channelHtml}
+        <p class="card-discount-row">${cardDiscountText}</p>
+        ${conditionsHtml}
+        <span class="card-mode-row">${getChannelMode(ev)}</span>
+        ${distanceLabel}
         <div class="card-stats">
           <span><svg class="meta-ic" viewBox="0 0 24 24" width="12" height="12" fill="none"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="2"/></svg> ${formatCount((eventStatsCache[ev.id] || {}).views || 0)}</span>
           <span class="stat-heart"><svg class="meta-ic" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z"/></svg> ${formatCount((eventStatsCache[ev.id] || {}).likes || 0)}</span>
@@ -325,5 +341,5 @@ function renderFeed() {
     });
   });
 
-  grid.querySelectorAll(".card-logo-badge img").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  grid.querySelectorAll(".card-brand-logo-sm").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 }

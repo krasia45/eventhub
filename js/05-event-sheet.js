@@ -67,7 +67,7 @@ function openSheet(eventId) {
   }
 
   const verifiedNote = document.getElementById("sheetVerifiedNote");
-  if (verifiedNote) verifiedNote.hidden = !ev.isVerifiedReal;
+  if (verifiedNote) verifiedNote.hidden = true; // "실제 진행중" 표시 전체 제거 방침에 따라 카드와 동일하게 항상 숨김
 
   const isPopup = ev.category === "popup";
 

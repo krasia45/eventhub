@@ -1,13 +1,14 @@
 /* ===================== 카드 배지: 거리 / 소상공인 ===================== */
+/* 이전엔 이미지 위에 얹는 오버레이(position:absolute)였는데,
+   "이미지 위에는 아무것도 없게" 방침에 따라 카드 본문 안 인라인 pill로 이동. */
 .card-distance {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background: rgba(0,0,0,0.65);
+  display: inline-flex;
+  align-items: center;
+  background: var(--mint);
   color: #fff;
   font-size: 10.5px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
 }
 .card-merchant-badge {
