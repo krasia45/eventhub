@@ -279,9 +279,9 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
   transition: all 0.15s ease;
 }
 .keyword-chip.selected {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: #FFFFFF;
+  border-color: var(--mint);
+  color: var(--mint-dark);
 }
 
 .onboarding-email-step { margin: 18px 0; }
