@@ -205,7 +205,7 @@ let eventStatsCache = {}; // { eventId: { views, likes } } — /api/events 응�
 
 function sendEventStat(action, eventId) {
   // 실패해도 화면 동작에 영향 없는 백그라운드 요청 (fire-and-forget)
-  fetch("/api/stats", {
+  fetch("/api/events", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action, eventId }),
@@ -214,7 +214,7 @@ function sendEventStat(action, eventId) {
 
 // 카테고리/할인유형/서브태그 필터 실사용 여부 추적 (실사용자 테스트 검증용 최소 계측)
 function trackFilterUse(filterKey) {
-  fetch("/api/stats", {
+  fetch("/api/events", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "filterUse", filterKey }),

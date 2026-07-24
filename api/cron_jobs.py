@@ -1,23 +1,16 @@
 """
-POST /api/candidates_scan
-Vercel Cron이 매주 1회 호출합니다 (vercel.json의 crons 설정 참고).
+POST /api/cron_jobs?job=candidates_scan
+     Vercel Cron이 매주 1회 호출 (vercel.json 참고). Claude의 web_search로
+     카테고리별 실제 진행 중인 프로모션을 찾아 event_candidates에 저장.
 
-Claude의 "web_search" 도구를 사용해 카테고리별로 실제 진행 중인
-할인 프로모션을 찾아 event_candidates 테이블에 'pending' 상태로 저장합니다.
-⚠️ 이 결과는 절대 자동으로 사이트에 노출되지 않습니다 — 반드시 관리자가
-   /admin.html 에서 출처(source_url)를 확인하고 승인해야 실제 이벤트로 등록됩니다.
+POST /api/cron_jobs?job=check_broken_links
+     Vercel Cron이 매일 1회 호출. 모든 활성 이벤트의 link에 HEAD 요청을 보내
+     연속 실패 시 자동 비활성화.
 
-────────────────────────────────────────────────────────────────
-2026-07 변경: 기존엔 Gemini를 썼는데, 무료 티어 호출 한도(429)에 자주
-걸려서 Claude API(web_search 도구)로 교체했습니다. 프롬프트/저장 로직/
-카테고리 순회 구조는 이전과 동일하게 유지했습니다.
-
-또한 기존엔 카테고리당 후보들을 한 번에 묶어서 sb_insert했는데, 이 방식은
-묶음 안에 단 하나라도 기존 pending과 중복되는 게 있으면(브랜드+제목+시작일
-동일) PostgREST가 묶음 전체를 실패시켜서, 진짜 새로운 후보까지 같이 유실되는
-문제가 있었습니다. 이번에 후보를 하나씩 저장하도록 바꿔서, 중복 하나 때문에
-나머지가 같이 날아가지 않게 했습니다.
-────────────────────────────────────────────────────────────────
+(원래 candidates_scan.py / check_broken_links.py로 분리돼 있었는데, 둘 다
+ "Cron이 호출하는 POST 전용" 함수라 Vercel Hobby 플랜 함수 개수 제한 때문에
+ 한 파일로 합쳤습니다. vercel.json의 crons 설정에서 ?job= 쿼리로 어느 작업인지
+ 구분해서 지정합니다.)
 """
 
 from http.server import BaseHTTPRequestHandler
@@ -25,36 +18,51 @@ import json
 import os
 import sys
 import time
+import smtplib
 import urllib.request
 import urllib.error
+from urllib.parse import urlparse, parse_qs
+from email.mime.text import MIMEText
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(__file__))
-from _supabase_client import sb_insert
+from _supabase_client import sb_select, sb_update, sb_insert
 
-CATEGORIES = ["fashion", "beauty", "food", "popup"]
-CATEGORY_LABEL = {
+FAIL_THRESHOLD = 2  # 링크 점검: 이 횟수만큼 연속 실패해야 비활성화
+
+CANDIDATE_CATEGORIES = ["fashion", "beauty", "food", "popup"]
+CANDIDATE_CATEGORY_LABEL = {
     "fashion": "패션", "beauty": "뷰티", "food": "카페·디저트", "popup": "팝업·컬처",
 }
-# "living(라이프스타일)"은 일부러 뺐습니다 — 실제 웹검색 테스트를 두 차례 해보니, 이
-# 카테고리는 검색해도 소비자 대상 이벤트보다 서울리빙디자인페어·홈테이블데코페어 같은
-# B2B 박람회/전시회가 압도적으로 많이 잡혀서 자동 스캔 효율이 낮았습니다. 다만 이
-# 카테고리 자체를 없앤 건 아니라서, admin.html에서 URL/캡션 붙여넣기나 수동 등록으로는
-# 그대로 라이프스타일 이벤트를 등록할 수 있습니다 (사람이 직접 찾은 건 신뢰할 수 있으니까요).
+# "living(라이프스타일)"은 일부러 뺐습니다 — 실제 웹검색 테스트 결과, B2B 박람회에
+# 오염되는 구조적 문제가 있어 자동스캔에서 제외했습니다(수동등록은 그대로 가능).
 
 
 class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
-        # ── Cron 보호: Vercel Cron만 호출 가능하도록 시크릿 검증 ──
         cron_secret = os.environ.get("CRON_SECRET", "")
         auth_header = self.headers.get("Authorization", "")
         if cron_secret and auth_header != f"Bearer {cron_secret}":
             self._send_json(401, {"error": "인증되지 않은 요청입니다."})
             return
 
-        ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-        if not ANTHROPIC_API_KEY:
+        query = parse_qs(urlparse(self.path).query)
+        job = query.get("job", [""])[0]
+
+        if job == "candidates_scan":
+            self._run_candidates_scan()
+        elif job == "check_broken_links":
+            self._run_check_broken_links()
+        else:
+            self._send_json(400, {"error": "?job=candidates_scan 또는 ?job=check_broken_links 가 필요합니다."})
+
+    # ══════════════════════════════════════════════════════════════
+    # job = candidates_scan (기존 candidates_scan.py)
+    # ══════════════════════════════════════════════════════════════
+    def _run_candidates_scan(self):
+        anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not anthropic_key:
             self._send_json(500, {"error": "ANTHROPIC_API_KEY가 설정되지 않았습니다."})
             return
 
@@ -62,17 +70,15 @@ class handler(BaseHTTPRequestHandler):
         total_saved = 0
         scan_errors = []
 
-        for category in CATEGORIES:
+        for category in CANDIDATE_CATEGORIES:
             try:
-                candidates = self._scan_category(ANTHROPIC_API_KEY, category)
+                candidates = self._scan_category(anthropic_key, category)
                 total_found += len(candidates)
                 for c in candidates:
                     try:
                         sb_insert("event_candidates", c)
                         total_saved += 1
                     except Exception as e:
-                        # 대부분은 idx_candidates_no_exact_dup(중복) 위반이라 정상적인 스킵.
-                        # 그 외 사유일 수도 있으니 로그는 남기되, 이 후보 하나만 건너뛰고 계속 진행.
                         print(f"[candidates_scan] 저장 스킵 ({category}/{c.get('brand')}): {e}")
             except Exception as e:
                 scan_errors.append({"category": category, "error": str(e)})
@@ -85,14 +91,8 @@ class handler(BaseHTTPRequestHandler):
         })
 
     def _scan_category(self, api_key, category):
-        label = CATEGORY_LABEL[category]
+        label = CANDIDATE_CATEGORY_LABEL[category]
 
-        # ══════════════════════════════════════════════════════════
-        # 환각 방지 핵심: web_search 도구로 실제 웹 검색 결과에 "그라운딩"시켜서,
-        # AI가 검색도 안 해보고 지어내는 것을 방지합니다. 그리고 이 결과는 여기서
-        # 바로 게시되지 않고, 사람이 source_url을 열어서 직접 확인 후 승인해야만
-        # 실제 노출됩니다 (이중 안전장치).
-        # ══════════════════════════════════════════════════════════
         prompt = f"""오늘 날짜: {datetime.now().strftime('%Y-%m-%d')}
 
 지금 한국에서 실제로 진행 중인 "{label}" 카테고리의 브랜드 할인 프로모션을
@@ -124,9 +124,6 @@ class handler(BaseHTTPRequestHandler):
             "anthropic-version": "2023-06-01",
         }
 
-        # 일시적 오류(429 요청과다, 529 서버과부하 등)는 짧게 대기 후 최대 2번까지 재시도.
-        # 그래도 계속 실패하면 마지막 예외를 그대로 던져서, 상위(do_POST)에서
-        # 해당 카테고리만 스킵 처리하고 나머지 카테고리는 계속 진행하게 한다.
         max_attempts = 3
         last_error = None
         result = None
@@ -139,7 +136,7 @@ class handler(BaseHTTPRequestHandler):
             except urllib.error.HTTPError as e:
                 last_error = e
                 if e.code in (429, 529, 503) and attempt < max_attempts - 1:
-                    time.sleep(2 * (attempt + 1))  # 2초, 4초로 점점 늘려가며 대기
+                    time.sleep(2 * (attempt + 1))
                     continue
                 raise
             except Exception as e:
@@ -152,9 +149,6 @@ class handler(BaseHTTPRequestHandler):
         if result is None:
             raise last_error or RuntimeError("알 수 없는 이유로 응답을 받지 못했습니다.")
 
-
-        # Claude의 web_search 응답은 여러 종류의 블록(server_tool_use, web_search_tool_result, text)이
-        # 섞여서 옵니다. 우리가 파싱할 최종 답변은 text 블록에만 들어있습니다.
         blocks = result.get("content", [])
         raw_text = "\n".join(b.get("text", "") for b in blocks if b.get("type") == "text")
 
@@ -169,7 +163,7 @@ class handler(BaseHTTPRequestHandler):
                 continue
 
             if not item.get("source_url") or not item.get("brand"):
-                continue  # 출처 없는 항목은 신뢰할 수 없으므로 폐기
+                continue
 
             candidates.append({
                 "category": category,
@@ -191,6 +185,112 @@ class handler(BaseHTTPRequestHandler):
             })
 
         return candidates
+
+    # ══════════════════════════════════════════════════════════════
+    # job = check_broken_links (기존 check_broken_links.py)
+    # ══════════════════════════════════════════════════════════════
+    def _run_check_broken_links(self):
+        try:
+            events = sb_select("events", {
+                "select": "id,category,brand,title,link,link_fail_count",
+                "is_active": "eq.true",
+            })
+        except Exception as e:
+            self._send_json(500, {"error": str(e)})
+            return
+
+        deactivated = []
+        warned = []
+
+        for ev in events:
+            link = ev.get("link")
+            if not link:
+                continue
+
+            ok = self._check_link(link)
+
+            if ok:
+                if ev.get("link_fail_count", 0) != 0:
+                    try:
+                        sb_update("events", {"id": f"eq.{ev['id']}"}, {
+                            "link_fail_count": 0,
+                            "link_last_checked": "now()",
+                        })
+                    except Exception as e:
+                        print(f"이벤트 {ev['id']} 리셋 실패:", str(e))
+                else:
+                    try:
+                        sb_update("events", {"id": f"eq.{ev['id']}"}, {"link_last_checked": "now()"})
+                    except Exception as e:
+                        print(f"이벤트 {ev['id']} link_last_checked 갱신 실패:", str(e))
+                continue
+
+            new_fail_count = (ev.get("link_fail_count") or 0) + 1
+            patch = {"link_fail_count": new_fail_count, "link_last_checked": "now()"}
+
+            if new_fail_count >= FAIL_THRESHOLD:
+                patch["is_active"] = False
+                deactivated.append(ev)
+            else:
+                warned.append(ev)
+
+            try:
+                sb_update("events", {"id": f"eq.{ev['id']}"}, patch)
+            except Exception as e:
+                print(f"이벤트 {ev['id']} 갱신 실패:", str(e))
+
+        self._send_broken_links_email(deactivated, warned)
+
+        self._send_json(200, {
+            "success": True,
+            "checked": len(events),
+            "deactivated": len(deactivated),
+            "warned": len(warned),
+        })
+
+    def _check_link(self, url, timeout=6):
+        for method in ("HEAD", "GET"):
+            try:
+                req = urllib.request.Request(url, method=method, headers={"User-Agent": "Mozilla/5.0 (EventHub-LinkChecker)"})
+                with urllib.request.urlopen(req, timeout=timeout) as res:
+                    if res.status < 400:
+                        return True
+            except urllib.error.HTTPError as e:
+                if e.code < 400:
+                    return True
+                continue
+            except Exception:
+                continue
+        return False
+
+    def _send_broken_links_email(self, deactivated, warned):
+        gmail_user = os.environ.get("GMAIL_USER", "")
+        gmail_app_password = os.environ.get("GMAIL_APP_PASSWORD", "")
+        notify_to = os.environ.get("NOTIFY_EMAIL", gmail_user)
+
+        if not gmail_user or not gmail_app_password or not (deactivated or warned):
+            return
+
+        parts = []
+        if deactivated:
+            lines = [f"- [{ev['category']}] {ev['brand']} · {ev['title']} ({ev['link']})" for ev in deactivated]
+            parts.append(f"🚫 자동 비활성화됨 ({len(deactivated)}건, 연속 {FAIL_THRESHOLD}회 실패):\n" + "\n".join(lines))
+        if warned:
+            lines = [f"- [{ev['category']}] {ev['brand']} · {ev['title']} ({ev['link']})" for ev in warned]
+            parts.append(f"⚠️ 이번에 실패했지만 아직 비활성화는 안 됨 (내일도 실패하면 비활성화됨, {len(warned)}건):\n" + "\n".join(lines))
+
+        body_text = "\n\n".join(parts) + "\n\nSupabase Table Editor에서 확인 후, 필요하면 is_active를 다시 true로 바꿔주세요."
+        msg = MIMEText(body_text)
+        msg["Subject"] = f"[EventHub] 링크 점검 결과 — 비활성화 {len(deactivated)}건 / 경고 {len(warned)}건"
+        msg["From"] = gmail_user
+        msg["To"] = notify_to
+
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=8) as server:
+                server.login(gmail_user, gmail_app_password)
+                server.sendmail(gmail_user, [notify_to], msg.as_string())
+        except Exception as e:
+            print("링크 점검 알림 메일 발송 실패:", str(e))
 
     def _send_json(self, status, data):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")

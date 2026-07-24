@@ -18,6 +18,7 @@ import sys
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 from urllib.parse import urlparse
 from datetime import datetime
 
@@ -28,6 +29,24 @@ from _supabase_client import sb_insert
 def check_admin_key(provided_key):
     real_key = os.environ.get("ADMIN_SECRET", "")
     return bool(real_key) and provided_key == real_key
+
+
+def strip_detail_suffix(address):
+    """"1층", "지하1층", "302호"처럼 뒤에 붙은 상세정보는 지오코딩 정확도를 떨어뜨리는
+    경우가 많아, 원본으로 실패하면 이걸 뗀 버전으로 한 번 더 시도하기 위한 정제 함수."""
+    cleaned = re.sub(r"\s*(지하)?\s*\d+\s*층\s*$", "", address)
+    cleaned = re.sub(r"\s*\d+\s*호\s*$", "", cleaned)
+    cleaned = re.sub(r",\s*$", "", cleaned)
+    return cleaned.strip()
+
+
+def kakao_local_search(path, query, rest_key, timeout=6):
+    """카카오 로컬 API(주소 검색 또는 키워드 검색) 호출 후 documents 배열 반환."""
+    url = f"https://dapi.kakao.com/v2/local/{path}?{urllib.parse.urlencode({'query': query})}"
+    req = urllib.request.Request(url, headers={"Authorization": f"KakaoAK {rest_key}"})
+    with urllib.request.urlopen(req, timeout=timeout) as res:
+        data = json.loads(res.read().decode("utf-8"))
+    return data.get("documents", [])
 
 
 def extract_meta(html, prop):
@@ -72,6 +91,10 @@ class handler(BaseHTTPRequestHandler):
 
         if data.get("mode") == "parse_caption":
             self._handle_parse_caption(data)
+            return
+
+        if data.get("mode") == "geocode":
+            self._handle_geocode(data)
             return
 
         url = (data.get("url") or "").strip()
@@ -275,6 +298,57 @@ class handler(BaseHTTPRequestHandler):
             return
 
         self._send_json(200, {"success": True, "extracted": {"title": title, "image": ""}})
+
+    def _handle_geocode(self, data):
+        """admin.html 승인 화면에서 입력한 주소/장소명을 좌표(lat/lng)로 변환.
+        (예전엔 별도 파일 api/geocode.py였는데, Vercel Hobby 플랜 함수 개수 제한 때문에 여기로 합침)"""
+        query = (data.get("query") or "").strip()
+        if not query:
+            self._send_json(400, {"error": "주소 또는 장소명을 입력해주세요."})
+            return
+
+        rest_key = os.environ.get("KAKAO_REST_API_KEY", "")
+        if not rest_key:
+            self._send_json(500, {
+                "error": "KAKAO_REST_API_KEY가 설정되지 않았습니다. "
+                         "카카오 디벨로퍼스에서 REST API 키를 발급받아 Vercel 환경변수로 등록해주세요."
+            })
+            return
+
+        cleaned = strip_detail_suffix(query)
+        candidates = list(dict.fromkeys([q for q in (query, cleaned) if q]))
+
+        try:
+            for q in candidates:
+                docs = kakao_local_search("search/address.json", q, rest_key)
+                if docs:
+                    self._send_json(200, {
+                        "lat": float(docs[0]["y"]), "lng": float(docs[0]["x"]),
+                        "matchedQuery": q, "method": "address",
+                    })
+                    return
+
+            for q in candidates:
+                docs = kakao_local_search("search/keyword.json", q, rest_key)
+                if docs:
+                    self._send_json(200, {
+                        "lat": float(docs[0]["y"]), "lng": float(docs[0]["x"]),
+                        "matchedQuery": q, "method": "keyword",
+                    })
+                    return
+
+            self._send_json(404, {
+                "error": f"주소/장소를 찾을 수 없습니다. (시도한 검색어: {', '.join(candidates)})"
+            })
+
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", errors="ignore")[:200]
+            if e.code == 401:
+                self._send_json(502, {"error": "카카오 REST API 키가 유효하지 않습니다. KAKAO_REST_API_KEY 값을 확인해주세요."})
+            else:
+                self._send_json(502, {"error": f"카카오 API 오류 ({e.code}): {detail}"})
+        except Exception as e:
+            self._send_json(500, {"error": f"지오코딩 중 오류가 발생했어요: {str(e)}"})
 
     def _send_json(self, status, data):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")

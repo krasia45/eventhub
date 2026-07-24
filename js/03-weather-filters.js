@@ -29,8 +29,8 @@ async function loadWeather(loc) {
   try {
     // target.region이 있으면 지역명 검색(서버가 지오코딩), 아니면 좌표 기반 조회
     const apiUrl = target.region
-      ? `/api/weather?region=${encodeURIComponent(target.region)}`
-      : `/api/weather?lat=${target.lat}&lng=${target.lng}`;
+      ? `/api/itinerary?region=${encodeURIComponent(target.region)}`
+      : `/api/itinerary?lat=${target.lat}&lng=${target.lng}`;
     const res = await fetch(apiUrl);
     const data = await res.json();
 

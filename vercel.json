@@ -2,28 +2,12 @@
   "version": 2,
   "routes": [
     {
-      "src": "/api/recommend",
-      "dest": "/api/recommend.py"
-    },
-    {
-      "src": "/api/weather",
-      "dest": "/api/weather.py"
-    },
-    {
-      "src": "/api/travel",
-      "dest": "/api/travel.py"
-    },
-    {
       "src": "/api/itinerary",
       "dest": "/api/itinerary.py"
     },
     {
       "src": "/api/events",
       "dest": "/api/events.py"
-    },
-    {
-      "src": "/api/stats",
-      "dest": "/api/stats.py"
     },
     {
       "src": "/api/inquiries",
@@ -34,20 +18,16 @@
       "dest": "/api/admin_candidates.py"
     },
     {
-      "src": "/api/geocode",
-      "dest": "/api/geocode.py"
-    },
-    {
-      "src": "/api/candidates_scan",
-      "dest": "/api/candidates_scan.py"
-    },
-    {
       "src": "/api/admin_url_register",
       "dest": "/api/admin_url_register.py"
     },
     {
-      "src": "/api/check_broken_links",
-      "dest": "/api/check_broken_links.py"
+      "src": "/api/cron_jobs",
+      "dest": "/api/cron_jobs.py"
+    },
+    {
+      "src": "/api/auth_naver_callback",
+      "dest": "/api/auth_naver_callback.py"
     },
     {
       "src": "/(.*)",
@@ -58,34 +38,43 @@
     {
       "source": "/js/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/css/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/index.html",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
       ]
     }
   ],
   "functions": {
-    "api/candidates_scan.py": {
+    "api/cron_jobs.py": {
       "maxDuration": 60
     }
   },
   "crons": [
     {
-      "path": "/api/candidates_scan",
+      "path": "/api/cron_jobs?job=candidates_scan",
       "schedule": "0 3 * * 1"
     },
     {
-      "path": "/api/check_broken_links",
+      "path": "/api/cron_jobs?job=check_broken_links",
       "schedule": "0 4 * * *"
     }
   ]

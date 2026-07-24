@@ -3,7 +3,7 @@
    (원래 하나였던 main.js를 기능별로 여러 파일로 분리했습니다.
     index.html에 로드 순서대로 <script> 태그가 나열되어 있으며,
     모든 파일이 하나의 전역 스코프를 공유합니다 — 순서를 바꾸면 안 됩니다.
-    백엔드: Supabase 기반 /api/events, /api/stats, /api/inquiries.
+    백엔드: Supabase 기반 /api/events(GET+POST 통합), /api/inquiries.
     Google Sheets/Apps Script는 더 이상 사용하지 않습니다.)
    ========================================================= */
 
