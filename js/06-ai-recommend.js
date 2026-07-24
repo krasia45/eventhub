@@ -1,7 +1,69 @@
+/* ---------- 키워드 매칭 설정 ----------
+   키워드칩(예: "#비건뷰티")은 마케팅용으로 따로 지은 표현이라, 이벤트에 실제로 붙는
+   tags/카테고리 값과 글자가 다를 수 있다. 그래서 단순 문자열 비교 대신, 키워드마다
+   "어떤 카테고리와 관련 있는지" + "본문에서 어떤 단어가 나오면 강하게 매칭할지"를
+   미리 정의해두고 점수를 매긴다.
+   새 키워드칩을 추가하면 여기에도 한 줄 추가해주면 된다. */
+const KEYWORD_MATCH_CONFIG = {
+  // 지역 — 카테고리와 무관하게, 참여방법(channel)에 지역명이 실제로 나오는지만 본다
+  "#성수동": { textHints: ["성수"] },
+  "#홍대·연남": { textHints: ["홍대", "연남"] },
+  "#더현대서울": { textHints: ["더현대"] },
+  "#압구정로데오": { textHints: ["압구정", "로데오"] },
+  "#한남동": { textHints: ["한남"] },
+  "#강남역": { textHints: ["강남"] },
+  // 스타일
+  "#포토존맛집": { category: "food", textHints: ["포토존"] },
+  "#비건뷰티": { category: "beauty", textHints: ["비건", "크루얼티프리", "vegan"] },
+  "#리미티드에디션": { textHints: ["한정판", "리미티드", "단독"] },
+  "#신상디저트": { category: "food", textHints: ["신메뉴", "신상", "출시"] },
+  "#코덕필수템": { category: "beauty", textHints: ["코덕"] },
+  "#스트릿패션": { category: "fashion", textHints: ["스트릿", "스트리트"] },
+  "#미니멀룩": { category: "fashion", textHints: ["미니멀"] },
+  // 혜택
+  "#1+1": { textHints: ["1+1"] },
+  "#반값할인": { textHints: ["50%", "반값"] },
+  "#무료체험·증정": { textHints: ["무료", "증정", "체험"] },
+  "#선착순한정": { textHints: ["선착순", "한정"] },
+  "#타임세일": { textHints: ["타임세일", "핫딜"] },
+  "#즉시쿠폰": { textHints: ["즉시할인", "즉시쿠폰", "쿠폰"] },
+};
+
+function eventCombinedText(ev) {
+  return [ev.title, ev.desc, ev.subtitle, ev.discount, ev.channel, ...(ev.tags || [])]
+    .filter(Boolean).join(" ").toLowerCase();
+}
+
+// 이벤트 하나가 선택된 키워드들과 얼마나 관련 있는지 점수를 매긴다.
+// 본문에 실제로 관련 단어가 나오면 +2(강한 매칭), 카테고리만 일치하면 +1(약한 매칭).
+function scoreEventForKeywords(ev, keywords) {
+  const text = eventCombinedText(ev);
+  let score = 0;
+  for (const kw of keywords) {
+    const cfg = KEYWORD_MATCH_CONFIG[kw];
+    if (!cfg) continue;
+    const textHit = (cfg.textHints || []).some(hint => text.includes(hint.toLowerCase()));
+    if (textHit) score += 2;
+    else if (cfg.category && ev.category === cfg.category) score += 1;
+  }
+  return score;
+}
+
+// AI 호출 없이, 키워드와 실제로 관련 있는 이벤트를 즉시(네트워크 호출 0회) 골라준다.
+// 관련도 점수가 같으면 인기 점수(조회수·저장수)로 다시 정렬해서, 그냥 무작위처럼 안 보이게 한다.
+function matchEventsToKeywords(keywords, count = 6) {
+  return EVENTS
+    .filter(isEventLive)
+    .map(ev => ({ ev, score: scoreEventForKeywords(ev, keywords) }))
+    .sort((a, b) => b.score - a.score || getEventScore(b.ev.id) - getEventScore(a.ev.id))
+    .slice(0, count)
+    .map(x => x.ev);
+}
+
 /* ---------- AI 추천 피드 (검색 없이 로그인 키워드 기반으로 상시 노출) ---------- */
 let aiFeedExpanded = false; // "더보기" 눌러서 로컬 매칭으로 카드를 더 보여준 상태인지
 
-async function loadAiFeed(keywords) {
+function loadAiFeed(keywords) {
   const grid = document.getElementById("aiFeedGrid");
   aiFeedExpanded = false;
 
@@ -9,50 +71,12 @@ async function loadAiFeed(keywords) {
     renderAiFeedSetupPrompt();
     return;
   }
-
   if (EVENTS.length === 0) { grid.innerHTML = renderFeedSkeleton(6); return; }
 
-  grid.innerHTML = renderFeedSkeleton(6);
-
-  try {
-    const eventsSummary = EVENTS.filter(isEventLive).map(ev => ({
-      id: ev.id, brand: ev.brand, category: ev.category,
-      title: ev.title, tags: ev.tags, discount: ev.discount
-    }));
-
-    const res = await fetch("/api/recommend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ interest: keywords.join(", "), events: eventsSummary }),
-    });
-    const data = await res.json();
-
-    if (!res.ok || data.error || !Array.isArray(data.ids) || data.ids.length === 0) {
-      renderAiFeedFallback(keywords);
-      return;
-    }
-
-    const matched = data.ids.map(id => EVENTS.find(ev => ev.id === id)).filter(ev => ev && isEventLive(ev));
-    if (matched.length === 0) { renderAiFeedFallback(keywords); return; }
-    renderAiFeedCards(matched);
-
-  } catch (err) {
-    console.error("AI 추천 피드 로드 오류:", err);
-    renderAiFeedFallback(keywords);
-  }
-}
-
-// AI 호출이 실패하거나 결과가 없을 때: 키워드가 태그/제목에 실제로 매칭되는 진짜 이벤트로 대체
-// (AI가 안 되더라도 화면이 비지 않게 하면서, 없는 데이터를 지어내지는 않음)
-function renderAiFeedFallback(keywords) {
-  const kwLower = (keywords || []).map(k => k.toLowerCase());
-  let candidates = EVENTS.filter(ev => isEventLive(ev) &&
-    kwLower.some(kw => ev.tags.some(t => t.toLowerCase().includes(kw)) || ev.title.toLowerCase().includes(kw))
-  );
-  if (candidates.length === 0) {
-    candidates = EVENTS.filter(isEventLive).sort((a, b) => getEventScore(b.id) - getEventScore(a.id));
-  }
-  renderAiFeedCards(candidates.slice(0, 6));
+  // AI 호출이 없어서 네트워크 왕복 없이 바로 계산·렌더링된다 (체감 지연 없음)
+  const matched = matchEventsToKeywords(keywords, 6);
+  if (matched.length === 0) { renderAiFeedSetupPrompt(); return; }
+  renderAiFeedCards(matched);
 }
 
 function renderAiFeedSetupPrompt() {
@@ -123,6 +147,7 @@ async function openAiRecommendPage() {
   loadAiPageTab("recommend");
 
   document.getElementById("aiRecommendPageOverlay").classList.add("open");
+  pushModalHistory(closeAiRecommendPage);
 }
 
 document.querySelectorAll(".ai-page-tab").forEach(tab => {
@@ -141,21 +166,10 @@ async function loadAiPageTab(tab) {
 
   if (tab === "recommend") {
     if (aiPageKeywords.length > 0) {
-      try {
-        const eventsSummary = EVENTS.filter(isEventLive).map(ev => ({ id: ev.id, brand: ev.brand, category: ev.category, title: ev.title, tags: ev.tags, discount: ev.discount }));
-        const res = await fetch("/api/recommend", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ interest: aiPageKeywords.join(", "), events: eventsSummary }),
-        });
-        const data = await res.json();
-        if (res.ok && Array.isArray(data.ids)) {
-          events = data.ids.map(id => EVENTS.find(ev => ev.id === id)).filter(ev => ev && isEventLive(ev));
-        }
-      } catch (err) { console.error("AI 추천 페이지 로드 오류:", err); }
+      events = matchEventsToKeywords(aiPageKeywords, 9);
     }
     if (events.length === 0) {
-      // 키워드가 없거나 AI 호출이 실패하면 인기순 이벤트로 대체 (실제 데이터, 가짜 아님)
+      // 키워드가 없으면 인기순 이벤트로 대체 (실제 데이터, 가짜 아님)
       events = EVENTS.filter(isEventLive).sort((a, b) => getEventScore(b.id) - getEventScore(a.id)).slice(0, 9);
     }
 
@@ -209,8 +223,12 @@ async function loadAiPageTab(tab) {
   grid.querySelectorAll(".card-brand-logo-sm").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
 }
 
-document.getElementById("aiRecommendPageClose").addEventListener("click", () => {
+function closeAiRecommendPage() {
   document.getElementById("aiRecommendPageOverlay").classList.remove("open");
+}
+document.getElementById("aiRecommendPageClose").addEventListener("click", () => {
+  closeAiRecommendPage();
+  popModalHistory();
 });
 document.getElementById("aiPageSetupBtn").addEventListener("click", () => {
   if (!currentUser) { showToast("로그인 후 키워드를 설정할 수 있어요."); openAuthModal(); return; }

@@ -116,15 +116,20 @@ document.getElementById("weatherRegionGpsBtn").addEventListener("click", async (
 document.getElementById("weatherHeaderChip").addEventListener("click", () => {
   document.getElementById("weatherOverlay").classList.add("open");
   document.body.style.overflow = "hidden";
+  pushModalHistory(closeWeatherOverlay);
 });
-document.getElementById("weatherClose").addEventListener("click", () => {
+function closeWeatherOverlay() {
   document.getElementById("weatherOverlay").classList.remove("open");
   document.body.style.overflow = "";
+}
+document.getElementById("weatherClose").addEventListener("click", () => {
+  closeWeatherOverlay();
+  popModalHistory();
 });
 document.getElementById("weatherOverlay").addEventListener("click", (e) => {
   if (e.target.id === "weatherOverlay") {
-    document.getElementById("weatherOverlay").classList.remove("open");
-    document.body.style.overflow = "";
+    closeWeatherOverlay();
+    popModalHistory();
   }
 });
 
@@ -147,6 +152,7 @@ function matchesDiscountFilter(ev, filter) {
     const match = ev.discount.match(/(\d+)\s*%/);
     return !!match && parseInt(match[1], 10) >= 50;
   }
+  if (filter === "newopen") return (ev.tags || []).includes("신규오픈");
   return true;
 }
 
@@ -181,9 +187,26 @@ function getFilteredEvents() {
 
   list = list.filter(ev => matchesDiscountFilter(ev, currentDiscountFilter));
 
+  // "🆕 신규오픈" 필터를 실제로 선택했을 때만, 결과가 부족하면 가상 이벤트로 보충한다.
+  // (전체 피드/다른 필터에는 절대 안 섞이고, 이 필터를 켰을 때만 나타남)
+  // 실제 신규오픈 태그 이벤트가 쌓이면 이 조건이 자연스럽게 false가 되어 가상 데이터는 사라진다.
+  if (currentDiscountFilter === "newopen" && list.length < 3) {
+    const mockPool = MOCK_NEW_OPEN_EVENTS
+      .filter(ev => currentCategory === "all" || ev.category === currentCategory)
+      .map(ev => ({ ...ev, dday: computeDday(ev.periodEnd) }));
+    const existingIds = new Set(list.map(ev => ev.id));
+    list = [...list, ...mockPool.filter(ev => !existingIds.has(ev.id))];
+  }
+
   // 서브카테고리(태그) 필터 — 카테고리 안에서 태그로 한 번 더 좁히기
   if (currentSubTag) {
     list = list.filter(ev => (ev.tags || []).includes(currentSubTag));
+  }
+
+  // 팝업 탭 관심지역 배너에서 지역을 선택한 경우, 그 지역 채널 텍스트로 한 번 더 좁히기
+  if (currentRegionFilter && typeof KEYWORD_MATCH_CONFIG !== "undefined" && KEYWORD_MATCH_CONFIG[currentRegionFilter]) {
+    const hints = KEYWORD_MATCH_CONFIG[currentRegionFilter].textHints || [];
+    list = list.filter(ev => hints.some(h => (ev.channel || "").includes(h)));
   }
 
   if (gpsFilterActive && userLocation) {

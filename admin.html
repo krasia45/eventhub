@@ -19,6 +19,7 @@
   .manual-form { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .manual-form input, .manual-form select, .manual-form textarea { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-family: inherit; resize: vertical; }
   .manual-form textarea#manualChannel { grid-column: 1 / -1; }
+  .manual-form textarea#manualDesc { grid-column: 1 / -1; }
   .manual-form input#manualSourceUrl { grid-column: 1 / -1; }
   .manual-form button { grid-column: 1 / -1; padding: 10px 16px; border-radius: 8px; background: #1a1a1a; color: #fff; border: none; font-weight: 700; }
   .register-status { font-size: 12.5px; margin-top: 8px; }
@@ -45,6 +46,20 @@
   .btn-approve { flex: 1; padding: 10px; background: #1E8A4C; color: #fff; border: none; border-radius: 8px; font-weight: 700; }
   .btn-reject { flex: 1; padding: 10px; background: #f1f1f1; color: #333; border: none; border-radius: 8px; font-weight: 700; }
   .empty { text-align: center; color: #999; padding: 40px 0; }
+  .pub-event-card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid #eee; }
+  .pub-event-card.inactive { opacity: 0.55; border-style: dashed; }
+  .pub-event-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .pub-event-brand { font-size: 12px; color: #888; }
+  .pub-event-title { font-size: 14px; font-weight: 700; margin: 2px 0 4px; }
+  .pub-event-meta { font-size: 12.5px; color: #555; margin-bottom: 8px; }
+  .pub-event-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #f1f1f1; color: #666; }
+  .pub-event-badge.inactive { background: #FDEAEA; color: #C0392B; }
+  .pub-event-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pub-event-actions button { padding: 7px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; font-size: 12.5px; font-weight: 600; }
+  .pub-event-actions button.danger { border-color: #f3caca; color: #C0392B; }
+  .pub-edit-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .pub-edit-form input, .pub-edit-form select, .pub-edit-form textarea { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-family: inherit; }
+  .pub-edit-form .span2 { grid-column: 1 / -1; }
   .inquiry-card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid #eee; }
   .inquiry-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
   .inquiry-name { font-size: 13px; font-weight: 700; }
@@ -98,11 +113,13 @@
     <option value="fashion">패션</option>
     <option value="beauty">뷰티</option>
     <option value="food">카페·디저트</option>
+    <option value="living">라이프스타일</option>
   </select>
   <input type="text" id="manualDiscount" placeholder="혜택 (예: 최대 50% 할인 / 5,000원 쿠폰 / 응모 시 스타벅스 기프티콘 / 참여 시 적립금 최대 1만원)">
   <input type="date" id="manualStart">
   <input type="date" id="manualEnd">
   <textarea id="manualChannel" rows="2" placeholder="참여방법/운영시간/주소 등 — 정보가 여러 개면 꼭 줄바꿈으로 구분해주세요&#10;예)&#10;서울 성동구 연무장길 101&#10;11:00-21:00&#10;구매 시 1인 1개 한정"></textarea>
+  <textarea id="manualDesc" rows="3" placeholder="상세안내 — 상세페이지에 그대로 노출되는 내용이에요. 요약하지 말고, 실제 이벤트 내용(대상 상품, 조건, 특전 등)을 있는 그대로 적어주세요."></textarea>
   <p style="font-size:11.5px;color:#999;margin:-6px 0 0;">💡 참여방법에 서로 다른 정보(시간/장소/조건 등)를 한 줄에 이어쓰면 상세페이지에 뭉쳐서 보여요. 꼭 줄마다 하나씩 나눠 입력해주세요.</p>
   <input type="text" id="manualSourceUrl" placeholder="출처 URL (인스타 게시물 링크 등, 검증용)">
   <button onclick="registerManual()">추가하기</button>
@@ -120,6 +137,22 @@
   <button onclick="loadInquiries()">문의 불러오기</button>
 </div>
 <div id="inquiryList"></div>
+
+<h2>📋 게시된 이벤트 관리</h2>
+<p style="font-size:13px;color:#666;">이미 사이트에 노출 중인 이벤트를 검색해서 수정하거나, 비활성화·삭제할 수 있어요.</p>
+<div class="key-bar">
+  <input type="text" id="eventsSearchInput" placeholder="브랜드/제목 검색" style="flex:1;">
+  <select id="eventsCategoryFilter">
+    <option value="">전체 카테고리</option>
+    <option value="fashion">패션</option>
+    <option value="beauty">뷰티</option>
+    <option value="food">카페·디저트</option>
+    <option value="popup">팝업·컬처</option>
+    <option value="living">라이프스타일</option>
+  </select>
+  <button onclick="loadPublishedEvents()">불러오기</button>
+</div>
+<div id="publishedEventsList"></div>
 
 <script>
 function getKey() {
@@ -287,6 +320,7 @@ async function registerManual() {
   const start = document.getElementById("manualStart").value;
   const end = document.getElementById("manualEnd").value;
   const channel = document.getElementById("manualChannel").value.trim();
+  const desc = document.getElementById("manualDesc").value.trim();
   const sourceUrl = document.getElementById("manualSourceUrl").value.trim();
   const statusEl = document.getElementById("manualStatus");
 
@@ -302,7 +336,7 @@ async function registerManual() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         key, mode: "manual", category,
-        brand, title, discount, channel,
+        brand, title, discount, channel, desc,
         periodStart: start, periodEnd: end,
         sourceUrl: sourceUrl || null,
       }),
@@ -313,7 +347,7 @@ async function registerManual() {
       return;
     }
     statusEl.textContent = `✅ "${title}" 후보로 추가됐어요. 아래에서 승인해주세요.`;
-    ["manualBrand","manualTitle","manualDiscount","manualStart","manualEnd","manualChannel","manualSourceUrl"].forEach(id => {
+    ["manualBrand","manualTitle","manualDiscount","manualStart","manualEnd","manualChannel","manualDesc","manualSourceUrl"].forEach(id => {
       document.getElementById(id).value = "";
     });
     loadCandidates();
@@ -367,6 +401,7 @@ async function loadCandidates() {
         <input type="text" placeholder="도메인 (예: oliveyoung.co.kr)" class="f-domain" value="${c.domain || ""}">
         <input type="text" placeholder="링크 (비우면 출처 URL 사용)" class="f-link" value="${c.link || ""}">
         <input type="text" placeholder="조건 (예: 네이버페이 결제 시에만 적용)" class="f-conditions" style="grid-column: 1 / -1;" value="${c.conditions || ""}">
+        <textarea placeholder="상세안내 — 상세페이지에 그대로 노출돼요. 실제 내용 맞는지 확인 후 승인해주세요." class="f-desc" rows="3" style="grid-column: 1 / -1;">${escapeAttr(c.desc || "")}</textarea>
         <div class="btn-row">
           <button class="btn-approve" onclick="approve('${c.id}')">✓ 승인하고 게시</button>
           <button class="btn-reject" onclick="reject('${c.id}')">✕ 반려</button>
@@ -438,6 +473,7 @@ async function approve(id) {
       domain: card.querySelector(".f-domain").value,
       link: card.querySelector(".f-link").value,
       conditions: card.querySelector(".f-conditions").value,
+      desc: card.querySelector(".f-desc").value,
     }),
   });
   const data = await res.json();
@@ -506,6 +542,156 @@ async function markAnswered(id) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) { alert("처리 실패: " + (data.error || "")); return; }
   loadInquiries();
+}
+
+const CATEGORY_LABEL_MAP = { fashion: "패션", beauty: "뷰티", food: "카페·디저트", popup: "팝업·컬처", living: "라이프스타일" };
+
+async function loadPublishedEvents() {
+  const key = getKey();
+  if (!key) { alert("관리자 키를 입력해주세요."); return; }
+  localStorage.setItem("eventhub-admin-key", key);
+
+  const search = document.getElementById("eventsSearchInput").value.trim();
+  const category = document.getElementById("eventsCategoryFilter").value;
+  const listEl = document.getElementById("publishedEventsList");
+  listEl.innerHTML = `<p class="empty">불러오는 중...</p>`;
+
+  const qs = new URLSearchParams({ key });
+  if (search) qs.set("search", search);
+  if (category) qs.set("category", category);
+
+  const res = await fetch(`/api/admin_events?${qs.toString()}`);
+  const data = await res.json();
+
+  if (!res.ok) {
+    listEl.innerHTML = `<p class="empty">불러오기 실패: ${escapeAttr(data.error || "")}</p>`;
+    return;
+  }
+  if (!data.length) {
+    listEl.innerHTML = `<p class="empty">조건에 맞는 이벤트가 없어요.</p>`;
+    return;
+  }
+
+  listEl.innerHTML = data.map(ev => renderPublishedEventCard(ev)).join("");
+}
+
+function renderPublishedEventCard(ev) {
+  const inactive = ev.is_active === false;
+  return `
+    <div class="pub-event-card ${inactive ? "inactive" : ""}" data-id="${ev.id}">
+      <div class="pub-event-view">
+        <div class="pub-event-head">
+          <span class="pub-event-brand">${escapeAttr(ev.brand)} · ${escapeAttr(CATEGORY_LABEL_MAP[ev.category] || ev.category)}</span>
+          <span class="pub-event-badge ${inactive ? "inactive" : ""}">${inactive ? "비활성" : "게시중"}</span>
+        </div>
+        <p class="pub-event-title">${escapeAttr(ev.title)}</p>
+        <p class="pub-event-meta">${escapeAttr(ev.discount || "")} · ${escapeAttr(ev.period || "")}</p>
+        <div class="pub-event-actions">
+          <button onclick="toggleEditForm('${ev.id}')">✏️ 수정</button>
+          ${inactive
+            ? `<button onclick="reactivateEvent('${ev.id}')">▶️ 재활성화</button>`
+            : `<button onclick="deactivateEvent('${ev.id}')">⏸ 비활성화</button>`}
+          <button class="danger" onclick="deleteEventConfirm('${ev.id}')">🗑 완전삭제</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleEditForm(id) {
+  const card = document.querySelector(`.pub-event-card[data-id="${id}"]`);
+  const existingForm = card.querySelector(".pub-edit-form");
+  if (existingForm) { existingForm.remove(); return; } // 이미 열려있으면 접기
+
+  // 현재 카드에 표시된 값을 그대로 기본값으로 사용 (별도 재조회 없이 바로 편집)
+  const brand = card.querySelector(".pub-event-brand").textContent.split(" · ")[0];
+  const title = card.querySelector(".pub-event-title").textContent;
+  const [discount, period] = card.querySelector(".pub-event-meta").textContent.split(" · ");
+  const [periodStart, periodEnd] = (period || "").split(" - ").map(s => (s || "").trim());
+
+  const form = document.createElement("div");
+  form.className = "pub-edit-form";
+  form.innerHTML = `
+    <input type="text" class="e-brand" placeholder="브랜드" value="${escapeAttr(brand)}">
+    <input type="text" class="e-title span2" placeholder="제목" value="${escapeAttr(title)}">
+    <input type="text" class="e-discount" placeholder="혜택" value="${escapeAttr(discount || "")}">
+    <input type="text" class="e-conditions" placeholder="조건 (없으면 비워두기)">
+    <input type="date" class="e-start" value="${periodStart || ""}">
+    <input type="date" class="e-end" value="${periodEnd || ""}">
+    <textarea class="e-channel span2" rows="2" placeholder="참여방법/장소/시간"></textarea>
+    <textarea class="e-desc span2" rows="2" placeholder="상세안내"></textarea>
+    <input type="text" class="e-image span2" placeholder="이미지 URL">
+    <div class="span2" style="display:flex; gap:8px;">
+      <button onclick="savePublishedEvent('${id}')" style="flex:1; background:#1a1a1a; color:#fff; border:none; padding:9px; border-radius:6px; font-weight:700;">저장</button>
+      <button onclick="toggleEditForm('${id}')" style="flex:1; padding:9px; border-radius:6px; border:1px solid #ddd;">취소</button>
+    </div>
+  `;
+  card.appendChild(form);
+}
+
+async function savePublishedEvent(id) {
+  const key = getKey();
+  const card = document.querySelector(`.pub-event-card[data-id="${id}"]`);
+  const patch = {
+    brand: card.querySelector(".e-brand").value.trim(),
+    title: card.querySelector(".e-title").value.trim(),
+    discount: card.querySelector(".e-discount").value.trim(),
+    conditions: card.querySelector(".e-conditions").value.trim(),
+    period_start: card.querySelector(".e-start").value || null,
+    period_end: card.querySelector(".e-end").value || null,
+    channel: card.querySelector(".e-channel").value.trim(),
+    desc: card.querySelector(".e-desc").value.trim(),
+    image: card.querySelector(".e-image").value.trim(),
+  };
+  const cleanPatch = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== ""));
+
+  const res = await fetch("/api/admin_events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key, action: "update", eventId: id, patch: cleanPatch }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { alert("수정 실패: " + (data.error || "")); return; }
+  alert("수정 완료!");
+  loadPublishedEvents();
+}
+
+async function deactivateEvent(id) {
+  const key = getKey();
+  const res = await fetch("/api/admin_events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key, action: "deactivate", eventId: id }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { alert("처리 실패: " + (data.error || "")); return; }
+  loadPublishedEvents();
+}
+
+async function reactivateEvent(id) {
+  const key = getKey();
+  const res = await fetch("/api/admin_events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key, action: "reactivate", eventId: id }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { alert("처리 실패: " + (data.error || "")); return; }
+  loadPublishedEvents();
+}
+
+async function deleteEventConfirm(id) {
+  if (!confirm("정말 완전히 삭제할까요? 이 작업은 되돌릴 수 없고, 이 이벤트의 조회수·찜 기록도 함께 사라져요.\n\n일단 숨기고 싶은 거라면 '비활성화'를 추천해요.")) return;
+  const key = getKey();
+  const res = await fetch("/api/admin_events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key, action: "delete", eventId: id }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { alert("삭제 실패: " + (data.error || "")); return; }
+  alert("삭제 완료");
+  loadPublishedEvents();
 }
 
 // 저장된 키가 있으면 자동으로 채워넣기

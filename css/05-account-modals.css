@@ -243,6 +243,7 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
 .social-btn:active { transform: scale(0.98); }
 .social-btn-google { background: #fff; color: #333; }
 .social-btn-kakao { background: #FEE500; color: #191919; border-color: #FEE500; }
+.social-btn-naver { background: #03C75A; color: #fff; border-color: #03C75A; }
 
 .auth-divider {
   display: flex;

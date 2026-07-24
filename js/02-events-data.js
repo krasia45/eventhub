@@ -40,6 +40,43 @@ function handleImageError(imgEl) {
 let EVENTS = [];
 let eventsLoaded = false;
 
+/* "🆕 신규오픈" 필터용 가상 이벤트. 실제 이벤트 스키마와 완전히 동일하게 맞췄고,
+   id는 전부 "mock-"로 시작해서 실제 데이터와 절대 안 겹친다.
+   실제로 "신규오픈" 태그가 붙은 이벤트가 3개 이상 쌓이면 아래에서 자동으로 안 섞인다
+   (loadEventsFromApi 안의 실제 개수 체크 로직 참고). */
+const MOCK_NEW_OPEN_EVENTS = [
+  {
+    id: "mock-newopen-cafe", category: "food", brand: "[예시] 성수 신상 카페",
+    merchantType: "소상공인", isVerifiedReal: false, lat: 37.5445, lng: 127.0559,
+    title: "[예시] 성수동 신규 오픈 카페", subtitle: "실제 이벤트 승인 시 자동 교체돼요",
+    discount: "오픈 기념 음료 무료 증정", period: "2026.08.01 - 2026.08.31",
+    periodStart: "2026-08-01", periodEnd: "2026-08-31", channel: "서울 성동구 성수동 일대",
+    conditions: "", desc: "신규오픈 필터 레이아웃 확인용 예시 데이터입니다.",
+    tags: ["카페", "신규오픈"], image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23E8E8EC'/%3E%3C/svg%3E",
+    domain: "", link: "",
+  },
+  {
+    id: "mock-newopen-beauty", category: "beauty", brand: "[예시] 홍대 신규 뷰티샵",
+    merchantType: "브랜드", isVerifiedReal: false, lat: 37.5563, lng: 126.9236,
+    title: "[예시] 홍대 신규 오픈 기념 이벤트", subtitle: "실제 이벤트 승인 시 자동 교체돼요",
+    discount: "첫 방문 20% 할인", period: "2026.08.05 - 2026.08.20",
+    periodStart: "2026-08-05", periodEnd: "2026-08-20", channel: "서울 마포구 홍대 일대",
+    conditions: "", desc: "신규오픈 필터 레이아웃 확인용 예시 데이터입니다.",
+    tags: ["뷰티", "신규오픈"], image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23E8E8EC'/%3E%3C/svg%3E",
+    domain: "", link: "",
+  },
+  {
+    id: "mock-newopen-fashion", category: "fashion", brand: "[예시] 강남 신규 편집숍",
+    merchantType: "브랜드", isVerifiedReal: false, lat: 37.4979, lng: 127.0276,
+    title: "[예시] 강남역 신규 오픈 매장", subtitle: "실제 이벤트 승인 시 자동 교체돼요",
+    discount: "선착순 굿즈 증정", period: "2026.08.03 - 2026.08.17",
+    periodStart: "2026-08-03", periodEnd: "2026-08-17", channel: "서울 강남구 강남역 일대",
+    conditions: "", desc: "신규오픈 필터 레이아웃 확인용 예시 데이터입니다.",
+    tags: ["패션", "신규오픈"], image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23E8E8EC'/%3E%3C/svg%3E",
+    domain: "", link: "",
+  },
+];
+
 function computeDday(periodEnd) {
   if (!periodEnd) return "";
   const end = new Date(periodEnd + "T23:59:59");
@@ -119,6 +156,15 @@ async function loadEventsFromApi() {
   renderFeed();
   renderHeroCarousel();
   renderNearbySection();
+  renderPopupRegionBanner();
+
+  // 공유받은 이벤트 링크(?event=id)로 들어온 경우, 자동으로 그 이벤트 시트를 열어준다.
+  // (openSheet은 05-event-sheet.js에 정의되어 있지만, 이 함수가 실제로 "실행"되는 시점엔
+  // 모든 스크립트가 이미 로드되어 있으므로 문제없이 호출된다)
+  const sharedEventId = new URLSearchParams(location.search).get("event");
+  if (sharedEventId && EVENTS.some(ev => ev.id === sharedEventId)) {
+    openSheet(sharedEventId);
+  }
 }
 
 

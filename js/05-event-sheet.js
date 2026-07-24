@@ -102,6 +102,7 @@ function openSheet(eventId) {
 
   sheetOverlay.classList.add("open");
   document.body.style.overflow = "hidden";
+  pushModalHistory(closeSheet, getEventShareUrl(ev)); // 뒤로가기로 닫히게 + 주소창이 이 이벤트 링크로 바뀜(공유 시 그대로 씀)
 
   // "다녀왔어요" 후기는 실제로 방문하는 장소(팝업스토어)에만 의미가 있음.
   // 단순 할인 정보성 이벤트(패션/뷰티/카페 쿠폰 등)는 "방문"이라는 행위 자체가 없어서 숨김.
@@ -275,9 +276,15 @@ document.getElementById("visitSubmitBtn").addEventListener("click", async () => 
   }
 });
 
-document.getElementById("sheetClose").addEventListener("click", closeSheet);
+document.getElementById("sheetClose").addEventListener("click", () => {
+  closeSheet();
+  popModalHistory();
+});
 sheetOverlay.addEventListener("click", (e) => {
-  if (e.target === sheetOverlay) closeSheet();
+  if (e.target === sheetOverlay) {
+    closeSheet();
+    popModalHistory();
+  }
 });
 
 function toggleLike(eventId) {

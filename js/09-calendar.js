@@ -52,6 +52,7 @@ async function openCalendar() {
   }
 
   renderCalendarGrid();
+  pushModalHistory(closeCalendar);
 }
 
 function closeCalendar() {
@@ -149,6 +150,7 @@ function renderCalendarDayDetail(dateKey) {
   listEl.querySelectorAll(".calendar-day-item.event-type").forEach(item => {
     item.addEventListener("click", () => {
       closeCalendar();
+      popModalHistory();
       openSheet(item.dataset.eventId);
     });
   });
@@ -170,8 +172,8 @@ async function deletePersonalSchedule(scheduleId) {
   renderCalendarDayDetail(calendarSelectedDate);
 }
 
-document.getElementById("calendarClose").addEventListener("click", closeCalendar);
-calendarOverlay.addEventListener("click", (e) => { if (e.target === calendarOverlay) closeCalendar(); });
+document.getElementById("calendarClose").addEventListener("click", () => { closeCalendar(); popModalHistory(); });
+calendarOverlay.addEventListener("click", (e) => { if (e.target === calendarOverlay) { closeCalendar(); popModalHistory(); } });
 
 document.getElementById("calendarPrevMonth").addEventListener("click", () => {
   calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
@@ -183,6 +185,10 @@ document.getElementById("calendarNextMonth").addEventListener("click", () => {
 });
 
 /* ---------- 개인 일정 추가 모달 ---------- */
+function closeScheduleForm() {
+  scheduleFormOverlay.classList.remove("open");
+}
+
 document.getElementById("calendarAddScheduleBtn").addEventListener("click", () => {
   if (!currentUser) {
     showToast("로그인하시면 개인 일정을 추가할 수 있어요.");
@@ -192,13 +198,15 @@ document.getElementById("calendarAddScheduleBtn").addEventListener("click", () =
   document.getElementById("scheduleFormDate").textContent = `📅 ${m}월 ${d}일 일정 추가`;
   document.getElementById("scheduleForm").reset();
   scheduleFormOverlay.classList.add("open");
+  pushModalHistory(closeScheduleForm);
 });
 
 document.getElementById("scheduleFormClose").addEventListener("click", () => {
-  scheduleFormOverlay.classList.remove("open");
+  closeScheduleForm();
+  popModalHistory();
 });
 scheduleFormOverlay.addEventListener("click", (e) => {
-  if (e.target === scheduleFormOverlay) scheduleFormOverlay.classList.remove("open");
+  if (e.target === scheduleFormOverlay) { closeScheduleForm(); popModalHistory(); }
 });
 
 document.getElementById("scheduleForm").addEventListener("submit", async (e) => {
@@ -227,7 +235,8 @@ document.getElementById("scheduleForm").addEventListener("submit", async (e) => 
   }
 
   if (data && data[0]) personalSchedules.push(data[0]);
-  scheduleFormOverlay.classList.remove("open");
+  closeScheduleForm();
+  popModalHistory();
   showToast("일정이 저장됐어요 📅");
   renderCalendarGrid();
   renderCalendarDayDetail(calendarSelectedDate);

@@ -11,6 +11,7 @@ const KEYWORD_POOL = {
   benefit: ["#1+1", "#반값할인", "#무료체험·증정", "#선착순한정", "#타임세일", "#즉시쿠폰"],
 };
 let selectedKeywords = new Set();
+let userInterestKeywords = []; // 로그인 사용자의 저장된 관심 키워드 (팝업 탭 관심지역 배너 등에서 재사용)
 
 /* ---------- 모달 열기/닫기 ---------- */
 function updateProfileButton() {
@@ -39,6 +40,7 @@ function openAuthModal() {
   }
   authOverlay.classList.add("open");
   document.body.style.overflow = "hidden";
+  pushModalHistory(closeAuthModal);
 }
 
 /* ---------- 프로필 허브: 아바타/인사말/레벨·포인트/팔로우 브랜드 관리 ---------- */
@@ -128,10 +130,12 @@ document.getElementById("profileFollowManageBtn").addEventListener("click", () =
 });
 document.getElementById("profileStatSaved").addEventListener("click", () => {
   closeAuthModal();
+  popModalHistory();
   openCouponWallet();
 });
 document.getElementById("profileCalendarBtn").addEventListener("click", () => {
   closeAuthModal();
+  popModalHistory();
   openCalendar();
 });
 document.getElementById("profileInfoBtn").addEventListener("click", () => {
@@ -144,18 +148,22 @@ document.getElementById("profilePointsBtn").addEventListener("click", () => {
 });
 document.getElementById("profileSavedMenuBtn").addEventListener("click", () => {
   closeAuthModal();
+  popModalHistory();
   openCouponWallet();
 });
 document.getElementById("profileRecentMenuBtn").addEventListener("click", () => {
   closeAuthModal();
+  popModalHistory();
   openRecentView();
 });
 document.getElementById("profileNotifSettingBtn").addEventListener("click", () => {
   closeAuthModal();
+  popModalHistory();
   openMoreMenu();
 });
 document.getElementById("profileSupportBtn").addEventListener("click", () => {
   closeAuthModal();
+  popModalHistory();
   document.querySelector(".inquiry-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
@@ -164,8 +172,8 @@ function closeAuthModal() {
   document.body.style.overflow = "";
 }
 document.getElementById("profileBtn").addEventListener("click", openAuthModal);
-document.getElementById("authClose").addEventListener("click", closeAuthModal);
-authOverlay.addEventListener("click", (e) => { if (e.target === authOverlay) closeAuthModal(); });
+document.getElementById("authClose").addEventListener("click", () => { closeAuthModal(); popModalHistory(); });
+authOverlay.addEventListener("click", (e) => { if (e.target === authOverlay) { closeAuthModal(); popModalHistory(); } });
 
 /* ---------- 소셜 로그인 ---------- */
 document.getElementById("googleLoginBtn").addEventListener("click", async () => {
@@ -187,6 +195,68 @@ document.getElementById("kakaoLoginBtn").addEventListener("click", async () => {
     },
   });
 });
+
+/* ---------- 네이버 로그인 ----------
+   Supabase가 네이버를 기본 지원하지 않아서, 직접 OAuth를 처리하고
+   /api/auth_naver_callback을 거쳐 매직링크 토큰으로 세션을 완성한다.
+   ⚠️ NAVER_CLIENT_ID는 네이버 디벨로퍼스에서 발급받은 실제 값으로 바꿔주세요
+      (Client ID는 공개돼도 되는 값이라 프론트에 넣어도 안전합니다 — Secret만 절대 노출 금지).
+   ⚠️ 네이버 디벨로퍼스 콘솔의 "Callback URL"도 아래 NAVER_REDIRECT_URI와 정확히 같아야 해요. */
+const NAVER_CLIENT_ID = "dbC7jKdUF70ygWf0N5rU";
+const NAVER_REDIRECT_URI = window.location.origin + "/";
+
+document.getElementById("naverLoginBtn").addEventListener("click", () => {
+  const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  sessionStorage.setItem("eventhub-naver-state", state);
+  const authUrl = `https://nid.naver.com/oauth2.0/authorize`
+    + `?response_type=code&client_id=${encodeURIComponent(NAVER_CLIENT_ID)}`
+    + `&redirect_uri=${encodeURIComponent(NAVER_REDIRECT_URI)}`
+    + `&state=${encodeURIComponent(state)}`;
+  window.location.href = authUrl;
+});
+
+async function handleNaverCallbackIfPresent() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  const state = params.get("state");
+  if (!code || !state) return; // 네이버 콜백이 아니면 아무것도 안 함 (다른 ?파라미터와 안 섞이게)
+
+  const savedState = sessionStorage.getItem("eventhub-naver-state");
+  sessionStorage.removeItem("eventhub-naver-state");
+  history.replaceState({}, "", window.location.pathname); // code/state를 주소창에서 즉시 제거(새로고침 시 재실행 방지)
+
+  if (!savedState || state !== savedState) {
+    showToast("로그인 요청이 만료됐어요. 다시 시도해주세요.");
+    return;
+  }
+  if (!supabaseClient) { showToast("로그인 기능을 일시적으로 사용할 수 없어요."); return; }
+
+  showToast("네이버 로그인 처리 중...");
+  try {
+    const res = await fetch("/api/auth_naver_callback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, redirectUri: NAVER_REDIRECT_URI }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      showToast("네이버 로그인 실패: " + (data.error || "잠시 후 다시 시도해주세요."));
+      return;
+    }
+    const { error } = await supabaseClient.auth.verifyOtp({
+      email: data.email,
+      token_hash: data.tokenHash,
+      type: "magiclink",
+    });
+    if (error) {
+      showToast("로그인 세션 생성에 실패했어요: " + error.message);
+    }
+    // 성공 시 아래 onAuthStateChange의 SIGNED_IN 핸들러가 이어서 처리함(모달 닫기 등)
+  } catch (err) {
+    console.error("네이버 로그인 콜백 처리 오류:", err);
+    showToast("네이버 로그인 중 오류가 발생했어요.");
+  }
+}
 
 /* ---------- 이메일/비밀번호 로그인 (보조 수단) ---------- */
 function setAuthMode(mode) {
@@ -238,9 +308,10 @@ document.getElementById("authForm").addEventListener("submit", async (e) => {
 });
 
 document.getElementById("authLogoutBtn").addEventListener("click", async () => {
-  if (!supabaseClient) { closeAuthModal(); return; }
+  if (!supabaseClient) { closeAuthModal(); popModalHistory(); return; }
   await supabaseClient.auth.signOut();
   closeAuthModal();
+  popModalHistory();
   showToast("로그아웃되었습니다");
 });
 
@@ -382,6 +453,7 @@ async function loadUserPreferencesAndSync() {
 
   renderAiKeywordChips(pref.keywords || []);
   loadAiFeed(pref.keywords || []);
+  userInterestKeywords = pref.keywords || []; // 팝업 탭 관심지역 배너 등에서 재사용
 
   // 2) 로그인 전 localStorage에 쌓인 좋아요를 DB로 마이그레이션 (한 번만)
   if (likedEvents.size > 0) {
@@ -482,13 +554,17 @@ if (supabaseClient) {
     // "SIGNED_IN"은 방금 로그인했을 때, "INITIAL_SESSION"은 이미 로그인된 상태로
     // 페이지를 새로고침했을 때 발생함 — 두 경우 모두 동기화가 필요함
     if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && currentUser) {
-      if (event === "SIGNED_IN") closeAuthModal();
+      if (event === "SIGNED_IN") { closeAuthModal(); popModalHistory(); }
       loadUserPreferencesAndSync();
     }
     if (event === "SIGNED_OUT") {
       // 로그아웃 시 좋아요는 localStorage 기준으로 되돌아감 (다음 로그인 시 다시 동기화)
+      userInterestKeywords = [];
     }
   });
+
+  // 네이버 로그인 리다이렉트로 돌아온 경우(주소창에 ?code=&state=가 있으면) 여기서 이어서 처리
+  handleNaverCallbackIfPresent();
 }
 
 /* ---------- AI 섹션 모드 전환 (맞춤 이벤트 추천 ↔ 여행 플래너) ---------- */
@@ -502,16 +578,22 @@ function openTravelPlanner() {
 
   document.getElementById("travelPlannerOverlay").classList.add("open");
   document.body.style.overflow = "hidden";
+  pushModalHistory(closeTravelPlanner);
+}
+
+function closeTravelPlanner() {
+  document.getElementById("travelPlannerOverlay").classList.remove("open");
+  document.body.style.overflow = "";
 }
 
 document.getElementById("travelPlannerClose").addEventListener("click", () => {
-  document.getElementById("travelPlannerOverlay").classList.remove("open");
-  document.body.style.overflow = "";
+  closeTravelPlanner();
+  popModalHistory();
 });
 document.getElementById("travelPlannerOverlay").addEventListener("click", (e) => {
   if (e.target.id === "travelPlannerOverlay") {
-    document.getElementById("travelPlannerOverlay").classList.remove("open");
-    document.body.style.overflow = "";
+    closeTravelPlanner();
+    popModalHistory();
   }
 });
 

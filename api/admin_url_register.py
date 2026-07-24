@@ -80,7 +80,7 @@ class handler(BaseHTTPRequestHandler):
         if not url.startswith("http"):
             self._send_json(400, {"error": "올바른 URL을 입력해주세요 (http:// 또는 https://로 시작)."})
             return
-        if category not in ("fashion", "beauty", "food", "popup"):
+        if category not in ("fashion", "beauty", "food", "popup", "living"):
             self._send_json(400, {"error": "카테고리를 선택해주세요."})
             return
 
@@ -169,7 +169,7 @@ class handler(BaseHTTPRequestHandler):
 규칙:
 - brand: 브랜드/매장명. 협업이면 "A X B" 형식으로.
 - title: 이벤트/팝업 제목이나 한 줄 소개.
-- category: 다음 중 하나만 — fashion, beauty, food, popup (애매하면 popup)
+- category: 다음 중 하나만 — fashion, beauty, food, popup, living (애매하면 popup)
 - discount: 위 유형 판단에 맞는 혜택 요약 (없으면 빈 문자열)
 - period_start, period_end: YYYY-MM-DD 형식. 캡션에 기간이 명시 안 되어 있으면 둘 다 null.
 - channel: 운영시간/장소/참여방법 등 (캡션에 있는 만큼만, 없으면 빈 문자열).
@@ -184,7 +184,7 @@ class handler(BaseHTTPRequestHandler):
             "properties": {
                 "brand": {"type": "STRING"},
                 "title": {"type": "STRING"},
-                "category": {"type": "STRING", "enum": ["fashion", "beauty", "food", "popup"]},
+                "category": {"type": "STRING", "enum": ["fashion", "beauty", "food", "popup", "living"]},
                 "discount": {"type": "STRING"},
                 "period_start": {"type": "STRING", "nullable": True},
                 "period_end": {"type": "STRING", "nullable": True},
@@ -233,6 +233,7 @@ class handler(BaseHTTPRequestHandler):
         category = (data.get("category") or "").strip()
         discount = (data.get("discount") or "").strip()
         channel = (data.get("channel") or "").strip()
+        desc = (data.get("desc") or "").strip()
         period_start = (data.get("periodStart") or "").strip()
         period_end = (data.get("periodEnd") or "").strip()
         source_url = data.get("sourceUrl")
@@ -240,7 +241,7 @@ class handler(BaseHTTPRequestHandler):
         if not brand or not title or not period_start or not period_end:
             self._send_json(400, {"error": "브랜드명, 제목, 시작일, 종료일은 필수예요."})
             return
-        if category not in ("fashion", "beauty", "food", "popup"):
+        if category not in ("fashion", "beauty", "food", "popup", "living"):
             self._send_json(400, {"error": "카테고리를 선택해주세요."})
             return
 
@@ -256,7 +257,7 @@ class handler(BaseHTTPRequestHandler):
             "period_start": period_start,
             "period_end": period_end,
             "channel": channel,
-            "desc": "",
+            "desc": desc,
             "tags": [],
             "image": "",
             "domain": "",

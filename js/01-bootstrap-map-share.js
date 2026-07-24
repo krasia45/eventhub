@@ -93,7 +93,11 @@ async function shareToKakao(ev, shareUrl) {
 
 /* ---------- 공유하기: 인스타그램/페이스북/X(트위터)/카카오톡 4개만 선택지로 제공 ---------- */
 function openShareFlow(ev) {
-  const shareUrl = window.location.href;
+  // 이전엔 그냥 현재 페이지 주소를 공유해서, 받은 사람이 열면 그 이벤트가 아니라
+  // 홈 화면이 떴다. openSheet()가 주소창을 ?event=id로 이미 바꿔주므로, 지금은
+  // 시트가 열려있는 상태에서 공유 버튼을 누른다는 전제하에 location.href를 써도 되지만,
+  // 만약을 대비해 getEventShareUrl()로 명시적으로 조립한다.
+  const shareUrl = getEventShareUrl(ev);
   openShareMenu(ev, shareUrl);
 }
 
@@ -135,19 +139,26 @@ function openShareMenu(ev, shareUrl) {
         } catch { showToast(`링크: ${shareUrl}`); }
       }
 
-      document.getElementById("shareMenuOverlay").classList.remove("open");
+      closeShareMenu();
+      popModalHistory();
     });
   });
 
   document.getElementById("shareMenuOverlay").classList.add("open");
   document.body.style.overflow = "hidden";
+  pushModalHistory(closeShareMenu);
+}
+
+function closeShareMenu() {
+  document.getElementById("shareMenuOverlay").classList.remove("open");
 }
 
 document.getElementById("shareMenuClose").addEventListener("click", () => {
-  document.getElementById("shareMenuOverlay").classList.remove("open");
+  closeShareMenu();
+  popModalHistory();
 });
 document.getElementById("shareMenuOverlay").addEventListener("click", (e) => {
-  if (e.target.id === "shareMenuOverlay") document.getElementById("shareMenuOverlay").classList.remove("open");
+  if (e.target.id === "shareMenuOverlay") { closeShareMenu(); popModalHistory(); }
 });
 
 async function renderEventMap(ev) {
@@ -210,4 +221,56 @@ function getKakaoRouteLink(ev) {
 function getNaverMapLink(ev) {
   // 네이버지도 검색 링크 (좌표+브랜드명 기반)
   return `https://map.naver.com/p/search/${encodeURIComponent(ev.brand + " " + ev.title)}`;
+}
+
+/* ==================================================================
+   뒤로가기(히스토리 API) 연동 + 공유 링크 정상화 공통 유틸
+   ------------------------------------------------------------------
+   모달/바텀시트가 열려도 브라우저(폰)의 시스템 뒤로가기가 그 존재를
+   전혀 몰라서, 뒤로가기를 눌러도 안 닫히고 페이지를 벗어나버리는
+   문제를 해결한다. 이벤트 상세시트처럼 "고유 링크가 있어야 하는" 모달은
+   url 인자로 실제 주소창 URL도 같이 바꿔서, 공유했을 때 그 이벤트로
+   바로 열리게 한다 (그냥 뒤로가기만 감지하면 되는 모달은 url을 생략하면 됨).
+
+   사용법: 모달을 열 때 pushModalHistory(닫는함수, [선택:URL])를 호출하고,
+   "X 버튼"이나 "바깥 영역 클릭"으로 닫을 때는 실제 닫기 함수 호출
+   직후에 popModalHistory()도 같이 호출한다.
+   ================================================================== */
+const modalCloseStack = []; // 열려있는 모달들의 "닫기 함수" 스택 (맨 위 = 가장 최근에 연 모달)
+let suppressNextPopstate = false;
+
+function pushModalHistory(closeFn, url) {
+  modalCloseStack.push(closeFn);
+  history.pushState({ eventhubModalDepth: modalCloseStack.length }, "", url || location.href);
+}
+
+// 버튼/바깥영역 클릭 등 "UI 조작으로" 모달을 닫을 때 호출.
+// 실제 화면을 닫는 로직(예: closeSheet())은 호출한 쪽에서 이미 실행했다고 가정하고,
+// 여기서는 히스토리 스택만 정리한다. history.back()이 이전 URL로 자동 복원해준다.
+function popModalHistory() {
+  if (modalCloseStack.length === 0) return;
+  modalCloseStack.pop();
+  suppressNextPopstate = true;
+  history.back();
+}
+
+window.addEventListener("popstate", () => {
+  if (suppressNextPopstate) {
+    suppressNextPopstate = false;
+    return;
+  }
+  // 시스템 뒤로가기(제스처/버튼)가 눌린 경우: 가장 최근에 연 모달을 닫는다
+  if (modalCloseStack.length > 0) {
+    const closeFn = modalCloseStack.pop();
+    closeFn();
+  }
+});
+
+// 이벤트 상세시트 전용 공유 URL. 주소창 URL이 이미 ?event=id로 맞춰져 있으면
+// 그걸 그대로 쓰고(공유 시점에 시트가 열려있는 상태라 항상 맞음), 혹시 모를
+// 예외 상황을 대비해 안전하게 직접 조립하는 경로도 마련해둔다.
+function getEventShareUrl(ev) {
+  const url = new URL(location.href);
+  url.searchParams.set("event", ev.id);
+  return url.toString();
 }

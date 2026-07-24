@@ -83,7 +83,7 @@ async function renderNearbySection() {
   nearbyHasData = true;
   section.hidden = false;
 
-  scroll.innerHTML = nearby.map(({ ev, dist }) => {
+  scroll.innerHTML = nearby.map(({ ev, dist }, idx) => {
     const distLabel = dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`;
     const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
     const cardDiscountText = escapeHtml((ev.discount || "").split(/\s+\+\s+/)[0].trim());
@@ -103,6 +103,7 @@ async function renderNearbySection() {
         </div>
         <div class="nearby-card-brand-row">
           <span class="card-brand-left">
+            <span class="nearby-rank-num ${idx < 3 ? "nearby-rank-hot" : "nearby-rank-alt"}">${idx + 1}</span>
             ${logoHtml}
             <p class="nearby-card-brand">${escapeHtml(ev.brand)}</p>
           </span>
@@ -169,6 +170,7 @@ function openCouponWallet() {
   renderCouponWallet();
   couponWalletOverlay.classList.add("open");
   document.body.style.overflow = "hidden";
+  pushModalHistory(closeCouponWallet);
 }
 
 function closeCouponWallet() {
@@ -224,6 +226,7 @@ function renderCouponWallet() {
   listEl.querySelectorAll(".coupon-wallet-item").forEach(item => {
     item.addEventListener("click", () => {
       closeCouponWallet();
+      popModalHistory();
       openSheet(item.dataset.id);
     });
   });
@@ -237,7 +240,7 @@ function renderCouponWallet() {
   });
 }
 
-document.getElementById("couponWalletClose").addEventListener("click", closeCouponWallet);
+document.getElementById("couponWalletClose").addEventListener("click", () => { closeCouponWallet(); popModalHistory(); });
 document.getElementById("couponWalletClearBtn").addEventListener("click", () => {
   const likedList = EVENTS.filter(ev => likedEvents.has(ev.id));
   if (likedList.length === 0) return;
@@ -260,6 +263,7 @@ function openRecentView() {
   renderRecentView();
   recentViewOverlay.classList.add("open");
   document.body.style.overflow = "hidden";
+  pushModalHistory(closeRecentView);
 }
 
 function closeRecentView() {
@@ -296,6 +300,7 @@ function renderRecentView() {
   listEl.querySelectorAll(".coupon-wallet-item").forEach(item => {
     item.addEventListener("click", () => {
       closeRecentView();
+      popModalHistory();
       openSheet(item.dataset.id);
     });
   });
@@ -314,7 +319,7 @@ function removeRecentlyViewed(eventId) {
   localStorage.setItem("eventhub-recent", JSON.stringify(recentlyViewed));
 }
 
-document.getElementById("recentViewClose").addEventListener("click", closeRecentView);
+document.getElementById("recentViewClose").addEventListener("click", () => { closeRecentView(); popModalHistory(); });
 document.getElementById("recentViewClearBtn").addEventListener("click", () => {
   if (recentlyViewed.length === 0) return;
   if (!confirm(`최근 본 이벤트 기록 ${recentlyViewed.length}개를 전부 삭제할까요?`)) return;
@@ -323,7 +328,7 @@ document.getElementById("recentViewClearBtn").addEventListener("click", () => {
   renderRecentView();
 });
 recentViewOverlay.addEventListener("click", (e) => {
-  if (e.target === recentViewOverlay) closeRecentView();
+  if (e.target === recentViewOverlay) { closeRecentView(); popModalHistory(); }
 });
 document.getElementById("walletTabRow").addEventListener("click", (e) => {
   const tab = e.target.closest(".wallet-tab");
@@ -333,5 +338,5 @@ document.getElementById("walletTabRow").addEventListener("click", (e) => {
   renderCouponWallet();
 });
 couponWalletOverlay.addEventListener("click", (e) => {
-  if (e.target === couponWalletOverlay) closeCouponWallet();
+  if (e.target === couponWalletOverlay) { closeCouponWallet(); popModalHistory(); }
 });

@@ -165,6 +165,7 @@ async function renderNotificationList() {
       el.addEventListener("click", (e) => {
         if (e.target.closest(".notif-item-remove")) return;
         closeMoreMenu();
+        popModalHistory();
         openSheet(el.dataset.id);
       });
     });
@@ -207,22 +208,28 @@ function openMoreMenu() {
   document.getElementById("moreMenuOverlay").classList.add("open");
   document.body.style.overflow = "hidden";
   renderNotificationList();
+  pushModalHistory(closeMoreMenu);
 }
 function closeMoreMenu() {
   document.getElementById("moreMenuOverlay").classList.remove("open");
   document.body.style.overflow = "";
 }
-document.getElementById("moreMenuClose").addEventListener("click", closeMoreMenu);
+document.getElementById("moreMenuClose").addEventListener("click", () => { closeMoreMenu(); popModalHistory(); });
 document.getElementById("moreMenuOverlay").addEventListener("click", (e) => {
-  if (e.target.id === "moreMenuOverlay") closeMoreMenu();
+  if (e.target.id === "moreMenuOverlay") { closeMoreMenu(); popModalHistory(); }
 });
-// 더보기 메뉴 안의 버튼을 누르면 각 기능 실행 후 메뉴도 자동으로 닫힘
+// 더보기 메뉴 안의 버튼을 누르면 각 기능 실행 후 메뉴도 자동으로 닫힘.
+// (캘린더 버튼은 별도 리스너에서 먼저 popModalHistory까지 마치므로, 여기서는 UI만 한 번 더 정리해도 무해함)
 document.querySelector(".more-menu-grid").addEventListener("click", (e) => {
   if (e.target.closest(".quick-menu-btn")) closeMoreMenu();
 });
 
 /* ---------- 퀵메뉴 4버튼 (더보기 메뉴 안에 위치) ---------- */
-document.getElementById("quickMenuCalendarBtn").addEventListener("click", () => openCalendar());
+document.getElementById("quickMenuCalendarBtn").addEventListener("click", () => {
+  closeMoreMenu();
+  popModalHistory();
+  openCalendar();
+});
 
 document.getElementById("quickMenuLocalBtn").addEventListener("click", () => {
   if (!gpsFilterActive) toggleGpsFilter();

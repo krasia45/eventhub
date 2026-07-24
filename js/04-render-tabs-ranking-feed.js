@@ -1,4 +1,59 @@
 /* ---------- Render: Category Tabs ---------- */
+/* ---------- 팝업 탭 전용: 관심 지역 배너 (Luma의 "지역 구독" 벤치마킹) ----------
+   새 DB 테이블을 따로 만들지 않고, 온보딩에서 이미 고른 지역 키워드
+   (userInterestKeywords, 10-auth.js에서 로그인 시 채워짐)를 재사용한다.
+   관심 지역을 등록해둔 사용자에게는 "그 지역 팝업이 몇 개 있는지" 바로 보여주고,
+   등록 안 한 사용자에게는 지역 칩을 보여줘서 온보딩 편집 화면으로 유도한다. */
+let currentRegionFilter = null; // 배너에서 지역을 눌러 필터링 중이면 그 지역 키워드(예: "#성수동")
+
+function renderPopupRegionBanner() {
+  const el = document.getElementById("popupRegionBanner");
+  if (!el) return;
+  if (currentCategory !== "popup") { el.hidden = true; el.innerHTML = ""; currentRegionFilter = null; return; }
+
+  const allRegions = (typeof KEYWORD_POOL !== "undefined") ? KEYWORD_POOL.region : [];
+  const myRegions = allRegions.filter(kw => userInterestKeywords.includes(kw));
+
+  el.hidden = false;
+
+  if (myRegions.length === 0) {
+    el.innerHTML = `
+      <p class="popup-region-banner-title">🗺️ 관심 지역을 등록해두면 새 팝업이 뜰 때 먼저 보여드려요</p>
+      <div class="popup-region-chip-row">
+        ${allRegions.map(r => `<span class="popup-region-chip">${escapeHtml(r.replace("#", ""))}</span>`).join("")}
+      </div>
+    `;
+    const row = el.querySelector(".popup-region-chip-row");
+    if (row) {
+      row.addEventListener("click", () => {
+        if (!currentUser) { showToast("로그인하시면 관심 지역을 등록할 수 있어요."); openAuthModal(); return; }
+        openOnboarding(true, [...selectedKeywords]);
+      });
+    }
+    return;
+  }
+
+  el.innerHTML = `
+    <p class="popup-region-banner-title">🗺️ 내 관심 지역</p>
+    <div class="popup-region-chip-row">
+      ${myRegions.map(kw => {
+        const hints = (typeof KEYWORD_MATCH_CONFIG !== "undefined" && KEYWORD_MATCH_CONFIG[kw]) ? KEYWORD_MATCH_CONFIG[kw].textHints : [];
+        const count = EVENTS.filter(ev => ev.category === "popup" && isEventLive(ev) && hints.some(h => (ev.channel || "").includes(h))).length;
+        const label = kw.replace("#", "");
+        return `<button type="button" class="popup-region-chip ${currentRegionFilter === kw ? "active" : ""}" data-region="${kw}">${escapeHtml(label)} ${count}개</button>`;
+      }).join("")}
+    </div>
+  `;
+  el.querySelectorAll(".popup-region-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const kw = chip.dataset.region;
+      currentRegionFilter = currentRegionFilter === kw ? null : kw; // 같은 걸 다시 누르면 해제
+      renderPopupRegionBanner();
+      renderFeed();
+    });
+  });
+}
+
 function renderCategoryTabs() {
   const nav = document.getElementById("categoryTabs");
   nav.innerHTML = CATEGORIES.map(cat => `
@@ -17,6 +72,7 @@ function renderCategoryTabs() {
       renderCategoryTabs();
       renderBrandFilter();
       renderSubcatRow();
+      renderPopupRegionBanner();
       renderFeed();
       renderRanking();
       updateDiscoverySectionsVisibility();
@@ -315,6 +371,7 @@ function renderFeed() {
   else if (selectedBrands.size > 1) conditionParts.push(`${[...selectedBrands][0]} 외 ${selectedBrands.size - 1}곳`);
   if (currentDiscountFilter === "1+1") conditionParts.push("1+1");
   else if (currentDiscountFilter === "50plus") conditionParts.push("50%+ 할인");
+  else if (currentDiscountFilter === "newopen") conditionParts.push("신규오픈");
   if (currentSubTag) conditionParts.push(currentSubTag);
   const titleIcon = conditionParts.length > 0 ? "🎯" : currentCat.icon;
   const titleText = conditionParts.length > 0 ? `${conditionParts.join(" · ")} 이벤트` : baseLabel;
@@ -331,7 +388,13 @@ function renderFeed() {
   grid.innerHTML = filtered.map(ev => renderEventCardHtml(ev)).join("");
 
   grid.querySelectorAll(".event-card").forEach(card => {
-    card.addEventListener("click", () => openSheet(card.dataset.id));
+    card.addEventListener("click", () => {
+      if (card.dataset.id.startsWith("mock-")) {
+        showToast("예시 데이터예요 — 실제 이벤트가 승인되면 상세페이지로 연결돼요.");
+        return;
+      }
+      openSheet(card.dataset.id);
+    });
   });
 
   grid.querySelectorAll(".card-like-btn").forEach(btn => {

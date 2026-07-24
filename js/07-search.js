@@ -182,20 +182,26 @@ function openSearchResults(query) {
     grid.querySelectorAll(".card-like-btn").forEach(btn => {
       btn.addEventListener("click", (e) => { e.stopPropagation(); toggleLike(btn.dataset.id); });
     });
-    grid.querySelectorAll(".card-logo-badge img").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+    grid.querySelectorAll(".card-brand-logo-sm").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
   }
 
   document.getElementById("searchResultsOverlay").classList.add("open");
   document.body.style.overflow = "hidden";
+  pushModalHistory(closeSearchResults);
+}
+
+function closeSearchResults() {
+  document.getElementById("searchResultsOverlay").classList.remove("open");
+  document.body.style.overflow = "";
 }
 
 document.getElementById("searchResultsClose").addEventListener("click", () => {
-  document.getElementById("searchResultsOverlay").classList.remove("open");
-  document.body.style.overflow = "";
+  closeSearchResults();
+  popModalHistory();
 });
 document.getElementById("searchResultsOverlay").addEventListener("click", (e) => {
   if (e.target.id === "searchResultsOverlay") {
-    document.getElementById("searchResultsOverlay").classList.remove("open");
-    document.body.style.overflow = "";
+    closeSearchResults();
+    popModalHistory();
   }
 });
