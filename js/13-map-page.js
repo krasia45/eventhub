@@ -259,7 +259,12 @@ async function renderMapPageMap(events) {
     mapPageKakaoMapInstance.setBounds(bounds);
 
   } catch (err) {
-    console.error("지도 페이지 카카오맵 로드 오류:", err);
+    console.error(
+      "지도 페이지 카카오맵 로드 오류:", err,
+      "\n→ 가장 흔한 원인: 카카오 디벨로퍼스 콘솔에 이 배포 도메인이 'Web 플랫폼'으로 등록 안 됨.\n" +
+      "  카카오 디벨로퍼스 → 내 애플리케이션 → 해당 앱 → 플랫폼 → Web 플랫폼 등록에서\n" +
+      "  https://krasia-eventhub-eventhub2.vercel.app 이 정확히 등록돼 있는지 확인해주세요."
+    );
     mapEl.innerHTML = `<div class="map-page-map-status">지도를 불러오지 못했어요. 아래 목록으로 확인해주세요.</div>`;
   }
 }

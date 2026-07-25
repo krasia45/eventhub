@@ -39,12 +39,21 @@ def _naver_request(url, timeout=10):
 
 def _extract_token_hash(link_data):
     """generate_link 응답에서 token_hash를 뽑아낸다.
-    Supabase 버전에 따라 필드명이 hashed_token / token_hash 등으로 다를 수 있어서,
-    직접 필드 + action_link URL 파싱까지 순서대로 시도해서 최대한 안전하게 뽑는다."""
-    for key in ("hashed_token", "token_hash", "email_otp"):
+    ⚠️ 실제 배포 후 확인해보니(2026-07-24), Supabase Admin API의 generate_link 응답은
+    hashed_token이 최상위가 아니라 properties 객체 안에 들어있다:
+        { "properties": { "hashed_token": "...", "action_link": "..." }, ... }
+    이걸 최상위에서만 찾도록 잘못 만들어서 못 찾거나 엉뚱한 값을 집어 verifyOtp에
+    넘기는 바람에 "invalid JWT: unable to parse or verify signature" 에러가 났었다.
+    properties 안을 최우선으로 보고, 혹시 몰라 최상위/action_link도 순서대로 시도한다.
+    (email_otp는 6자리 숫자 코드라 token_hash로 쓸 수 없는 별개의 값이므로 후보에서 제외했다.)"""
+    props = link_data.get("properties") or {}
+    for key in ("hashed_token", "token_hash"):
+        if props.get(key):
+            return props[key]
+    for key in ("hashed_token", "token_hash"):
         if link_data.get(key):
             return link_data[key]
-    action_link = link_data.get("action_link") or link_data.get("properties", {}).get("action_link", "")
+    action_link = props.get("action_link") or link_data.get("action_link", "")
     if action_link:
         parsed = urllib.parse.urlparse(action_link)
         qs = urllib.parse.parse_qs(parsed.query)

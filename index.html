@@ -119,11 +119,11 @@
     <!-- ===== 내 주변 인기 이벤트 (GPS 기반, 위치 권한 없으면 서울 기준으로 조용히 대체) ===== -->
     <section class="nearby-section" id="nearbySection" hidden>
       <div class="section-head">
-        <div class="nearby-title-row">
-          <h2 id="nearbyTitle"><span class="nearby-title-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8"/></svg></span> 내 주변 인기 이벤트</h2>
+        <h2 id="nearbyTitle"><span class="nearby-title-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8"/></svg></span> 내 주변 인기 이벤트</h2>
+        <div class="nearby-gps-row">
+          <button class="gps-chip" id="gpsFilterChip">📍 내 주변 20km</button>
           <button class="map-page-open-btn" id="mapPageOpenBtn" aria-label="지도에서 보기">🗺️</button>
         </div>
-        <button class="gps-chip" id="gpsFilterChip">📍 내 주변 20km</button>
       </div>
       <div class="nearby-scroll" id="nearbyScroll"></div>
     </section>

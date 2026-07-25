@@ -91,28 +91,61 @@ async function shareToKakao(ev, shareUrl) {
   });
 }
 
-/* ---------- 공유하기: 인스타그램/페이스북/X(트위터)/카카오톡 4개만 선택지로 제공 ---------- */
-function openShareFlow(ev) {
-  // 이전엔 그냥 현재 페이지 주소를 공유해서, 받은 사람이 열면 그 이벤트가 아니라
-  // 홈 화면이 떴다. openSheet()가 주소창을 ?event=id로 이미 바꿔주므로, 지금은
-  // 시트가 열려있는 상태에서 공유 버튼을 누른다는 전제하에 location.href를 써도 되지만,
-  // 만약을 대비해 getEventShareUrl()로 명시적으로 조립한다.
+/* ---------- 공유하기 ----------
+   모바일 웹에서 성숙한 앱들이 쓰는 표준 방식: navigator.share()로 OS 네이티브 공유
+   시트를 띄우면, 사용자가 그 기기에 실제로 설치된 앱(카카오톡/인스타그램/페이스북/X/
+   메시지 등)으로 바로 넘길 수 있다. 이러면 지금까지 겪던 문제들이 한 번에 우회된다:
+   - 카카오: JS SDK 인증(도메인 등록) 문제 없이, 진짜 설치된 카카오톡 앱으로 바로 감
+   - 페이스북/X: 브라우저에서 로그인 요구하는 sharer 웹페이지가 아니라, 설치된 앱으로 바로 감
+   - 인스타그램: "링크만 복사됨" 대신, OS 공유시트가 인스타그램 스토리 공유까지 직접 연결해줌
+   지원 안 하는 환경(주로 데스크톱 브라우저)에서는 기존 커스텀 4개 그리드로 자연스럽게 폴백. */
+async function openShareFlow(ev) {
   const shareUrl = getEventShareUrl(ev);
+  const shareData = {
+    title: `${ev.brand} · ${ev.title}`,
+    text: `${ev.brand} · ${ev.title} — ${ev.discount}`,
+    url: shareUrl,
+  };
+
+  if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+    try {
+      await navigator.share(shareData);
+      return; // 네이티브 시트로 정상 공유 완료
+    } catch (err) {
+      if (err && err.name === "AbortError") return; // 사용자가 공유 시트에서 직접 취소한 것 — 폴백하지 않고 조용히 종료
+      console.warn("네이티브 공유 실패, 커스텀 메뉴로 대체:", err);
+      // 그 외 실패(권한 정책 등)는 아래 커스텀 그리드로 폴백
+    }
+  }
+
   openShareMenu(ev, shareUrl);
 }
 
 function openShareMenu(ev, shareUrl) {
   const grid = document.getElementById("sharePlatformGrid");
   const platforms = [
-    { id: "instagram", label: "인스타그램", emoji: "📸", bg: "linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)", color: "#fff" },
-    { id: "facebook", label: "페이스북", emoji: "📘", bg: "#1877F2", color: "#fff" },
-    { id: "x", label: "X(트위터)", emoji: "𝕏", bg: "#000", color: "#fff" },
-    { id: "kakao", label: "카카오톡", emoji: "💬", bg: "#FEE500", color: "#191919" },
+    {
+      id: "instagram", label: "인스타그램", color: "#fff",
+      bg: "linear-gradient(45deg,#F58529,#FEDA77,#DD2A7B,#8134AF,#515BD4)",
+      svg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" stroke="white" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" stroke="white" stroke-width="1.8"/><circle cx="17.4" cy="6.6" r="1.1" fill="white"/></svg>`,
+    },
+    {
+      id: "facebook", label: "페이스북", color: "#fff", bg: "#1877F2",
+      svg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M15.5 8.5h-2c-.3 0-.5.2-.5.5v2h2.4l-.3 2.5H13v7h-3v-7H8v-2.5h2v-2.2c0-2 1.2-3.3 3.4-3.3h2.1v2.5Z" fill="white"/></svg>`,
+    },
+    {
+      id: "x", label: "X(트위터)", color: "#fff", bg: "#000",
+      svg: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none"><path d="M13.6 10.6 20 3h-2l-5.4 6.1L8.1 3H3l6.7 9.4L3 20h2l5.7-6.5L15.9 20H21l-7.4-9.4Zm-2 2.3-.7-1L5.9 4.6h2.1l4.2 5.9.7 1 5.5 7.7h-2.1l-4.5-6.3Z" fill="white"/></svg>`,
+    },
+    {
+      id: "kakao", label: "카카오톡", color: "#191919", bg: "#FEE500",
+      svg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M12 4C6.9 4 2.8 7.2 2.8 11.1c0 2.5 1.7 4.7 4.2 6-.2.7-.8 2.6-.9 3-.1.5.2.5.4.4.2-.1 2.4-1.6 3.4-2.3.7.1 1.4.2 2.1.2 5.1 0 9.2-3.2 9.2-7.1S17.1 4 12 4Z" fill="#191919"/></svg>`,
+    },
   ];
 
   grid.innerHTML = platforms.map(p => `
     <button type="button" class="share-platform-btn" data-platform="${p.id}" style="background:${p.bg}; color:${p.color};">
-      <span class="share-platform-emoji">${p.emoji}</span>
+      <span class="share-platform-icon">${p.svg}</span>
       <span>${p.label}</span>
     </button>
   `).join("");
@@ -125,7 +158,14 @@ function openShareMenu(ev, shareUrl) {
 
       if (platform === "kakao") {
         try { await shareToKakao(ev, shareUrl); }
-        catch { showToast("카카오톡 공유를 불러오지 못했어요."); }
+        catch (err) {
+          console.error(
+            "카카오톡 공유 실패:", err,
+            "\n→ 흔한 원인: 카카오 디벨로퍼스에서 이 앱에 '카카오톡 공유' 제품이 활성화 안 됐거나,\n" +
+            "  Web 플랫폼 도메인 등록이 안 돼 있을 수 있어요(지도 SDK 문제와 같은 원인 계열)."
+          );
+          showToast("카카오톡 공유를 불러오지 못했어요.");
+        }
       } else if (platform === "facebook") {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "noopener,noreferrer");
       } else if (platform === "x") {

@@ -71,7 +71,7 @@
   "crons": [
     {
       "path": "/api/cron_jobs?job=candidates_scan",
-      "schedule": "0 3 * * 1"
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/cron_jobs?job=check_broken_links",

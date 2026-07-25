@@ -11,6 +11,14 @@
   h2 { font-size: 16px; margin-top: 28px; }
   .key-bar { display: flex; gap: 8px; margin-bottom: 20px; }
   .key-bar input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+  .key-bar select {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    min-width: 130px;
+  }
   .key-bar button { padding: 10px 16px; border-radius: 8px; background: #1a1a1a; color: #fff; border: none; }
 
   .register-form { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #eee; display: grid; grid-template-columns: 2fr 1fr auto; gap: 8px; }
@@ -162,14 +170,15 @@ function getKey() {
 /* ── 주소 → 좌표 변환 ──
    기존엔 브라우저에서 카카오맵 JS SDK를 직접 불러와 처리했는데, 이 방식은 카카오
    개발자 콘솔에 배포 도메인이 정확히 등록돼 있어야만 동작해서 "SDK 로드 실패"가
-   났었습니다. 대신 서버(/api/geocode)에서 카카오 REST API를 호출하도록 바꿔서
-   도메인 등록 여부와 무관하게 안정적으로 동작하게 했습니다. */
+   났었습니다. 대신 서버(/api/admin_url_register, mode=geocode)에서 카카오 REST API를
+   호출하도록 바꿔서 도메인 등록 여부와 무관하게 안정적으로 동작하게 했습니다.
+   (예전엔 별도 파일 /api/geocode였는데, Vercel Hobby 플랜 함수 개수 제한 때문에 병합) */
 async function geocodeAddress(query) {
   const key = getKey();
-  const res = await fetch("/api/geocode", {
+  const res = await fetch("/api/admin_url_register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ key, query }),
+    body: JSON.stringify({ key, mode: "geocode", query }),
   });
 
   let data;
@@ -556,11 +565,11 @@ async function loadPublishedEvents() {
   const listEl = document.getElementById("publishedEventsList");
   listEl.innerHTML = `<p class="empty">불러오는 중...</p>`;
 
-  const qs = new URLSearchParams({ key });
+  const qs = new URLSearchParams({ key, resource: "events" });
   if (search) qs.set("search", search);
   if (category) qs.set("category", category);
 
-  const res = await fetch(`/api/admin_events?${qs.toString()}`);
+  const res = await fetch(`/api/admin_candidates?${qs.toString()}`);
   const data = await res.json();
 
   if (!res.ok) {
@@ -645,7 +654,7 @@ async function savePublishedEvent(id) {
   };
   const cleanPatch = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== ""));
 
-  const res = await fetch("/api/admin_events", {
+  const res = await fetch("/api/admin_candidates", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, action: "update", eventId: id, patch: cleanPatch }),
@@ -658,7 +667,7 @@ async function savePublishedEvent(id) {
 
 async function deactivateEvent(id) {
   const key = getKey();
-  const res = await fetch("/api/admin_events", {
+  const res = await fetch("/api/admin_candidates", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, action: "deactivate", eventId: id }),
@@ -670,7 +679,7 @@ async function deactivateEvent(id) {
 
 async function reactivateEvent(id) {
   const key = getKey();
-  const res = await fetch("/api/admin_events", {
+  const res = await fetch("/api/admin_candidates", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, action: "reactivate", eventId: id }),
@@ -683,7 +692,7 @@ async function reactivateEvent(id) {
 async function deleteEventConfirm(id) {
   if (!confirm("정말 완전히 삭제할까요? 이 작업은 되돌릴 수 없고, 이 이벤트의 조회수·찜 기록도 함께 사라져요.\n\n일단 숨기고 싶은 거라면 '비활성화'를 추천해요.")) return;
   const key = getKey();
-  const res = await fetch("/api/admin_events", {
+  const res = await fetch("/api/admin_candidates", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, action: "delete", eventId: id }),

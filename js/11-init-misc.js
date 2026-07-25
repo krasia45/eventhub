@@ -262,3 +262,24 @@ async function openFollowedBrandsPanel() {
     console.error("팔로우 목록 조회 오류:", err);
   }
 }
+
+/* ---------- 헤더 실제 높이 → CSS 변수 반영 (카테고리 탭이 헤더 아래에 정확히 붙게 하기 위함) ----------
+   .category-tabs가 sticky top값을 84px로 고정해뒀었는데, .header의 padding이
+   clamp()라서 화면 크기/폰트 렌더링에 따라 실제 헤더 높이가 84px보다 커지는 경우가 있었고,
+   그러면 카테고리 탭이 스크롤 시 헤더 뒤로 살짝 가려서 글자가 잘려 보이는 문제가 있었다.
+   고정값 대신 실제 헤더 높이를 측정해서 --header-height로 반영하면 화면 크기가 어떻든
+   정확히 헤더 바로 아래에 탭이 이어붙는다. */
+function syncHeaderHeightVar() {
+  const header = document.querySelector(".header");
+  if (!header) return;
+  document.documentElement.style.setProperty("--header-height", `${header.offsetHeight}px`);
+}
+syncHeaderHeightVar();
+window.addEventListener("resize", syncHeaderHeightVar);
+window.addEventListener("orientationchange", syncHeaderHeightVar);
+// 폰트가 늦게 로드되면 텍스트 크기가 바뀌면서 헤더 높이도 미세하게 달라질 수 있어 재동기화
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(syncHeaderHeightVar);
+}
+// 날씨 위젯처럼 헤더 안 내용이 비동기로 채워지는 경우를 대비해 초기 로드 직후 한 번 더 재확인
+setTimeout(syncHeaderHeightVar, 500);

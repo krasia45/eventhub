@@ -2,10 +2,11 @@
 .stat-heart { color: #FF3B30; font-weight: 700; }
 
 /* ===================== 내 주변 인기 이벤트 ===================== */
-.nearby-title-row {
+.nearby-gps-row {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 .map-page-open-btn {
   flex-shrink: 0;
@@ -87,6 +88,7 @@
 .nearby-card-mode-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 5px;
   margin-top: 5px;
   flex-wrap: wrap;
