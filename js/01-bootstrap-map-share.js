@@ -91,33 +91,12 @@ async function shareToKakao(ev, shareUrl) {
   });
 }
 
-/* ---------- 공유하기 ----------
-   모바일 웹에서 성숙한 앱들이 쓰는 표준 방식: navigator.share()로 OS 네이티브 공유
-   시트를 띄우면, 사용자가 그 기기에 실제로 설치된 앱(카카오톡/인스타그램/페이스북/X/
-   메시지 등)으로 바로 넘길 수 있다. 이러면 지금까지 겪던 문제들이 한 번에 우회된다:
-   - 카카오: JS SDK 인증(도메인 등록) 문제 없이, 진짜 설치된 카카오톡 앱으로 바로 감
-   - 페이스북/X: 브라우저에서 로그인 요구하는 sharer 웹페이지가 아니라, 설치된 앱으로 바로 감
-   - 인스타그램: "링크만 복사됨" 대신, OS 공유시트가 인스타그램 스토리 공유까지 직접 연결해줌
-   지원 안 하는 환경(주로 데스크톱 브라우저)에서는 기존 커스텀 4개 그리드로 자연스럽게 폴백. */
-async function openShareFlow(ev) {
+/* ---------- 공유하기: 인스타그램/페이스북/X(트위터)/카카오톡 로고 그리드로 항상 표시 ----------
+   (한때 navigator.share()로 OS 네이티브 시트를 우선 띄우게 해봤는데, 데스크톱에서는
+   AirDrop/Mail/메모 같은 브랜드와 무관한 OS 공유 옵션만 나와서 오히려 불편하다는 피드백을
+   받고 되돌림. 항상 이 커스텀 그리드를 보여준다.) */
+function openShareFlow(ev) {
   const shareUrl = getEventShareUrl(ev);
-  const shareData = {
-    title: `${ev.brand} · ${ev.title}`,
-    text: `${ev.brand} · ${ev.title} — ${ev.discount}`,
-    url: shareUrl,
-  };
-
-  if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
-    try {
-      await navigator.share(shareData);
-      return; // 네이티브 시트로 정상 공유 완료
-    } catch (err) {
-      if (err && err.name === "AbortError") return; // 사용자가 공유 시트에서 직접 취소한 것 — 폴백하지 않고 조용히 종료
-      console.warn("네이티브 공유 실패, 커스텀 메뉴로 대체:", err);
-      // 그 외 실패(권한 정책 등)는 아래 커스텀 그리드로 폴백
-    }
-  }
-
   openShareMenu(ev, shareUrl);
 }
 

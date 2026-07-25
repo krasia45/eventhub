@@ -305,6 +305,7 @@
 }
 .card-dday-inline {
   flex-shrink: 0;
+  white-space: nowrap;
   font-size: 10.5px;
   font-weight: 800;
   color: #fff;
@@ -361,9 +362,9 @@
   gap: 3px;
   font-size: 10.5px;
   font-weight: 700;
-  color: var(--mint-dark);
-  background: var(--mint-light);
-  padding: 2px 8px;
+  color: #fff;
+  background: var(--mint-dark);
+  padding: 3px 9px;
   border-radius: 999px;
   margin-bottom: 6px;
 }

@@ -396,6 +396,8 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
 /* ---------- D-day 배지 (이미지 우측 상단) ---------- */
 .sheet-dday-inline {
   display: inline-block;
+  flex-shrink: 0;
+  white-space: nowrap;
   background: var(--accent);
   color: #fff;
   font-size: 11px;

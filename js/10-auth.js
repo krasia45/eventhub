@@ -244,7 +244,6 @@ async function handleNaverCallbackIfPresent() {
       return;
     }
     const { error } = await supabaseClient.auth.verifyOtp({
-      email: data.email,
       token_hash: data.tokenHash,
       type: "magiclink",
     });

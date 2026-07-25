@@ -124,7 +124,7 @@
   overflow-x: auto;
   scrollbar-width: none;
   position: sticky;
-  top: 84px;
+  top: var(--header-height, 84px);
   z-index: 29;
   background: var(--bg);
   max-width: var(--max-page);
@@ -134,7 +134,7 @@
 .category-tabs::-webkit-scrollbar { display: none; }
 
 @media (min-width: 760px) {
-  .category-tabs { flex-wrap: wrap; overflow: visible; top: 76px; }
+  .category-tabs { flex-wrap: wrap; overflow: visible; }
 }
 
 .tab-pill {

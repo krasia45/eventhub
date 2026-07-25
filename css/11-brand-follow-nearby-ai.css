@@ -88,8 +88,7 @@
 .nearby-card-mode-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 5px;
+  gap: 6px;
   margin-top: 5px;
   flex-wrap: wrap;
 }
