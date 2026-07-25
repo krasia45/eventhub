@@ -91,10 +91,44 @@ async function shareToKakao(ev, shareUrl) {
   });
 }
 
-/* ---------- 공유하기: 인스타그램/페이스북/X(트위터)/카카오톡 로고 그리드로 항상 표시 ----------
-   (한때 navigator.share()로 OS 네이티브 시트를 우선 띄우게 해봤는데, 데스크톱에서는
-   AirDrop/Mail/메모 같은 브랜드와 무관한 OS 공유 옵션만 나와서 오히려 불편하다는 피드백을
-   받고 되돌림. 항상 이 커스텀 그리드를 보여준다.) */
+/* ---------- 모바일 OS 감지 + "앱으로 열기 시도 → 실패하면 스토어로" 공통 로직 ----------
+   커스텀 URL 스킴(fb://, twitter:// 등)은 앱이 없을 때 그냥 조용히 아무 반응 없이 실패하는
+   경우가 많아 신뢰하기 어렵다는 걸 확인했음. 대신 표준 웹 URL(sharer.php, intent/tweet)은
+   실제로 유니버설 링크로 등록돼 있어서, 그 자체가 이미 "앱 설치돼 있으면 앱으로 자동 전환"
+   되는 걸 활용한다. 그 다음 짧은 시간 안에 페이지가 여전히 떠 있으면(=앱으로 전환 안 됨)
+   앱이 없는 것으로 보고 스토어로 보낸다. */
+function getMobileOS() {
+  const ua = navigator.userAgent;
+  if (/Android/i.test(ua)) return "android";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
+  return null;
+}
+
+function openAppElseStore(appUrl, storeUrlAndroid, storeUrlIOS) {
+  const os = getMobileOS();
+  if (!os) {
+    // 데스크톱: 스토어 개념이 없으니 그냥 새 탭에서 웹으로 열기
+    window.open(appUrl, "_blank", "noopener,noreferrer");
+    return;
+  }
+  const storeUrl = os === "android" ? storeUrlAndroid : storeUrlIOS;
+  let left = false;
+  const markLeft = () => { left = true; };
+  document.addEventListener("visibilitychange", markLeft, { once: true });
+  window.addEventListener("pagehide", markLeft, { once: true });
+  window.location.href = appUrl;
+  setTimeout(() => {
+    if (!left) window.location.href = storeUrl; // 앱으로 안 넘어갔다 = 미설치로 판단, 스토어로
+  }, 1500);
+}
+
+const APP_STORE_LINKS = {
+  facebook: { android: "https://play.google.com/store/apps/details?id=com.facebook.katana", ios: "https://apps.apple.com/app/facebook/id284882215" },
+  x: { android: "https://play.google.com/store/apps/details?id=com.twitter.android", ios: "https://apps.apple.com/app/x/id333903271" },
+  instagram: { android: "https://play.google.com/store/apps/details?id=com.instagram.android", ios: "https://apps.apple.com/app/instagram/id389801252" },
+};
+
+/* ---------- 공유하기: 인스타그램/페이스북/X(트위터)/카카오톡 실제 앱 아이콘 스타일 그리드 ---------- */
 function openShareFlow(ev) {
   const shareUrl = getEventShareUrl(ev);
   openShareMenu(ev, shareUrl);
@@ -104,28 +138,28 @@ function openShareMenu(ev, shareUrl) {
   const grid = document.getElementById("sharePlatformGrid");
   const platforms = [
     {
-      id: "instagram", label: "인스타그램", color: "#fff",
+      id: "instagram", label: "Instagram",
       bg: "linear-gradient(45deg,#F58529,#FEDA77,#DD2A7B,#8134AF,#515BD4)",
-      svg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" stroke="white" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" stroke="white" stroke-width="1.8"/><circle cx="17.4" cy="6.6" r="1.1" fill="white"/></svg>`,
+      svg: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" stroke="white" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" stroke="white" stroke-width="1.8"/><circle cx="17.4" cy="6.6" r="1.1" fill="white"/></svg>`,
     },
     {
-      id: "facebook", label: "페이스북", color: "#fff", bg: "#1877F2",
-      svg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M15.5 8.5h-2c-.3 0-.5.2-.5.5v2h2.4l-.3 2.5H13v7h-3v-7H8v-2.5h2v-2.2c0-2 1.2-3.3 3.4-3.3h2.1v2.5Z" fill="white"/></svg>`,
+      id: "facebook", label: "Facebook", bg: "#1877F2",
+      svg: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M15.5 8.5h-2c-.3 0-.5.2-.5.5v2h2.4l-.3 2.5H13v7h-3v-7H8v-2.5h2v-2.2c0-2 1.2-3.3 3.4-3.3h2.1v2.5Z" fill="white"/></svg>`,
     },
     {
-      id: "x", label: "X(트위터)", color: "#fff", bg: "#000",
-      svg: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none"><path d="M13.6 10.6 20 3h-2l-5.4 6.1L8.1 3H3l6.7 9.4L3 20h2l5.7-6.5L15.9 20H21l-7.4-9.4Zm-2 2.3-.7-1L5.9 4.6h2.1l4.2 5.9.7 1 5.5 7.7h-2.1l-4.5-6.3Z" fill="white"/></svg>`,
+      id: "x", label: "X", bg: "#000",
+      svg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M13.6 10.6 20 3h-2l-5.4 6.1L8.1 3H3l6.7 9.4L3 20h2l5.7-6.5L15.9 20H21l-7.4-9.4Zm-2 2.3-.7-1L5.9 4.6h2.1l4.2 5.9.7 1 5.5 7.7h-2.1l-4.5-6.3Z" fill="white"/></svg>`,
     },
     {
-      id: "kakao", label: "카카오톡", color: "#191919", bg: "#FEE500",
-      svg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M12 4C6.9 4 2.8 7.2 2.8 11.1c0 2.5 1.7 4.7 4.2 6-.2.7-.8 2.6-.9 3-.1.5.2.5.4.4.2-.1 2.4-1.6 3.4-2.3.7.1 1.4.2 2.1.2 5.1 0 9.2-3.2 9.2-7.1S17.1 4 12 4Z" fill="#191919"/></svg>`,
+      id: "kakao", label: "KakaoTalk", bg: "#FEE500",
+      svg: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M12 4C6.9 4 2.8 7.2 2.8 11.1c0 2.5 1.7 4.7 4.2 6-.2.7-.8 2.6-.9 3-.1.5.2.5.4.4.2-.1 2.4-1.6 3.4-2.3.7.1 1.4.2 2.1.2 5.1 0 9.2-3.2 9.2-7.1S17.1 4 12 4Z" fill="#191919"/></svg>`,
     },
   ];
 
   grid.innerHTML = platforms.map(p => `
-    <button type="button" class="share-platform-btn" data-platform="${p.id}" style="background:${p.bg}; color:${p.color};">
-      <span class="share-platform-icon">${p.svg}</span>
-      <span>${p.label}</span>
+    <button type="button" class="share-platform-btn" data-platform="${p.id}">
+      <span class="share-platform-icon" style="background:${p.bg};">${p.svg}</span>
+      <span class="share-platform-label">${p.label}</span>
     </button>
   `).join("");
 
@@ -146,16 +180,19 @@ function openShareMenu(ev, shareUrl) {
           showToast("카카오톡 공유를 불러오지 못했어요.");
         }
       } else if (platform === "facebook") {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "noopener,noreferrer");
+        // sharer.php는 유니버설 링크로 등록돼 있어 앱 설치 시 자동으로 앱이 뜨고,
+        // 앱이 없으면 페이지에 남아있는 걸 감지해서 스토어로 보낸다.
+        openAppElseStore(`https://www.facebook.com/sharer/sharer.php?u=${url}`, APP_STORE_LINKS.facebook.android, APP_STORE_LINKS.facebook.ios);
       } else if (platform === "x") {
-        window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank", "noopener,noreferrer");
+        openAppElseStore(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, APP_STORE_LINKS.x.android, APP_STORE_LINKS.x.ios);
       } else if (platform === "instagram") {
-        // 인스타그램은 피드/스토리에 외부 링크를 직접 공유하는 웹 API를 제공하지 않아
-        // (게시물 작성은 앱에서만 가능), 링크를 복사해서 스토리/DM에 직접 붙여넣도록 안내합니다.
+        // 인스타그램은 피드/스토리에 외부 링크를 직접 공유하는 웹 API가 없어서
+        // (게시물 작성은 앱에서만 가능), 링크를 복사한 뒤 앱을 직접 열어준다(없으면 스토어로).
         try {
           await navigator.clipboard.writeText(shareUrl);
           showToast("링크가 복사됐어요! 인스타그램 스토리·DM에 붙여넣어 공유해보세요 📸");
         } catch { showToast(`링크: ${shareUrl}`); }
+        openAppElseStore("instagram://app", APP_STORE_LINKS.instagram.android, APP_STORE_LINKS.instagram.ios);
       }
 
       closeShareMenu();

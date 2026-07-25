@@ -130,22 +130,24 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 16px 8px;
+  padding: 10px 8px;
   border-radius: var(--radius-sm);
-  font-size: 11.5px;
-  font-weight: 700;
   transition: transform 0.12s ease;
 }
 .share-platform-btn:active { transform: scale(0.95); }
-.share-platform-emoji {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.25);
+.share-platform-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px; /* 완전한 원이 아니라 실제 앱 아이콘처럼 살짝 둥근 사각형(스퀴클) */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 19px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.share-platform-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-2);
 }
 
 /* ===================== 더보기 메뉴 (헤더 "⋯" 버튼에서 진입) ===================== */

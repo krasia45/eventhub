@@ -44,44 +44,17 @@ function openAuthModal() {
 }
 
 /* ---------- 프로필 허브: 아바타/인사말/레벨·포인트/팔로우 브랜드 관리 ---------- */
-const PROFILE_LEVELS = [
-  { min: 0,   name: "Lv.1 Event Starter" },
-  { min: 100, name: "Lv.2 Trend Seeker" },
-  { min: 300, name: "Lv.3 Trendy Explorer" },
-  { min: 700, name: "Lv.4 Hotplace Master" },
-];
-
-function updateProfileLevel(followCount) {
-  // 포인트: 실제 활동 기반 (찜 1개 = 50P, 팔로우 1개 = 30P)
-  const points = likedEvents.size * 50 + followCount * 30;
-  let level = PROFILE_LEVELS[0], next = PROFILE_LEVELS[1];
-  for (let i = PROFILE_LEVELS.length - 1; i >= 0; i--) {
-    if (points >= PROFILE_LEVELS[i].min) { level = PROFILE_LEVELS[i]; next = PROFILE_LEVELS[i + 1] || null; break; }
-  }
-  document.getElementById("profileLevelBadge").textContent = level.name;
-  document.getElementById("profilePoints").textContent = `${points.toLocaleString()}P`;
-  const fill = document.getElementById("profileLevelFill");
-  const hint = document.getElementById("profileLevelHint");
-  if (next) {
-    const span = next.min - level.min;
-    fill.style.width = `${Math.min(100, Math.round(((points - level.min) / span) * 100))}%`;
-    hint.textContent = `다음 레벨까지 ${(next.min - points).toLocaleString()}P — 찜·팔로우로 포인트를 모아보세요!`;
-  } else {
-    fill.style.width = "100%";
-    hint.textContent = "최고 레벨이에요! 🎉";
-  }
-}
-
 function renderProfileHub() {
   const shortName = (currentUser.email || currentUser.user_metadata?.name || "회원").split("@")[0];
   document.getElementById("profileAvatar").textContent = shortName.charAt(0).toUpperCase();
-  document.getElementById("profileGreeting").textContent = `👋 ${shortName}님, 안녕하세요!`;
+  document.getElementById("profileGreeting").textContent = `안녕하세요, ${shortName}님`;
   document.getElementById("profileSavedCount").textContent = likedEvents.size;
-  updateProfileLevel(profileFollowedBrands.length);
+  document.getElementById("profileScheduleCount").textContent =
+    (typeof personalSchedules !== "undefined" ? personalSchedules.length : 0);
+  renderProfileTaste();
 
-  // 팔로우 브랜드 목록은 매번 새로 불러와서 통계 숫자와 관리 리스트 둘 다에 반영
+  // 팔로우 브랜드 목록은 매번 새로 불러와서 활동 카드 숫자와 관리 리스트 둘 다에 반영
   document.getElementById("profileFollowList").hidden = true;
-  document.getElementById("profileFollowChevron").textContent = "›";
   if (!supabaseClient) return;
 
   supabaseClient.from("user_follows").select("brand").eq("user_id", currentUser.id)
@@ -89,8 +62,34 @@ function renderProfileHub() {
       if (error) { console.error("팔로우 목록 조회 오류:", error); return; }
       const brands = (data || []).map(f => f.brand);
       profileFollowedBrands = brands;
-      updateProfileLevel(brands.length);
+      document.getElementById("profileFollowCount").textContent = brands.length;
     });
+}
+
+/* ---------- 나의 이벤트 취향 렌더링 ----------
+   온보딩에서 고른 키워드를 지역/키워드로 나눠 칩으로 보여준다.
+   이 데이터는 나중에 개인화 추천의 사용자 프로필로 그대로 확장된다. */
+function renderProfileTaste() {
+  const regionEl = document.getElementById("profileTasteRegions");
+  const keywordEl = document.getElementById("profileTasteKeywords");
+  const regionLabel = document.getElementById("profileTasteRegionLabel");
+  const keywordLabel = document.getElementById("profileTasteKeywordLabel");
+
+  const regions = userInterestKeywords.filter(k => KEYWORD_POOL.region.includes(k));
+  const others = userInterestKeywords.filter(k => !KEYWORD_POOL.region.includes(k));
+
+  if (userInterestKeywords.length === 0) {
+    regionLabel.hidden = true;
+    keywordLabel.hidden = true;
+    regionEl.innerHTML = "";
+    keywordEl.innerHTML = `<p class="profile-taste-empty">아직 선택한 취향이 없어요. 취향을 고르면 맞춤 이벤트를 보여드려요.</p>`;
+    return;
+  }
+
+  regionLabel.hidden = regions.length === 0;
+  regionEl.innerHTML = regions.map(k => `<span class="profile-taste-chip">${escapeHtml(k)}</span>`).join("");
+  keywordLabel.hidden = others.length === 0;
+  keywordEl.innerHTML = others.map(k => `<span class="profile-taste-chip">${escapeHtml(k)}</span>`).join("");
 }
 
 let profileFollowedBrands = [];
@@ -120,36 +119,57 @@ function renderProfileFollowList() {
   });
 }
 
-document.getElementById("profileFollowManageBtn").addEventListener("click", () => {
-  const listEl = document.getElementById("profileFollowList");
-  const chevron = document.getElementById("profileFollowChevron");
-  const nowOpen = listEl.hidden;
-  listEl.hidden = !nowOpen;
-  chevron.textContent = nowOpen ? "⌄" : "›";
-  if (nowOpen) renderProfileFollowList();
-});
-document.getElementById("profileStatSaved").addEventListener("click", () => {
+/* ---------- 나의 활동 카드 3개: 각 화면으로 바로 이동 ---------- */
+document.getElementById("profileActSaved").addEventListener("click", () => {
   closeAuthModal();
   popModalHistory();
   openCouponWallet();
 });
-document.getElementById("profileCalendarBtn").addEventListener("click", () => {
+document.getElementById("profileActFollow").addEventListener("click", () => {
+  // 팔로우 브랜드는 별도 화면이 없어 프로필 안에서 목록을 펼쳐 보여준다
+  const listEl = document.getElementById("profileFollowList");
+  const nowOpen = listEl.hidden;
+  listEl.hidden = !nowOpen;
+  if (nowOpen) renderProfileFollowList();
+});
+document.getElementById("profileActCalendar").addEventListener("click", () => {
   closeAuthModal();
   popModalHistory();
   openCalendar();
 });
-document.getElementById("profileInfoBtn").addEventListener("click", () => {
-  showToast(`${currentUser.email || "카카오 계정으로 로그인됨"}`);
-});
-document.getElementById("profilePointsBtn").addEventListener("click", () => {
-  const savedP = likedEvents.size * 50;
-  const followP = profileFollowedBrands.length * 30;
-  showToast(`찜 ${likedEvents.size}개(${savedP}P) + 팔로우 ${profileFollowedBrands.length}개(${followP}P) = 총 ${savedP + followP}P`);
-});
-document.getElementById("profileSavedMenuBtn").addEventListener("click", () => {
+
+/* ---------- 취향 수정: 온보딩 키워드 선택 화면을 편집 모드로 재사용 ---------- */
+document.getElementById("profileTasteEditBtn").addEventListener("click", () => {
   closeAuthModal();
   popModalHistory();
-  openCouponWallet();
+  openOnboarding(true, userInterestKeywords);
+});
+
+/* ---------- 개인정보 보호 안내 시트 ---------- */
+function closePrivacyGuide() {
+  document.getElementById("privacyGuideOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.getElementById("profilePrivacyGuideBtn").addEventListener("click", () => {
+  document.getElementById("privacyGuideOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+  pushModalHistory(closePrivacyGuide);
+});
+document.getElementById("privacyGuideClose").addEventListener("click", () => {
+  closePrivacyGuide();
+  popModalHistory();
+});
+document.getElementById("privacyGuideOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "privacyGuideOverlay") {
+    closePrivacyGuide();
+    popModalHistory();
+  }
+});
+
+document.getElementById("profileTravelBtn").addEventListener("click", () => {
+  closeAuthModal();
+  popModalHistory();
+  openTravelPlanner();
 });
 document.getElementById("profileRecentMenuBtn").addEventListener("click", () => {
   closeAuthModal();

@@ -159,44 +159,97 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
   font-size: 20px; font-weight: 800;
 }
 .profile-header-info { min-width: 0; }
-.profile-level-row { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
-.profile-level-badge {
-  font-size: 11px; font-weight: 800; color: var(--accent-dark);
-  background: var(--accent-light);
-  padding: 3px 10px;
-  border-radius: 999px;
-}
-.profile-points { font-size: 12.5px; font-weight: 800; color: var(--text-1); }
+.profile-header-sub { font-size: 12.5px; color: var(--text-3); font-weight: 600; margin-top: 4px; }
 
-.profile-level-progress { margin-bottom: 18px; }
-.profile-level-bar {
-  height: 7px;
-  border-radius: 999px;
-  background: var(--bg);
-  overflow: hidden;
-  margin-bottom: 6px;
+/* ── 나의 활동: 숫자 중심의 3카드 ── */
+.profile-activity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
 }
-.profile-level-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--accent) 0%, #FFA24D 100%);
-  transition: width 0.4s ease;
-}
-.profile-level-hint { font-size: 11px; color: var(--text-3); font-weight: 600; }
-
-.profile-quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
-.profile-quick-item {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+.profile-activity-card {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 13px 4px 11px;
-  font-size: 10.5px; font-weight: 700; color: var(--text-2);
+  padding: 14px 4px 12px;
   transition: transform 0.12s ease;
 }
-.profile-quick-item:active { transform: scale(0.95); }
-.profile-quick-emoji { font-size: 19px; }
-.profile-quick-label b { color: var(--accent); font-weight: 800; }
+.profile-activity-card:active { transform: scale(0.96); }
+.profile-activity-card b { font-size: 19px; font-weight: 800; color: var(--text-1); }
+.profile-activity-card span { font-size: 10.5px; font-weight: 700; color: var(--text-3); }
+
+/* ── 나의 이벤트 취향 카드 ── */
+.profile-taste-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.profile-taste-card .profile-section-label { margin: 0 0 10px; }
+.profile-taste-sub { font-size: 11px; font-weight: 700; color: var(--text-3); margin: 8px 0 6px; }
+.profile-taste-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.profile-taste-chip {
+  font-size: 11.5px; font-weight: 700;
+  color: var(--accent-dark);
+  background: var(--accent-light);
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+.profile-taste-empty { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+.profile-taste-edit-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  font-size: 12.5px; font-weight: 700; color: var(--text-2);
+}
+
+/* ── 개인정보 보호 카드 ── */
+.profile-privacy-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px 4px;
+  margin-bottom: 20px;
+}
+.profile-privacy-desc { font-size: 12px; color: var(--text-3); line-height: 1.5; margin-bottom: 4px; }
+.profile-menu-list-flat .profile-menu-item { padding: 12px 0; font-size: 13px; }
+.profile-menu-list-flat .profile-menu-item:last-child { border-bottom: none; }
+.profile-menu-left { display: inline-flex; align-items: center; gap: 8px; }
+.profile-menu-left svg { color: var(--text-3); }
+
+/* ── 로그아웃: 버튼 대신 조용한 텍스트 링크 ── */
+.auth-logout-text-btn {
+  display: block;
+  margin: 4px auto 0;
+  padding: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── 개인정보 보호 안내 시트 ── */
+.privacy-guide-sheet { max-width: 440px; }
+.privacy-guide-body { padding: 24px 22px 26px; }
+.privacy-guide-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.privacy-guide-intro { font-size: 12.5px; color: var(--text-3); margin-bottom: 18px; }
+.privacy-guide-item { margin-bottom: 14px; }
+.privacy-guide-item-title { font-size: 13.5px; font-weight: 800; color: var(--text-1); margin-bottom: 3px; }
+.privacy-guide-item-desc { font-size: 12.5px; color: var(--text-2); line-height: 1.55; }
+.privacy-guide-full-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12.5px; font-weight: 700;
+  color: var(--accent-dark);
+}
 
 .profile-section-label { font-size: 12px; font-weight: 800; color: var(--text-3); margin-bottom: 6px; }
 
@@ -208,6 +261,14 @@ html[data-theme="dark"] .auth-logout-btn { background: #2A2A33; color: #eee; }
   border-bottom: 1px solid var(--border);
 }
 .profile-menu-chevron { color: var(--text-3); font-size: 16px; }
+.profile-menu-weather {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+}
 
 .profile-follow-list { padding: 10px 4px 16px; display: flex; flex-direction: column; gap: 8px; }
 .profile-follow-row {

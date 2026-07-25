@@ -151,8 +151,8 @@ document.querySelectorAll(".nav-item").forEach(btn => {
 
     if (btn.dataset.nav === "saved") {
       openCouponWallet();
-    } else if (btn.dataset.nav === "search") {
-      openTravelPlanner();
+    } else if (btn.dataset.nav === "map") {
+      openMapPage();
     } else if (btn.dataset.nav === "calendar") {
       openCalendar();
     } else if (btn.dataset.nav === "profile") {

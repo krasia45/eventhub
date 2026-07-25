@@ -2,23 +2,38 @@
 .stat-heart { color: #FF3B30; font-weight: 700; }
 
 /* ===================== 내 주변 인기 이벤트 ===================== */
+/* 제목(1줄) + [20km칩 ↔ 지도에서 더 찾아보기](1줄) 세로 스택 구조.
+   둘째 줄은 어떤 화면 폭에서도 절대 두 줄로 꺾이지 않게 nowrap 고정. */
+.nearby-section-head {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
 .nearby-gps-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
-  flex-shrink: 0;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 .map-page-open-btn {
-  flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
+  flex-shrink: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  font-size: 13px;
-  display: flex;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-2);
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
   line-height: 1;
 }
 .nearby-title-ic {
@@ -167,6 +182,74 @@
   min-height: 260px;
   background: #f0f0f2;
   position: relative;
+}
+/* 지도 위 하단 중앙에 뜨는 "현재 지역에서 찾기" 플로팅 버튼 (네이버지도 패턴) */
+.map-refresh-btn {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 800;
+  padding: 9px 16px;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+  white-space: nowrap;
+}
+.map-refresh-btn:active { transform: translateX(-50%) scale(0.96); }
+
+/* 지도페이지 상단 검색창 */
+.map-page-search-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-soft, #f4f4f6);
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+.map-page-search-icon { color: var(--text-3); flex-shrink: 0; }
+.map-page-search-wrap input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 13.5px;
+  outline: none;
+}
+.map-page-search-clear {
+  flex-shrink: 0;
+  color: var(--text-3);
+  font-size: 13px;
+  padding: 2px 4px;
+}
+
+/* 리스트 헤더 ("현재 지역 이벤트 · N개") */
+.map-page-list-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px 4px;
+}
+.map-page-list-head h3 { font-size: 14.5px; font-weight: 800; }
+.map-page-list-count { font-size: 12px; color: var(--text-3); font-weight: 700; }
+
+/* 더 많은 이벤트 보기 */
+.map-page-more-btn {
+  display: block;
+  margin: 4px 16px 16px;
+  width: calc(100% - 32px);
+  padding: 12px;
+  border-radius: var(--radius-sm, 12px);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
 }
 .map-page-kakao-map { width: 100%; height: 100%; }
 .map-page-map-status {

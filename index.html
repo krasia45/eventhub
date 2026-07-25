@@ -39,9 +39,8 @@
       <div class="header-top">
         <button class="logo" id="logoHomeBtn" aria-label="홈으로">Event<span>Hub</span></button>
         <div class="header-actions">
-          <button class="weather-chip-header" id="weatherHeaderChip" aria-label="날씨">
-            <span id="weatherHeaderIcon">⏳</span>
-            <span id="weatherHeaderTemp">--°</span>
+          <button class="icon-btn map-header-btn" id="mapHeaderBtn" aria-label="지도에서 이벤트 찾기">
+            <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 4v14M15 6v14" stroke="currentColor" stroke-width="1.7"/></svg>
           </button>
           <button class="icon-btn notif-bell-btn" id="notifBellBtn" aria-label="알림">
             <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M12 3a5.5 5.5 0 0 0-5.5 5.5v2.6c0 .6-.2 1.2-.6 1.7L4.7 14.6c-.6.8 0 2 1 2h12.6c1 0 1.6-1.2 1-2l-1.2-1.8a2.9 2.9 0 0 1-.6-1.7V8.5A5.5 5.5 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
@@ -118,11 +117,11 @@
 
     <!-- ===== 내 주변 인기 이벤트 (GPS 기반, 위치 권한 없으면 서울 기준으로 조용히 대체) ===== -->
     <section class="nearby-section" id="nearbySection" hidden>
-      <div class="section-head">
+      <div class="section-head nearby-section-head">
         <h2 id="nearbyTitle"><span class="nearby-title-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8"/></svg></span> 내 주변 인기 이벤트</h2>
         <div class="nearby-gps-row">
           <button class="gps-chip" id="gpsFilterChip">📍 내 주변 20km</button>
-          <button class="map-page-open-btn" id="mapPageOpenBtn" aria-label="지도에서 보기">🗺️</button>
+          <button class="map-page-open-btn" id="mapPageOpenBtn" aria-label="지도에서 더 찾아보기">🗺️ 지도에서 더 찾아보기</button>
         </div>
       </div>
       <div class="nearby-scroll" id="nearbyScroll"></div>
@@ -220,21 +219,21 @@
   </div>
 
   <!-- ===== Bottom Nav ===== -->
-  <!-- 순서: 쿠폰함 / 여행플래너 / Home(중앙, elevated) / 알림(구 더보기, 기능 동일) / Profile -->
+  <!-- 순서: 홈 / 쿠폰함 / 주변이벤트찾기(중앙, elevated) / 캘린더 / Profile -->
   <nav class="bottom-nav">
+    <button class="nav-item active" data-nav="home">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M3 11.5 12 4l9 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>홈</span>
+    </button>
     <button class="nav-item" data-nav="saved">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 21s-7.2-4.5-9.6-9C.8 8.4 2.6 5 6 5c2 0 3.4 1 6 3.5C14.6 6 16 5 18 5c3.4 0 5.2 3.4 3.6 7-2.4 4.5-9.6 9-9.6 9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
       <span>쿠폰함</span>
     </button>
-    <button class="nav-item" data-nav="search">
-      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm10 2-5.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span>여행플래너</span>
-    </button>
-    <button class="nav-item nav-item-home active" data-nav="home">
+    <button class="nav-item nav-item-home" data-nav="map">
       <span class="nav-home-circle">
-        <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M3 11.5 12 4l9 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="2"/></svg>
       </span>
-      <span>Home</span>
+      <span>주변 이벤트</span>
     </button>
     <button class="nav-item" data-nav="calendar">
       <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="14.5" r="1.4" fill="currentColor"/></svg>
@@ -447,62 +446,111 @@
         <div class="profile-header">
           <div class="profile-avatar" id="profileAvatar">?</div>
           <div class="profile-header-info">
-            <h2 class="auth-title" id="profileGreeting">👋 안녕하세요!</h2>
-            <p class="profile-level-row"><span class="profile-level-badge" id="profileLevelBadge">Lv.1 Event Starter</span><span class="profile-points" id="profilePoints">0P</span></p>
+            <h2 class="auth-title" id="profileGreeting">안녕하세요!</h2>
+            <p class="profile-header-sub">나에게 맞는 이벤트를 찾아보세요</p>
           </div>
         </div>
-        <div class="profile-level-progress">
-          <div class="profile-level-bar"><div class="profile-level-fill" id="profileLevelFill" style="width:0%"></div></div>
-          <p class="profile-level-hint" id="profileLevelHint"></p>
-        </div>
 
-        <div class="profile-quick-grid">
-          <button class="profile-quick-item" id="profileInfoBtn">
-            <span class="profile-quick-emoji">👤</span>
-            <span class="profile-quick-label">내 정보</span>
+        <!-- 나의 활동: 한눈에 보고 해당 화면으로 이동 -->
+        <div class="profile-activity-grid">
+          <button class="profile-activity-card" id="profileActSaved">
+            <b id="profileSavedCount">0</b>
+            <span>저장한 이벤트</span>
           </button>
-          <button class="profile-quick-item" id="profilePointsBtn">
-            <span class="profile-quick-emoji">💎</span>
-            <span class="profile-quick-label">포인트</span>
+          <button class="profile-activity-card" id="profileActFollow">
+            <b id="profileFollowCount">0</b>
+            <span>팔로우 브랜드</span>
           </button>
-          <button class="profile-quick-item" id="profileStatSaved">
-            <span class="profile-quick-emoji">🎟</span>
-            <span class="profile-quick-label">쿠폰함 <b id="profileSavedCount">0</b></span>
-          </button>
-          <button class="profile-quick-item" id="profileCalendarBtn">
-            <span class="profile-quick-emoji">📅</span>
-            <span class="profile-quick-label">이벤트 달력</span>
+          <button class="profile-activity-card" id="profileActCalendar">
+            <b id="profileScheduleCount">0</b>
+            <span>캘린더 일정</span>
           </button>
         </div>
 
-        <p class="profile-section-label">내 활동</p>
+        <!-- 나의 이벤트 취향: 나중에 개인화 추천의 사용자 프로필 데이터가 되는 영역 -->
+        <div class="profile-taste-card">
+          <p class="profile-section-label">나의 이벤트 취향</p>
+          <p class="profile-taste-sub" id="profileTasteRegionLabel">관심 지역</p>
+          <div class="profile-taste-chips" id="profileTasteRegions"></div>
+          <p class="profile-taste-sub" id="profileTasteKeywordLabel">관심 키워드</p>
+          <div class="profile-taste-chips" id="profileTasteKeywords"></div>
+          <button class="profile-taste-edit-btn" id="profileTasteEditBtn">취향 수정하기</button>
+        </div>
+
+        <p class="profile-section-label">서비스</p>
         <div class="profile-menu-list">
-          <button class="profile-menu-item" id="profileSavedMenuBtn">
-            <span>❤️ 관심 이벤트</span><span class="profile-menu-chevron">›</span>
+          <button class="profile-menu-item" id="profileWeatherBtn">
+            <span class="profile-menu-left"><svg viewBox="0 0 24 24" fill="none" width="17" height="17"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg> 오늘 날씨</span>
+            <span class="profile-menu-weather"><span id="weatherHeaderIcon">⏳</span> <span id="weatherHeaderTemp">--°</span> <span class="profile-menu-chevron">›</span></span>
+          </button>
+          <button class="profile-menu-item" id="profileTravelBtn">
+            <span class="profile-menu-left"><svg viewBox="0 0 24 24" fill="none" width="17" height="17"><path d="M10.5 13.5 3 11l1.5-1.5L10 10l4.5-4.5c.8-.8 2-.8 2.5-.3s.5 1.7-.3 2.5L12.2 12l.5 5.5L11.2 19l-2.5-7.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> 여행 플래너</span><span class="profile-menu-chevron">›</span>
           </button>
           <button class="profile-menu-item" id="profileRecentMenuBtn">
-            <span>🕐 최근 본 이벤트</span><span class="profile-menu-chevron">›</span>
-          </button>
-          <button class="profile-menu-item" id="profileFollowManageBtn">
-            <span>🔔 팔로우 브랜드 관리</span><span class="profile-menu-chevron" id="profileFollowChevron">›</span>
+            <span class="profile-menu-left"><svg viewBox="0 0 24 24" fill="none" width="17" height="17"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg> 최근 본 이벤트</span><span class="profile-menu-chevron">›</span>
           </button>
           <button class="profile-menu-item" id="profileNotifSettingBtn">
-            <span>🔕 알림 설정</span><span class="profile-menu-chevron">›</span>
-          </button>
-          <button class="profile-menu-item" id="profileSupportBtn">
-            <span>💬 고객센터</span><span class="profile-menu-chevron">›</span>
+            <span class="profile-menu-left"><svg viewBox="0 0 24 24" fill="none" width="17" height="17"><path d="M12 4a5 5 0 0 0-5 5v2.4c0 .5-.2 1-.5 1.5l-1.1 1.6c-.5.8 0 1.8.9 1.8h11.4c.9 0 1.4-1 .9-1.8l-1.1-1.6a2.6 2.6 0 0 1-.5-1.5V9a5 5 0 0 0-5-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.8 18.5a2.3 2.3 0 0 0 4.4 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> 알림 설정</span><span class="profile-menu-chevron">›</span>
           </button>
         </div>
 
         <div class="profile-follow-list" id="profileFollowList" hidden></div>
 
-        <div class="invite-box" id="inviteBox">
-          <p class="invite-box-label">🎁 친구 초대하고 같이 써요</p>
-          <p class="invite-box-code" id="inviteCode">코드 생성 중...</p>
-          <button class="ai-btn invite-share-btn" id="inviteShareBtn">💬 카카오톡으로 초대 링크 보내기</button>
+        <!-- 개인정보 보호: 법률 문서 대신 사용자가 이해할 수 있는 짧은 안내 우선 -->
+        <p class="profile-section-label">개인정보 보호</p>
+        <div class="profile-privacy-card">
+          <p class="profile-privacy-desc">EventHub는 더 나은 이벤트 추천을 위해 필요한 정보만 안전하게 사용해요.</p>
+          <div class="profile-menu-list profile-menu-list-flat">
+            <button class="profile-menu-item" id="profilePrivacyGuideBtn">
+              <span>개인정보 보호 안내</span><span class="profile-menu-chevron">›</span>
+            </button>
+            <a class="profile-menu-item" href="privacy.html" target="_blank" rel="noopener">
+              <span>개인정보 처리방침</span><span class="profile-menu-chevron">›</span>
+            </a>
+            <a class="profile-menu-item" href="terms.html" target="_blank" rel="noopener">
+              <span>이용약관</span><span class="profile-menu-chevron">›</span>
+            </a>
+            <button class="profile-menu-item" id="profileSupportBtn">
+              <span>문의하기</span><span class="profile-menu-chevron">›</span>
+            </button>
+          </div>
         </div>
 
-        <button class="ai-btn auth-logout-btn" id="authLogoutBtn">로그아웃</button>
+        <div class="invite-box" id="inviteBox">
+          <p class="invite-box-label">친구 초대하고 같이 써요</p>
+          <p class="invite-box-code" id="inviteCode">코드 생성 중...</p>
+          <button class="ai-btn invite-share-btn" id="inviteShareBtn">카카오톡으로 초대 링크 보내기</button>
+        </div>
+
+        <button class="auth-logout-text-btn" id="authLogoutBtn">로그아웃</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 개인정보 보호 안내 (쉬운 설명 시트) ===== -->
+  <div class="sheet-overlay" id="privacyGuideOverlay">
+    <div class="bottom-sheet privacy-guide-sheet">
+      <button class="sheet-close" id="privacyGuideClose" aria-label="닫기">✕</button>
+      <div class="privacy-guide-body">
+        <h2 class="privacy-guide-title">개인정보 보호 안내</h2>
+        <p class="privacy-guide-intro">EventHub가 어떤 정보를 왜 사용하는지 쉽게 알려드려요.</p>
+        <div class="privacy-guide-item">
+          <p class="privacy-guide-item-title">위치 정보</p>
+          <p class="privacy-guide-item-desc">주변 이벤트를 보여드리기 위해서만 사용돼요. 위치는 저장하지 않아요.</p>
+        </div>
+        <div class="privacy-guide-item">
+          <p class="privacy-guide-item-title">관심 정보</p>
+          <p class="privacy-guide-item-desc">선택하신 관심 키워드는 더 정확한 이벤트 추천을 위해 사용돼요.</p>
+        </div>
+        <div class="privacy-guide-item">
+          <p class="privacy-guide-item-title">저장 및 이용 기록</p>
+          <p class="privacy-guide-item-desc">저장한 이벤트와 일정을 기기와 계정 간에 이어서 보실 수 있게 하기 위해 사용돼요.</p>
+        </div>
+        <div class="privacy-guide-item">
+          <p class="privacy-guide-item-title">안전한 관리</p>
+          <p class="privacy-guide-item-desc">모든 정보는 안전하게 관리되며, 서비스 제공 목적 외에는 사용되지 않아요.</p>
+        </div>
+        <a class="privacy-guide-full-link" href="privacy.html" target="_blank" rel="noopener">개인정보 처리방침 전문 보기 →</a>
       </div>
     </div>
   </div>
@@ -666,15 +714,23 @@
         <button class="page-back-btn" id="mapPageClose" aria-label="뒤로가기">
           <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <div class="page-header-text">
-          <h2>지도에서 보기</h2>
+        <div class="map-page-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16" class="map-page-search-icon"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm10 2-5.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" id="mapPageSearchInput" placeholder="이벤트·브랜드·지역 검색" autocomplete="off">
+          <button type="button" id="mapPageSearchClear" class="map-page-search-clear" hidden aria-label="검색 지우기">✕</button>
         </div>
       </div>
       <div class="map-page-filter-row" id="mapPageFilterRow"></div>
       <div class="map-page-map-wrap">
         <div id="mapPageKakaoMap" class="map-page-kakao-map"></div>
+        <button type="button" class="map-refresh-btn" id="mapRefreshBtn" hidden>📍 현재 지역에서 찾기</button>
+      </div>
+      <div class="map-page-list-head">
+        <h3 id="mapPageListTitle">현재 지역 이벤트</h3>
+        <span class="map-page-list-count" id="mapPageListCount"></span>
       </div>
       <div class="map-page-list" id="mapPageList"></div>
+      <button type="button" class="map-page-more-btn" id="mapPageMoreBtn" hidden>더 많은 이벤트 보기</button>
     </div>
   </div>
 

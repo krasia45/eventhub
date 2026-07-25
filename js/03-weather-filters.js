@@ -113,7 +113,10 @@ document.getElementById("weatherRegionGpsBtn").addEventListener("click", async (
   loadWeather(await getQuietLocation());
 });
 
-document.getElementById("weatherHeaderChip").addEventListener("click", () => {
+document.getElementById("profileWeatherBtn").addEventListener("click", () => {
+  // 프로필 시트 위에서 눌리므로, 프로필을 먼저 닫고 날씨 시트를 연다
+  closeAuthModal();
+  popModalHistory();
   document.getElementById("weatherOverlay").classList.add("open");
   document.body.style.overflow = "hidden";
   pushModalHistory(closeWeatherOverlay);
