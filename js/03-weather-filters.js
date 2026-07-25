@@ -155,6 +155,14 @@ function matchesDiscountFilter(ev, filter) {
     const match = ev.discount.match(/(\d+)\s*%/);
     return !!match && parseInt(match[1], 10) >= 50;
   }
+  if (filter === "free") {
+    const text = `${ev.discount} ${ev.title} ${(ev.tags || []).join(" ")}`;
+    return /무료|증정|체험단|사은품|샘플/.test(text);
+  }
+  if (filter === "limited") {
+    const text = `${ev.discount} ${ev.title} ${ev.conditions || ""} ${(ev.tags || []).join(" ")}`;
+    return /선착순|한정|타임세일|리미티드|단독/.test(text);
+  }
   if (filter === "newopen") return (ev.tags || []).includes("신규오픈");
   return true;
 }

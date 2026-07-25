@@ -173,6 +173,7 @@ let mapPageVisibleCount = 20;   // 리스트/마커에 현재까지 표시 중�
 const MAP_PAGE_PAGE_SIZE = 20;
 let mapPageMoved = false;       // 지도를 움직였는지 (버튼 표시용)
 let mapPageInitialized = false;
+let mapPageSelectedId = null;   // 현재 선택(강조)된 이벤트 — 마커·리스트가 함께 참조
 
 function getMapPageAllEvents() {
   const realOnes = (typeof EVENTS !== "undefined" ? EVENTS : [])
@@ -191,6 +192,11 @@ function runMapPageSearch() {
   // 카테고리 필터
   if (mapPageCurrentCategory !== "all") {
     filtered = filtered.filter(ev => ev.category === mapPageCurrentCategory);
+  }
+
+  // 혜택 필터 (홈의 matchesDiscountFilter 로직 그대로 재사용 — 1+1/50%↑/무료·증정/선착순·한정)
+  if (mapPageCurrentBenefit !== "all") {
+    filtered = filtered.filter(ev => matchesDiscountFilter(ev, mapPageCurrentBenefit));
   }
 
   // 검색어 필터 (브랜드/제목/태그/채널/혜택)
@@ -219,7 +225,16 @@ function runMapPageSearch() {
   }
 
   mapPageResults = filtered;
+
+  // 인기순(조회수·좋아요 기반) 정렬 — 지도 마커의 순위 배지가 이 순서를 따른다.
+  // 가상(mock) 이벤트는 통계가 없어 자연스럽게 뒤로 밀린다.
+  mapPageResults.sort((a, b) => {
+    const scoreOf = (ev) => (typeof getEventScore === "function" && !ev.id.startsWith("mock-")) ? getEventScore(ev.id) : 0;
+    return scoreOf(b) - scoreOf(a);
+  });
+
   mapPageVisibleCount = MAP_PAGE_PAGE_SIZE;
+  mapPageSelectedId = null;
   renderMapPageResults();
   hideMapRefreshBtn();
 }
@@ -243,30 +258,68 @@ function renderMapPageList(events, totalCount) {
     listEl.innerHTML = `<p class="map-page-empty">이 지역에는 표시할 이벤트가 없어요.<br>지도를 이동한 뒤 '현재 지역에서 찾기'를 눌러보세요.</p>`;
     return;
   }
-  listEl.innerHTML = events.map(ev => `
-    <div class="map-page-list-item" data-id="${ev.id}">
+  listEl.innerHTML = events.map((ev, idx) => `
+    <div class="map-page-list-item ${mapPageSelectedId === ev.id ? "active-pin" : ""}" data-id="${ev.id}">
+      <span class="map-page-list-rank ${idx < 3 ? "top" : ""}">${idx + 1}</span>
       <img class="map-page-list-thumb" src="${ev.image}" alt="" loading="lazy" onerror="handleImageError(this)">
       <div class="map-page-list-body">
         <p class="map-page-list-brand">${escapeHtml(ev.brand)}${ev.id.startsWith("mock-") ? '<span class="map-page-mock-badge">예시</span>' : ""}</p>
         <p class="map-page-list-title">${escapeHtml(ev.title)}</p>
         <p class="map-page-list-meta">${escapeHtml(ev.discount || "")} · ${escapeHtml(ev.channel || "")}</p>
       </div>
+      <button type="button" class="map-page-detail-btn" data-id="${ev.id}" aria-label="상세보기">
+        상세<svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
   `).join("");
 
+  // 카드 본문 클릭 → 상세로 가지 않고, 지도에서 해당 위치를 강조 (네이버지도 패턴)
   listEl.querySelectorAll(".map-page-list-item").forEach(item => {
     item.addEventListener("click", () => {
-      const ev = mapPageResults.find(e => e.id === item.dataset.id);
+      selectMapPageEvent(item.dataset.id, { scrollList: false });
+    });
+  });
+
+  // "상세" 버튼만 상세페이지로 — 지도는 닫지 않아서, 상세를 닫으면 지도로 돌아온다
+  listEl.querySelectorAll(".map-page-detail-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const ev = mapPageResults.find(x => x.id === btn.dataset.id);
       if (!ev) return;
       if (ev.id.startsWith("mock-")) {
         showToast("예시 데이터예요 — 실제 이벤트가 승인되면 상세페이지로 연결돼요.");
         return;
       }
-      closeMapPage();
-      popModalHistory();
       openSheet(ev.id);
     });
   });
+}
+
+/* ---------- 이벤트 선택 (마커↔리스트 양방향 동기화) ----------
+   네이버지도 벤치마킹: 선택된 마커는 커지면서 통통 튀고(bounce),
+   리스트의 해당 카드는 하이라이트 + 화면 안으로 스크롤, 지도는 그 위치로 부드럽게 이동 */
+function selectMapPageEvent(id, { scrollList = true } = {}) {
+  mapPageSelectedId = id;
+  const ev = mapPageResults.find(e => e.id === id);
+
+  // 리스트 하이라이트
+  document.querySelectorAll(".map-page-list-item").forEach(el => {
+    el.classList.toggle("active-pin", el.dataset.id === id);
+  });
+  if (scrollList) {
+    const listItem = document.querySelector(`.map-page-list-item[data-id="${id}"]`);
+    if (listItem) listItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  // 마커 강조 (선택된 것만 selected 클래스)
+  document.querySelectorAll(".map-marker-badge").forEach(el => {
+    el.classList.toggle("selected", el.dataset.id === id);
+  });
+
+  // 지도 중심 이동
+  if (ev && mapPageKakaoMapInstance) {
+    mapPageKakaoMapInstance.panTo(new kakao.maps.LatLng(ev.lat, ev.lng));
+  }
 }
 
 function renderMapPageMarkers(events) {
@@ -275,22 +328,24 @@ function renderMapPageMarkers(events) {
   mapPageMarkers.forEach(m => m.setMap(null));
   mapPageMarkers = [];
 
-  events.forEach(ev => {
+  events.forEach((ev, idx) => {
     const pos = new kakao.maps.LatLng(ev.lat, ev.lng);
-    const marker = new kakao.maps.Marker({ position: pos, map: mapPageKakaoMapInstance });
 
-    kakao.maps.event.addListener(marker, "click", () => {
-      // 마커 클릭 → 해당 리스트 카드 강조 + 스크롤 + 지도 중심 이동
-      document.querySelectorAll(".map-page-list-item").forEach(el => el.classList.remove("active-pin"));
-      const listItem = document.querySelector(`.map-page-list-item[data-id="${ev.id}"]`);
-      if (listItem) {
-        listItem.classList.add("active-pin");
-        listItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
-      mapPageKakaoMapInstance.panTo(pos);
+    // 기본 파란 핀 대신, 인기 순위가 한눈에 보이는 숫자 배지 마커 (1~3위는 오렌지로 강조)
+    const el = document.createElement("div");
+    el.className = `map-marker-badge ${idx < 3 ? "top" : ""} ${mapPageSelectedId === ev.id ? "selected" : ""}`;
+    el.dataset.id = ev.id;
+    el.textContent = idx + 1;
+    el.addEventListener("click", () => selectMapPageEvent(ev.id));
+
+    const overlay = new kakao.maps.CustomOverlay({
+      position: pos,
+      content: el,
+      yAnchor: 1.1,
+      clickable: true,
     });
-
-    mapPageMarkers.push(marker);
+    overlay.setMap(mapPageKakaoMapInstance);
+    mapPageMarkers.push(overlay);
   });
 }
 
@@ -365,7 +420,9 @@ async function initMapPageMap() {
   }
 }
 
-/* ---------- 카테고리 필터 ---------- */
+/* ---------- 카테고리 + 혜택 필터 ---------- */
+let mapPageCurrentBenefit = "all";
+
 function renderMapPageFilters() {
   const row = document.getElementById("mapPageFilterRow");
   const cats = [
@@ -376,14 +433,34 @@ function renderMapPageFilters() {
     { id: "food", label: "카페·디저트" },
     { id: "living", label: "라이프스타일" },
   ];
-  row.innerHTML = cats.map(c => `
-    <button type="button" class="map-page-filter-chip ${mapPageCurrentCategory === c.id ? "active" : ""}" data-cat="${c.id}">${c.label}</button>
-  `).join("");
-  row.querySelectorAll(".map-page-filter-chip").forEach(btn => {
+  const benefits = [
+    { id: "1+1", label: "1+1" },
+    { id: "50plus", label: "50%↑" },
+    { id: "free", label: "무료·증정" },
+    { id: "limited", label: "선착순·한정" },
+  ];
+  row.innerHTML =
+    cats.map(c => `
+      <button type="button" class="map-page-filter-chip ${mapPageCurrentCategory === c.id ? "active" : ""}" data-cat="${c.id}">${c.label}</button>
+    `).join("") +
+    `<span class="map-page-filter-divider"></span>` +
+    benefits.map(b => `
+      <button type="button" class="map-page-filter-chip benefit ${mapPageCurrentBenefit === b.id ? "active" : ""}" data-benefit="${b.id}">${b.label}</button>
+    `).join("");
+
+  row.querySelectorAll(".map-page-filter-chip[data-cat]").forEach(btn => {
     btn.addEventListener("click", () => {
       mapPageCurrentCategory = btn.dataset.cat;
       renderMapPageFilters();
-      runMapPageSearch(); // 카테고리 변경은 마커+리스트에 즉시 반영
+      runMapPageSearch();
+    });
+  });
+  row.querySelectorAll(".map-page-filter-chip[data-benefit]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      // 같은 칩 다시 누르면 해제 (토글)
+      mapPageCurrentBenefit = mapPageCurrentBenefit === btn.dataset.benefit ? "all" : btn.dataset.benefit;
+      renderMapPageFilters();
+      runMapPageSearch();
     });
   });
 }
