@@ -107,8 +107,12 @@ function getMobileOS() {
 function openAppElseStore(appUrl, storeUrlAndroid, storeUrlIOS) {
   const os = getMobileOS();
   if (!os) {
-    // 데스크톱: 스토어 개념이 없으니 그냥 새 탭에서 웹으로 열기
-    window.open(appUrl, "_blank", "noopener,noreferrer");
+    // 데스크톱: instagram:// 같은 커스텀 스킴은 브라우저가 처리 못 해서 빈 탭만 뜬다.
+    // 실제 웹 URL(http/https)일 때만 새 탭으로 열고, 커스텀 스킴이면 아무것도 하지 않는다
+    // (인스타그램처럼 데스크톱 공유 대상이 애초에 없는 경우 — 클립보드 복사 안내만으로 충분).
+    if (/^https?:\/\//.test(appUrl)) {
+      window.open(appUrl, "_blank", "noopener,noreferrer");
+    }
     return;
   }
   const storeUrl = os === "android" ? storeUrlAndroid : storeUrlIOS;

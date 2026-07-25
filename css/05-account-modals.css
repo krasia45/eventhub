@@ -11,6 +11,7 @@
   line-height: 1;
   padding: 3px 9px;
   border-radius: 999px;
+  margin-bottom: 6px;
 }
 .card-merchant-badge {
   display: inline-block;
