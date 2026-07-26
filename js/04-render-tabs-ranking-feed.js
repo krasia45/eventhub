@@ -305,9 +305,8 @@ function getChannelMode(ev) {
 }
 
 function renderEventCardHtml(ev) {
-  const distanceLabel = (gpsFilterActive && userLocation)
-    ? `<span class="card-distance">${haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng).toFixed(1)}km</span>`
-    : "";
+  // 거리 표시는 "내 주변 인기 이벤트" 섹션에서만 — 전체 피드에서는 20km 필터를 켜도 표시하지 않음
+  const distanceLabel = "";
   const merchantBadge = ev.merchantType === "소상공인"
     ? `<span class="card-merchant-badge">소상공인</span>`
     : "";
@@ -324,7 +323,9 @@ function renderEventCardHtml(ev) {
   // 카드의 할인 배지는 한 줄짜리 요약 공간이라, "A + B + C"처럼 여러 혜택이 이어진
   // 대형 프로모션이면 대표 혜택(첫 항목)만 보여준다. 전체 목록은 상세페이지 혜택칩에서
   // 그대로 다 보여주므로(ev.discount 원본은 안 건드림) 정보 손실은 없다.
-  const cardDiscountText = escapeHtml((ev.discount || "").split(/\s+\+\s+/)[0].trim());
+  const rawDiscount = (ev.discount || "").split(/\s+\+\s+/)[0].trim();
+  // 혜택(할인/증정 등)이 아예 없는 순수 홍보성 이벤트는 "홍보 이벤트"로 구분 표시
+  const cardDiscountText = rawDiscount ? escapeHtml(rawDiscount) : `<span class="card-promo-label">홍보 이벤트</span>`;
   return `
     <div class="event-card" data-id="${ev.id}">
       <div class="card-media">

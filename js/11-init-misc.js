@@ -283,3 +283,29 @@ if (document.fonts && document.fonts.ready) {
 }
 // 날씨 위젯처럼 헤더 안 내용이 비동기로 채워지는 경우를 대비해 초기 로드 직후 한 번 더 재확인
 setTimeout(syncHeaderHeightVar, 500);
+/* ---------- 홈 위로가기 버튼 ----------
+   스크롤이 화면 절반 이상 내려가면 표시하되, "스크롤 중일 때만" 보이고
+   멈추면 2.5초 후 자동으로 사라진다. 맨 위로 돌아오면 즉시 숨김. */
+(function initScrollTopBtn() {
+  const btn = document.getElementById("scrollTopBtn");
+  if (!btn) return;
+  let hideTimer = null;
+
+  window.addEventListener("scroll", () => {
+    const halfway = window.innerHeight * 0.5;
+    if (window.scrollY > halfway) {
+      btn.classList.add("visible");
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => btn.classList.remove("visible"), 2500);
+    } else {
+      btn.classList.remove("visible");
+      clearTimeout(hideTimer);
+    }
+  }, { passive: true });
+
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    btn.classList.remove("visible");
+    clearTimeout(hideTimer);
+  });
+})();

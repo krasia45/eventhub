@@ -499,3 +499,43 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
 .rank-like:active { transform: scale(0.88); }
 .rank-like .card-like-icon { color: var(--accent); }
 .rank-like.liked .card-like-icon svg path { fill: var(--accent); }
+/* ---------- 위로가기 버튼 ---------- */
+.scroll-top-btn {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.scroll-top-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---------- 문의하기 시트 ---------- */
+.inquiry-sheet { max-width: 460px; }
+.inquiry-sheet-body { padding: 24px 22px 26px; }
+.inquiry-sheet-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.inquiry-sheet-sub { font-size: 12.5px; color: var(--text-3); margin-bottom: 16px; }
+
+/* ---------- 팔로우 관리 페이지 ---------- */
+.follow-manage-sub {
+  padding: 4px 18px 10px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.follow-manage-list { padding: 4px 18px 24px; }

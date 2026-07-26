@@ -378,6 +378,8 @@ function closeMapPage() {
 }
 
 /* ---------- 지도 초기화: 현재 위치 기준 시작 ---------- */
+let mapMyLocationOverlay = null; // 현재 위치 파란 점
+
 async function initMapPageMap() {
   const mapEl = document.getElementById("mapPageKakaoMap");
 
@@ -385,20 +387,21 @@ async function initMapPageMap() {
     await loadKakaoMapSdk();
 
     if (!mapPageInitialized) {
-      // 현재 사용자 위치(거부/실패 시 서울시청)로 시작
-      const loc = await getQuietLocation();
+      // 현재 사용자 위치(거부/실패 시 서울시청)로 시작 — 정확도 우선 옵션으로 재시도
+      const loc = await getMapUserLocation();
       mapPageKakaoMapInstance = new kakao.maps.Map(mapEl, {
         center: new kakao.maps.LatLng(loc.lat, loc.lng),
         level: 7,
       });
+      renderMyLocationDot(loc);
 
-      // 지도 이동/확대축소 감지 → "현재 지역에서 찾기" 버튼 표시
-      // (idle: 드래그/줌이 끝나서 지도가 멈춘 시점에 1회 발생)
+      // 지도 이동/확대축소 감지 → "현재 지역에서 찾기" 버튼 표시 + 바텀시트 자동 접힘
       kakao.maps.event.addListener(mapPageKakaoMapInstance, "idle", () => {
         showMapRefreshBtn();
       });
       kakao.maps.event.addListener(mapPageKakaoMapInstance, "dragstart", () => {
         mapPageMoved = true;
+        collapseMapSheet(); // 지도를 만지기 시작하면 리스트를 접어서 지도를 넓게 (당근 패턴)
       });
       kakao.maps.event.addListener(mapPageKakaoMapInstance, "zoom_changed", () => {
         mapPageMoved = true;
@@ -419,6 +422,74 @@ async function initMapPageMap() {
     mapEl.innerHTML = `<div class="map-page-map-status">지도를 불러오지 못했어요. 아래 목록으로 확인해주세요.</div>`;
   }
 }
+
+/* 위치 요청: 지도용은 정확도를 높이고 타임아웃을 넉넉히 (기존 getQuietLocation은
+   5초 저정확도라 실내에서 자주 실패 → "위치 추적 안 됨"으로 보였음) */
+function getMapUserLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve({ lat: 37.5665, lng: 126.9780, fallback: true }); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve({ lat: 37.5665, lng: 126.9780, fallback: true }),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+    );
+  });
+}
+
+/* 현재 위치 파란 점 (당근/네이버지도의 내 위치 표시) */
+function renderMyLocationDot(loc) {
+  if (!mapPageKakaoMapInstance || loc.fallback) return;
+  if (mapMyLocationOverlay) mapMyLocationOverlay.setMap(null);
+  const el = document.createElement("div");
+  el.className = "map-my-location-dot";
+  mapMyLocationOverlay = new kakao.maps.CustomOverlay({
+    position: new kakao.maps.LatLng(loc.lat, loc.lng),
+    content: el,
+    yAnchor: 0.5,
+  });
+  mapMyLocationOverlay.setMap(mapPageKakaoMapInstance);
+}
+
+/* ---------- 현재 위치로 이동 버튼 ---------- */
+document.getElementById("mapLocateBtn").addEventListener("click", async () => {
+  const loc = await getMapUserLocation();
+  if (loc.fallback) {
+    showToast("위치 권한을 확인해주세요. 브라우저 설정에서 위치 접근을 허용해야 해요.");
+    return;
+  }
+  renderMyLocationDot(loc);
+  if (mapPageKakaoMapInstance) {
+    mapPageKakaoMapInstance.setLevel(6);
+    mapPageKakaoMapInstance.panTo(new kakao.maps.LatLng(loc.lat, loc.lng));
+  }
+});
+
+/* ---------- 바텀시트 접기/펼치기 (당근 패턴) ----------
+   상태 2개: collapsed(살짝만 보임, 지도 넓게) ↔ expanded(리스트 넓게).
+   지도 드래그 시 자동 collapsed, 핸들 탭/스와이프로 사용자가 직접 전환. */
+function collapseMapSheet() {
+  document.getElementById("mapBottomSheet").classList.add("collapsed");
+}
+function expandMapSheet() {
+  document.getElementById("mapBottomSheet").classList.remove("collapsed");
+}
+(function initMapSheetHandle() {
+  const handle = document.getElementById("mapSheetHandle");
+  const sheet = document.getElementById("mapBottomSheet");
+  let startY = null;
+
+  handle.addEventListener("click", () => {
+    sheet.classList.toggle("collapsed");
+  });
+  handle.addEventListener("touchstart", (e) => { startY = e.touches[0].clientY; }, { passive: true });
+  handle.addEventListener("touchend", (e) => {
+    if (startY == null) return;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > 24) collapseMapSheet();       // 아래로 스와이프 → 접기
+    else if (dy < -24) expandMapSheet();   // 위로 스와이프 → 펼치기
+    startY = null;
+  }, { passive: true });
+})();
 
 /* ---------- 카테고리 + 혜택 필터 ---------- */
 let mapPageCurrentBenefit = "all";

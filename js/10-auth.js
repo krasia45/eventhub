@@ -6,9 +6,9 @@ const onboardingOverlay = document.getElementById("onboardingOverlay");
 let authMode = "login"; // "login" | "signup"
 
 const KEYWORD_POOL = {
-  region: ["#성수동", "#홍대·연남", "#더현대서울", "#압구정로데오", "#한남동", "#강남역"],
-  style: ["#포토존맛집", "#비건뷰티", "#리미티드에디션", "#신상디저트", "#코덕필수템", "#스트릿패션", "#미니멀룩"],
-  benefit: ["#1+1", "#반값할인", "#무료체험·증정", "#선착순한정", "#타임세일", "#즉시쿠폰"],
+  region: ["#성수동", "#홍대·연남", "#더현대서울", "#압구정로데오", "#한남동", "#강남역", "#잠실·롯데월드몰", "#가로수길"],
+  style: ["#포토존맛집", "#비건뷰티", "#리미티드에디션", "#신상디저트", "#코덕필수템", "#스트릿패션", "#미니멀룩", "#아이돌콜라보", "#캐릭터굿즈", "#전시·클래스", "#빈티지·세컨핸드", "#K뷰티신상"],
+  benefit: ["#1+1", "#반값할인", "#무료체험·증정", "#선착순한정", "#타임세일", "#즉시쿠폰", "#포토카드증정", "#사은품이벤트"],
 };
 let selectedKeywords = new Set();
 let userInterestKeywords = []; // 로그인 사용자의 저장된 관심 키워드 (팝업 탭 관심지역 배너 등에서 재사용)
@@ -53,8 +53,7 @@ function renderProfileHub() {
     (typeof personalSchedules !== "undefined" ? personalSchedules.length : 0);
   renderProfileTaste();
 
-  // 팔로우 브랜드 목록은 매번 새로 불러와서 활동 카드 숫자와 관리 리스트 둘 다에 반영
-  document.getElementById("profileFollowList").hidden = true;
+  // 팔로우 브랜드 개수는 매번 새로 불러와서 활동 카드 숫자에 반영
   if (!supabaseClient) return;
 
   supabaseClient.from("user_follows").select("brand").eq("user_id", currentUser.id)
@@ -119,23 +118,53 @@ function renderProfileFollowList() {
   });
 }
 
-/* ---------- 나의 활동 카드 3개: 각 화면으로 바로 이동 ---------- */
-document.getElementById("profileActSaved").addEventListener("click", () => {
+/* ---------- 프로필에서 다른 화면으로 이동할 때의 공통 처리 ----------
+   기존 문제: 프로필 → 쿠폰함 진입 후 뒤로가기하면 홈으로 가버림.
+   해결: 새 화면이 pushModalHistory로 등록한 "닫기 함수"를 래핑해서,
+   그 화면이 닫힐 때(뒤로가기든 X버튼이든) 프로필이 자동으로 다시 열리게 한다. */
+function openFromProfile(openFn) {
   closeAuthModal();
   popModalHistory();
-  openCouponWallet();
+  openFn();
+  // 방금 열린 화면의 닫기 함수(스택 최상단)를 "닫고 나서 프로필 재오픈"으로 교체
+  if (modalCloseStack.length > 0) {
+    const originalClose = modalCloseStack[modalCloseStack.length - 1];
+    modalCloseStack[modalCloseStack.length - 1] = () => {
+      originalClose();
+      openAuthModal();
+    };
+  }
+}
+
+/* ---------- 나의 활동 카드 3개: 각 화면으로 바로 이동 (닫으면 프로필 복귀) ---------- */
+document.getElementById("profileActSaved").addEventListener("click", () => {
+  openFromProfile(openCouponWallet);
 });
 document.getElementById("profileActFollow").addEventListener("click", () => {
-  // 팔로우 브랜드는 별도 화면이 없어 프로필 안에서 목록을 펼쳐 보여준다
-  const listEl = document.getElementById("profileFollowList");
-  const nowOpen = listEl.hidden;
-  listEl.hidden = !nowOpen;
-  if (nowOpen) renderProfileFollowList();
+  openFollowManagePage();
 });
 document.getElementById("profileActCalendar").addEventListener("click", () => {
+  openFromProfile(openCalendar);
+});
+
+/* ---------- 팔로우 브랜드 관리 페이지 ---------- */
+function closeFollowManagePage() {
+  document.getElementById("followManageOverlay").classList.remove("open");
+}
+function openFollowManagePage() {
   closeAuthModal();
   popModalHistory();
-  openCalendar();
+  document.getElementById("followManageOverlay").classList.add("open");
+  renderProfileFollowList();
+  pushModalHistory(() => {
+    closeFollowManagePage();
+    openAuthModal(); // 닫으면 프로필로 복귀
+  });
+}
+document.getElementById("followManageClose").addEventListener("click", () => {
+  closeFollowManagePage();
+  popModalHistory();
+  openAuthModal();
 });
 
 /* ---------- 취향 수정: 온보딩 키워드 선택 화면을 편집 모드로 재사용 ---------- */
@@ -167,24 +196,41 @@ document.getElementById("privacyGuideOverlay").addEventListener("click", (e) => 
 });
 
 document.getElementById("profileTravelBtn").addEventListener("click", () => {
-  closeAuthModal();
-  popModalHistory();
-  openTravelPlanner();
+  openFromProfile(openTravelPlanner);
 });
 document.getElementById("profileRecentMenuBtn").addEventListener("click", () => {
-  closeAuthModal();
-  popModalHistory();
-  openRecentView();
+  openFromProfile(openRecentView);
 });
 document.getElementById("profileNotifSettingBtn").addEventListener("click", () => {
-  closeAuthModal();
-  popModalHistory();
-  openMoreMenu();
+  openFromProfile(openMoreMenu);
 });
+
+/* ---------- 문의하기: 홈 하단 스크롤 대신 전용 시트로 ---------- */
+function closeInquirySheet() {
+  document.getElementById("inquirySheetOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
 document.getElementById("profileSupportBtn").addEventListener("click", () => {
   closeAuthModal();
   popModalHistory();
-  document.querySelector(".inquiry-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("inquirySheetOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+  pushModalHistory(() => {
+    closeInquirySheet();
+    openAuthModal(); // 닫으면 프로필로 복귀
+  });
+});
+document.getElementById("inquirySheetClose").addEventListener("click", () => {
+  closeInquirySheet();
+  popModalHistory();
+  openAuthModal();
+});
+document.getElementById("inquirySheetOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "inquirySheetOverlay") {
+    closeInquirySheet();
+    popModalHistory();
+    openAuthModal();
+  }
 });
 
 function closeAuthModal() {

@@ -145,22 +145,6 @@
       <div class="feed-grid" id="feedGrid"></div>
     </section>
 
-    <!-- ===== Inquiry (문의하기) ===== -->
-    <section class="inquiry-section">
-      <div class="section-head">
-        <h2>💬 문의하기</h2>
-      </div>
-      <form class="inquiry-form" id="inquiryForm">
-        <input type="text" id="inquiryName" placeholder="이름 (선택)">
-        <input type="email" id="inquiryEmail" placeholder="이메일" required>
-        <textarea id="inquiryMessage" placeholder="문의 내용을 입력해주세요" rows="3" required></textarea>
-        <!-- 스팸봇 감지용 허니팟 필드 — 실제 사람에게는 안 보이고, 자동입력 봇만 채우는 함정 필드 -->
-        <input type="text" id="inquiryWebsite" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">
-        <button type="submit" class="inquiry-submit-btn" id="inquirySubmitBtn">문의 등록하기</button>
-        <p class="inquiry-status" id="inquiryStatus" hidden></p>
-      </form>
-    </section>
-
     <!-- ===== Footer ===== -->
     <footer class="app-footer">
       <p>© 2026 EventHub</p>
@@ -495,8 +479,6 @@
           </button>
         </div>
 
-        <div class="profile-follow-list" id="profileFollowList" hidden></div>
-
         <!-- 개인정보 보호: 법률 문서 대신 사용자가 이해할 수 있는 짧은 안내 우선 -->
         <p class="profile-section-label">개인정보 보호</p>
         <div class="profile-privacy-card">
@@ -527,6 +509,47 @@
       </div>
     </div>
   </div>
+
+  <!-- ===== 문의하기 시트 (프로필에서 진입, 홈 하단 섹션에서 이전됨) ===== -->
+  <div class="sheet-overlay" id="inquirySheetOverlay">
+    <div class="bottom-sheet inquiry-sheet">
+      <button class="sheet-close" id="inquirySheetClose" aria-label="닫기">✕</button>
+      <div class="inquiry-sheet-body">
+        <h2 class="inquiry-sheet-title">문의하기</h2>
+        <p class="inquiry-sheet-sub">불편한 점이나 제안하고 싶은 내용을 남겨주세요.</p>
+        <form class="inquiry-form" id="inquiryForm">
+          <input type="text" id="inquiryName" placeholder="이름 (선택)">
+          <input type="email" id="inquiryEmail" placeholder="이메일" required>
+          <textarea id="inquiryMessage" placeholder="문의 내용을 입력해주세요" rows="4" required></textarea>
+          <!-- 스팸봇 감지용 허니팟 필드 — 실제 사람에게는 안 보이고, 자동입력 봇만 채우는 함정 필드 -->
+          <input type="text" id="inquiryWebsite" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">
+          <button type="submit" class="inquiry-submit-btn" id="inquirySubmitBtn">문의 등록하기</button>
+          <p class="inquiry-status" id="inquiryStatus" hidden></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 팔로우 브랜드 관리 페이지 (프로필에서 진입) ===== -->
+  <div class="page-overlay" id="followManageOverlay">
+    <div class="page-view">
+      <div class="page-header">
+        <button class="page-back-btn" id="followManageClose" aria-label="뒤로가기">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="page-header-text">
+          <h2>팔로우 브랜드 관리</h2>
+        </div>
+      </div>
+      <p class="follow-manage-sub">팔로우한 브랜드의 새 이벤트가 등록되면 알림으로 알려드려요.</p>
+      <div class="profile-follow-list follow-manage-list" id="profileFollowList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 위로가기 버튼 (홈 스크롤 시) ===== -->
+  <button type="button" class="scroll-top-btn" id="scrollTopBtn" aria-label="맨 위로">
+    <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
 
   <!-- ===== 개인정보 보호 안내 (쉬운 설명 시트) ===== -->
   <div class="sheet-overlay" id="privacyGuideOverlay">
@@ -710,28 +733,45 @@
 
   <!-- ===== 지도에서 보기 ===== -->
   <div class="page-overlay" id="mapPageOverlay">
-    <div class="page-view">
-      <div class="page-header">
-        <button class="page-back-btn" id="mapPageClose" aria-label="뒤로가기">
-          <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <div class="map-page-search-wrap">
-          <svg viewBox="0 0 24 24" fill="none" width="16" height="16" class="map-page-search-icon"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm10 2-5.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <input type="text" id="mapPageSearchInput" placeholder="이벤트·브랜드·지역 검색" autocomplete="off">
-          <button type="button" id="mapPageSearchClear" class="map-page-search-clear" hidden aria-label="검색 지우기">✕</button>
-        </div>
-      </div>
-      <div class="map-page-filter-row" id="mapPageFilterRow"></div>
+    <div class="page-view map-page-view">
+      <!-- 지도가 화면 전체 배경, 나머지 UI는 전부 지도 위 오버레이 (당근마켓 동네지도 패턴) -->
       <div class="map-page-map-wrap">
         <div id="mapPageKakaoMap" class="map-page-kakao-map"></div>
+
+        <!-- 상단 오버레이: 뒤로가기 + 검색창 -->
+        <div class="map-top-overlay">
+          <div class="map-search-bar">
+            <button class="page-back-btn map-back-btn" id="mapPageClose" aria-label="뒤로가기">
+              <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="map-page-search-wrap">
+              <svg viewBox="0 0 24 24" fill="none" width="15" height="15" class="map-page-search-icon"><path d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm10 2-5.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <input type="text" id="mapPageSearchInput" placeholder="이벤트·브랜드·지역 검색" autocomplete="off">
+              <button type="button" id="mapPageSearchClear" class="map-page-search-clear" hidden aria-label="검색 지우기">✕</button>
+            </div>
+          </div>
+          <div class="map-page-filter-row" id="mapPageFilterRow"></div>
+        </div>
+
+        <!-- 지도 위 플로팅 버튼들 -->
+        <button type="button" class="map-locate-btn" id="mapLocateBtn" aria-label="현재 위치로">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5V6M12 18v3.5M2.5 12H6M18 12h3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/></svg>
+        </button>
         <button type="button" class="map-refresh-btn" id="mapRefreshBtn" hidden>📍 현재 지역에서 찾기</button>
       </div>
-      <div class="map-page-list-head">
-        <h3 id="mapPageListTitle">현재 지역 이벤트</h3>
-        <span class="map-page-list-count" id="mapPageListCount"></span>
+
+      <!-- 하단 바텀시트: 드래그 핸들로 접었다 폈다 (당근 스타일: 상단 곡선 + ─ 핸들) -->
+      <div class="map-bottom-sheet" id="mapBottomSheet">
+        <div class="map-sheet-handle-area" id="mapSheetHandle">
+          <span class="map-sheet-handle-bar"></span>
+        </div>
+        <div class="map-page-list-head">
+          <h3 id="mapPageListTitle">현재 지역 이벤트</h3>
+          <span class="map-page-list-count" id="mapPageListCount"></span>
+        </div>
+        <div class="map-page-list" id="mapPageList"></div>
+        <button type="button" class="map-page-more-btn" id="mapPageMoreBtn" hidden>더 많은 이벤트 보기</button>
       </div>
-      <div class="map-page-list" id="mapPageList"></div>
-      <button type="button" class="map-page-more-btn" id="mapPageMoreBtn" hidden>더 많은 이벤트 보기</button>
     </div>
   </div>
 
