@@ -98,10 +98,18 @@
       <button class="ranking-more-btn" id="rankingMoreBtn" hidden>더보기 ⌄</button>
     </section>
 
+    <!-- ===== 오늘 마감임박 (실시간성 신호 — 오늘 마감하는 이벤트가 없으면 섹션 자체가 숨겨짐) ===== -->
+    <section class="ending-today-section" id="endingTodaySection" hidden>
+      <div class="section-head">
+        <h2>⏰ 오늘 마감임박</h2>
+      </div>
+      <div class="ending-today-scroll" id="endingTodayScroll"></div>
+    </section>
+
     <!-- ===== AI 추천 · 나만을 위한 이벤트 (로그인 키워드 기반 상시 노출 피드) ===== -->
     <section class="ai-feed-section" id="aiSection">
       <div class="section-head">
-        <h2><svg class="star-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path class="star-main" d="M12 2c.6 3.4 2 5.8 5 7-3 1.2-4.4 3.6-5 7-.6-3.4-2-5.8-5-7 3-1.2 4.4-3.6 5-7Z" fill="#21B5BC"/><path class="star-small" d="M19 3c.3 1.6.9 2.7 2.3 3.2-1.4.5-2 1.6-2.3 3.2-.3-1.6-.9-2.7-2.3-3.2 1.4-.5 2-1.6 2.3-3.2Z" fill="#3BDDEC"/></svg> <span class="ai-title-mint">AI 추천</span> · 나만을 위한 이벤트</h2>
+        <h2 id="aiSectionTitle"><svg class="star-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path class="star-main" d="M12 2c.6 3.4 2 5.8 5 7-3 1.2-4.4 3.6-5 7-.6-3.4-2-5.8-5-7 3-1.2 4.4-3.6 5-7Z" fill="#21B5BC"/><path class="star-small" d="M19 3c.3 1.6.9 2.7 2.3 3.2-1.4.5-2 1.6-2.3 3.2-.3-1.6-.9-2.7-2.3-3.2 1.4-.5 2-1.6 2.3-3.2Z" fill="#3BDDEC"/></svg> <span class="ai-title-mint">맞춤 이벤트</span></h2>
         <button class="ai-feed-more-btn" id="aiFeedMoreBtn">더보기 ></button>
       </div>
 

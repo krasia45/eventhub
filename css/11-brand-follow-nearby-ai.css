@@ -55,6 +55,17 @@
 }
 .nearby-scroll::-webkit-scrollbar { display: none; }
 
+/* ---------- 오늘 마감임박 섹션 (내주변 스크롤과 동일 패턴 재사용) ---------- */
+.ending-today-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.ending-today-scroll::-webkit-scrollbar { display: none; }
+.ending-today-badge { background: var(--accent); } /* "오늘마감" 강조 배지, 기존 D-Day 배지와 동일 톤 유지 */
+
 .nearby-card {
   flex: 0 0 150px;
   cursor: pointer;

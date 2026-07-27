@@ -62,6 +62,69 @@ document.getElementById("heroCarousel").addEventListener("scroll", function () {
 });
 
 /* ---------- 내 주변 인기 이벤트 (GPS 조용히 시도 → 실패 시 서울 기준으로 대체) ---------- */
+/* ---------- 오늘 마감임박 (실시간성 신호) ----------
+   오늘(D-Day)에 정확히 마감하는 이벤트만, 인기순으로 최대 8개.
+   데이터가 없는 날은 섹션 자체를 숨긴다 — 가짜 데이터로 채우지 않는다. */
+function renderEndingTodaySection() {
+  const section = document.getElementById("endingTodaySection");
+  const scroll = document.getElementById("endingTodayScroll");
+
+  const endingToday = EVENTS
+    .filter(ev => isEventLive(ev) && ev.dday === "D-Day")
+    .sort((a, b) => getEventScore(b.id) - getEventScore(a.id))
+    .slice(0, 8);
+
+  if (endingToday.length === 0) {
+    section.hidden = true;
+    endingTodayHasData = false;
+    updateDiscoverySectionsVisibility();
+    return;
+  }
+  endingTodayHasData = true;
+  section.hidden = false;
+
+  scroll.innerHTML = endingToday.map((ev, idx) => {
+    const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
+    const cardDiscountText = escapeHtml((ev.discount || "").split(/\s+\+\s+/)[0].trim());
+    const logoHtml = ev.domain
+      ? `<img class="card-brand-logo-sm" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" src="${getLogoUrl(ev.domain)}" alt="">`
+      : "";
+    return `
+      <div class="nearby-card ending-today-card" data-id="${ev.id}">
+        <div class="nearby-card-media">
+          <img src="${ev.image}" alt="${escapeHtml(ev.title)}" loading="lazy" onerror="handleImageError(this)">
+          <button class="card-like-btn nearby-like ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
+            <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+          </button>
+        </div>
+        <div class="nearby-card-brand-row">
+          <span class="card-brand-left">
+            <span class="nearby-rank-num ${idx < 3 ? "nearby-rank-hot" : "nearby-rank-alt"}">${idx + 1}</span>
+            ${logoHtml}
+            <p class="nearby-card-brand">${escapeHtml(ev.brand)}</p>
+          </span>
+          <span class="card-dday-inline ending-today-badge">오늘마감</span>
+        </div>
+        <p class="nearby-card-title">${escapeHtml(ev.title)}</p>
+        ${cardDiscountText ? `<p class="nearby-card-discount">${cardDiscountText}</p>` : ""}
+        <div class="nearby-card-stats">
+          <span>👁 ${formatCount(stats.views)}</span>
+          <span class="stat-heart">❤️ ${formatCount(stats.likes)}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  scroll.querySelectorAll(".ending-today-card").forEach(card => {
+    card.addEventListener("click", () => openSheet(card.dataset.id));
+  });
+  scroll.querySelectorAll(".nearby-like").forEach(btn => {
+    btn.addEventListener("click", (e) => { e.stopPropagation(); toggleLike(btn.dataset.id); });
+  });
+  scroll.querySelectorAll(".card-brand-logo-sm").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  updateDiscoverySectionsVisibility();
+}
+
 async function renderNearbySection() {
   const section = document.getElementById("nearbySection");
   const scroll = document.getElementById("nearbyScroll");

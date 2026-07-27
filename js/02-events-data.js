@@ -79,7 +79,12 @@ const MOCK_NEW_OPEN_EVENTS = [
 
 function computeDday(periodEnd) {
   if (!periodEnd) return "";
-  const end = new Date(periodEnd + "T23:59:59");
+  // ⚠️ 예전엔 end를 "T23:59:59"로 만들어서, today(00:00:00)와의 차이가
+  //    정확히 24시간이 아니라 23시간 59분 59초가 되는 바람에 Math.ceil()이
+  //    오늘 마감(diffDays가 0이어야 함)도 1로 올려버려 "D-Day" 대신 "D-1"로
+  //    표시되는 버그가 있었다. end도 today와 똑같이 00:00:00 자정 기준으로
+  //    맞추면 날짜 차이가 정확히 24시간의 배수가 되어 이 오차가 사라진다.
+  const end = new Date(periodEnd + "T00:00:00");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   // Date 객체를 먼저 직접 비교해서 종료 여부를 확정한다.
@@ -88,7 +93,7 @@ function computeDday(periodEnd) {
   //  JS에서 -0 < 0은 false이면서 -0 === 0은 true라, 그 경우 "종료" 대신
   //  "D-Day"로 잘못 표시되고, 그 결과 종료 이벤트 제외 필터도 무력화됐다.)
   if (end < today) return "종료";
-  const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+  const diffDays = Math.round((end - today) / (1000 * 60 * 60 * 24));
   if (diffDays === 0) return "D-Day";
   return `D-${diffDays}`;
 }
@@ -156,6 +161,7 @@ async function loadEventsFromApi() {
   renderFeed();
   renderHeroCarousel();
   renderNearbySection();
+  renderEndingTodaySection();
   renderPopupRegionBanner();
 
   // 공유받은 이벤트 링크(?event=id)로 들어온 경우, 자동으로 그 이벤트 시트를 열어준다.
@@ -176,6 +182,7 @@ let selectedBrands = new Set(); // 카테고리 탭에서만 사용되는 브랜
 // 필터 활성 시 억지로 숨겼다가 필터 해제 시 "원래 있었으면 다시 보이게" 복원하려면
 // 그 원래 상태(위치 기반으로 실제 보여줄 데이터가 있었는지)를 따로 기억해둬야 함.
 let nearbyHasData = false;
+let endingTodayHasData = false;
 let endingSoonFilterActive = false; // 퀵메뉴 "종료 임박 알림" 토글 상태
 
 document.getElementById("logoHomeBtn").addEventListener("click", () => {

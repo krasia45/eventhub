@@ -184,6 +184,7 @@ function updateDiscoverySectionsVisibility() {
   document.getElementById("aiSection").hidden = active;
   document.getElementById("heroCarouselWrap").hidden = active;
   document.getElementById("nearbySection").hidden = active ? true : !nearbyHasData;
+  document.getElementById("endingTodaySection").hidden = active ? true : !endingTodayHasData;
   document.getElementById("rankingSection").hidden = active;
 }
 

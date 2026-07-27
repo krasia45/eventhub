@@ -481,7 +481,21 @@ document.getElementById("onboardingSubmitBtn").addEventListener("click", async (
 });
 
 /* ---------- AI 섹션 키워드 태그 (X 삭제 + "+" 추가) ---------- */
+/* ---------- AI 섹션 제목: 실제로는 AI가 아니라 키워드 매칭 방식이라 "AI 추천"이라는
+   표현 대신, 로그인 사용자면 "OOO님의 맞춤 이벤트"로 개인화해서 보여준다. ---------- */
+function updateAiSectionTitle() {
+  const titleEl = document.getElementById("aiSectionTitle");
+  const label = titleEl.querySelector(".ai-title-mint");
+  if (currentUser) {
+    const name = (currentUser.email || currentUser.user_metadata?.name || "회원").split("@")[0];
+    label.textContent = `${name}님의 맞춤 이벤트`;
+  } else {
+    label.textContent = "맞춤 이벤트";
+  }
+}
+
 function renderAiKeywordChips(keywords) {
+  updateAiSectionTitle();
   const row = document.getElementById("aiKeywordRow");
 
   if (!currentUser) {
@@ -638,6 +652,7 @@ if (supabaseClient) {
     if (event === "SIGNED_OUT") {
       // 로그아웃 시 좋아요는 localStorage 기준으로 되돌아감 (다음 로그인 시 다시 동기화)
       userInterestKeywords = [];
+      renderAiKeywordChips(); // 제목도 "OOO님의 맞춤 이벤트" → "맞춤 이벤트"로 되돌림
     }
   });
 
