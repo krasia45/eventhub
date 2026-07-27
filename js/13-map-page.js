@@ -480,8 +480,9 @@ let mapSheetDragging = false;
 
 function initMapSheetSnapPoints() {
   const viewH = document.querySelector(".map-page-view")?.clientHeight || window.innerHeight;
-  MAP_SHEET_SNAP.mid = Math.round(viewH * 0.38);
-  MAP_SHEET_SNAP.expanded = Math.round(viewH * 0.85);
+  MAP_SHEET_SNAP.collapsed = 130;                 // 하단: 기존 90 → 조금 더 올림
+  MAP_SHEET_SNAP.mid = Math.round(viewH * 0.48);   // 중단: 기존 38% → 조금 더 올림
+  MAP_SHEET_SNAP.expanded = viewH;                 // 상단: 검색창까지 덮도록 화면 전체 높이까지
 }
 
 function setMapSheetHeight(px, { animate = false } = {}) {

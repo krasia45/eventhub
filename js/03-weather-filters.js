@@ -113,13 +113,15 @@ document.getElementById("weatherRegionGpsBtn").addEventListener("click", async (
   loadWeather(await getQuietLocation());
 });
 
-document.getElementById("profileWeatherBtn").addEventListener("click", () => {
-  // 프로필 시트 위에서 눌리므로, 프로필을 먼저 닫고 날씨 시트를 연다
-  closeAuthModal();
-  popModalHistory();
+function openWeatherOverlayFromProfile() {
   document.getElementById("weatherOverlay").classList.add("open");
   document.body.style.overflow = "hidden";
   pushModalHistory(closeWeatherOverlay);
+}
+document.getElementById("profileWeatherBtn").addEventListener("click", () => {
+  // 다른 서비스 메뉴(여행플래너 등)와 동일하게 openFromProfile로 통일 —
+  // 이래야 X버튼/뒤로가기 둘 다 홈이 아니라 프로필로 복귀한다.
+  openFromProfile(openWeatherOverlayFromProfile);
 });
 function closeWeatherOverlay() {
   document.getElementById("weatherOverlay").classList.remove("open");
