@@ -86,7 +86,7 @@
 }
 .nearby-rank-hot { background: var(--accent); }
 .nearby-rank-alt { background: var(--mint-dark); }
-.nearby-card-brand { font-size: 10.5px; color: var(--text-3); font-weight: 700; }
+.nearby-card-brand { font-size: 10.5px; color: var(--accent-dark); font-weight: 700; }
 .nearby-card-title {
   font-size: 12.5px;
   font-weight: 700;
@@ -188,7 +188,8 @@
   border-color: var(--accent);
   color: var(--accent-dark);
 }
-.map-page-view { position: relative; overflow: hidden; }
+.map-page-view { overflow: hidden; } /* position은 .page-view(absolute)를 그대로 써야 함 — relative로 재정의하면
+   오버레이 시스템이 깨지면서 지도를 닫아도 이 요소가 화면 클릭을 가로채는 버그가 생김(수정 완료) */
 .map-page-map-wrap {
   position: absolute;
   inset: 0;
