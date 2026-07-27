@@ -152,18 +152,31 @@ function haversineDistanceKm(lat1, lng1, lat2, lng2) {
 
 function matchesDiscountFilter(ev, filter) {
   if (filter === "all") return true;
-  if (filter === "1+1") return ev.discount.includes("1+1");
+  if (filter === "1+1") return /1\s*\+\s*1|2\s*\+\s*1/.test(ev.discount); // 편의점 등에서 1+1·2+1이 같이 쓰이는 경우가 많아 함께 매칭
   if (filter === "50plus") {
     const match = ev.discount.match(/(\d+)\s*%/);
     return !!match && parseInt(match[1], 10) >= 50;
   }
   if (filter === "free") {
-    const text = `${ev.discount} ${ev.title} ${(ev.tags || []).join(" ")}`;
+    // ⚠️ 예전엔 ev.tags도 같이 봤는데, tags는 어떤 카드에도 화면에 안 보이는 내부 데이터라
+    // "카드엔 혜택 없다고 나오는데 왜 무료·증정 필터엔 걸리지?" 하는 괴리가 생겼다(실제 사례:
+    // discount가 비어있고 title에 "체험"만 있는 이벤트가 tags의 "체험단" 때문에 매칭됐었음).
+    // 카드에 실제로 보이는 필드(discount, title)만 기준으로 삼아 필터=카드 내용을 100% 일치시킨다.
+    const text = `${ev.discount} ${ev.title}`;
     return /무료|증정|체험단|사은품|샘플/.test(text);
   }
   if (filter === "limited") {
-    const text = `${ev.discount} ${ev.title} ${ev.conditions || ""} ${(ev.tags || []).join(" ")}`;
+    // conditions는 조건이 있을 때 카드에 실제로 노출되므로 유지, tags만 제거(위와 같은 이유)
+    const text = `${ev.discount} ${ev.title} ${ev.conditions || ""}`;
     return /선착순|한정|타임세일|리미티드|단독/.test(text);
+  }
+  if (filter === "coupon") {
+    const text = `${ev.discount} ${ev.title}`;
+    return /쿠폰/.test(text);
+  }
+  if (filter === "point") {
+    const text = `${ev.discount} ${ev.title}`;
+    return /적립|캐시백|포인트/.test(text);
   }
   if (filter === "newopen") return (ev.tags || []).includes("신규오픈");
   return true;
@@ -173,7 +186,10 @@ function matchesDiscountFilter(ev, filter) {
 /* 브랜드/할인유형/서브태그 중 하나라도 선택되어 있으면 "결과 모드"로 간주.
    카테고리 선택 자체는 포함하지 않음 — "패션 카테고리만 보는 중"은 여전히 발견 모드에 가까움. */
 function isAnyFilterActive() {
-  return selectedBrands.size > 0 || currentDiscountFilter !== "all" || !!currentSubTag;
+  // 분야(카테고리)는 포함 안 함 — 카테고리만 고른 상태는 여전히 "발견 모드"로 유지한다
+  // (최종 시안 이미지: 뷰티 카테고리를 선택해도 실시간·맞춤·주변 섹션이 그대로 보임)
+  return selectedBrands.size > 0 || currentDiscountFilter !== "all" || !!currentSubTag
+    || !!currentRegionFilter || gpsFilterActive || onlineOfflineFilter !== "all";
 }
 
 /* 필터가 활성화되면 필터를 반영 안 하는 발견형 콘텐츠(AI추천/히어로배너/내주변)와
@@ -225,6 +241,16 @@ function getFilteredEvents() {
 
   if (gpsFilterActive && userLocation) {
     list = list.filter(ev => ev.lat != null && ev.lng != null && haversineDistanceKm(userLocation.lat, userLocation.lng, ev.lat, ev.lng) <= 20);
+  }
+
+  // 더보기 > 온라인/오프라인 — 실제 channel 텍스트로 판정하는 getChannelMode() 재사용 (가짜 필터 아님)
+  if (onlineOfflineFilter !== "all") {
+    list = list.filter(ev => {
+      const mode = getChannelMode(ev);
+      if (onlineOfflineFilter === "online") return mode === "온라인" || mode === "온오프라인";
+      if (onlineOfflineFilter === "offline") return mode === "오프라인" || mode === "온오프라인";
+      return true;
+    });
   }
 
   if (endingSoonFilterActive) {

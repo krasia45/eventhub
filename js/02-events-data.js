@@ -2,20 +2,26 @@
 const CATEGORIES = [
   { id: "all",     label: "전체",       emoji: "🏠",
     icon: `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>` },
+  { id: "convenience", label: "편의점", emoji: "🏪",
+    icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5 5 4h14l1 5.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4 9.5h16V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 20v-5a2 2 0 0 1 4 0v5" stroke="currentColor" stroke-width="1.5"/></svg>` },
   { id: "food",    label: "카페·디저트", emoji: "🍰",
     icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M17 10.5h1.5a2.5 2.5 0 0 1 0 5H17" stroke="currentColor" stroke-width="1.6"/><path d="M8 3c0 1-1.2 1-1.2 2S8 6 8 7M12 3c0 1-1.2 1-1.2 2S12 6 12 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>` },
   { id: "beauty",  label: "뷰티",       emoji: "💄",
     icon: `<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="10" width="6" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M10 10V7a2 2 0 0 1 4 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M11 3.5h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>` },
   { id: "fashion", label: "패션",       emoji: "👗",
     icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M9 4h6l1.5 2.5L21 9l-2.5 2-1-1.5V20a1 1 0 0 1-1 1H7.5a1 1 0 0 1-1-1V9.5l-1 1.5L3 9l4.5-2.5L9 4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="4" r="1.4" stroke="currentColor" stroke-width="1.4"/></svg>` },
-  { id: "popup",   label: "팝업·컬처",   emoji: "🎪",
+  { id: "popup",   label: "팝업·전시",   emoji: "🎪",
     icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 3v4M12 7 5 20h14L12 7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="3" r="1.3" stroke="currentColor" stroke-width="1.4"/><path d="M8.5 14.5h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>` },
-  { id: "living",  label: "라이프스타일", emoji: "🛋️",
-    icon: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 12v6M20 12v6M4 12a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2H4v-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 10V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.6"/></svg>` },
 ];
+// "라이프스타일"은 실제 조사 결과 EventHub 타깃(10-20대 여성) 이벤트 유형과 안 맞아서 제거했다.
+// (기존 주석엔 "제외"라고 적혀 있었지만 CATEGORIES 배열엔 실제로 안 빠져 있어서 홈에 계속 노출되던
+//  상태였다 — 이번에 정리하며 실제로 제거)
+// "굿즈·캐릭터"(K팝 MD, 캐릭터, 게임 IP)는 별도 상위 탭으로 안 만들고 "팝업·전시"의 하위 태그로
+// 흡수한다 — 실제 조사 결과 대다수가 팝업 형식으로 열리기 때문. 서브카테고리는 renderSubcatRow()가
+// 실제 등록된 이벤트 태그 빈도로 동적 생성하므로, 코드에서 "굿즈"/"캐릭터" 같은 태그를 강제하지
+// 않아도 실제 이벤트가 그 태그를 달고 들어오면 자동으로 하위 탭에 나타난다.
 
-// BRD 확정 사항: 구매 주기가 긴 전자기기/숙박/배달/리빙은 이번 개편에서 제외
-// (DB에는 그대로 남아있고, 프론트에서만 숨김 처리 — 나중에 필요하면 되살리기 쉽도록)
+
 const ACTIVE_CATEGORY_IDS = CATEGORIES.filter(c => c.id !== "all").map(c => c.id);
 
 /* ---------- 이벤트 대표 이미지 로드 실패 안전망 ----------
@@ -178,6 +184,7 @@ async function loadEventsFromApi() {
 let currentCategory = "all";
 let currentDiscountFilter = "all"; // "all" | "1+1" | "50plus"
 let selectedBrands = new Set(); // 카테고리 탭에서만 사용되는 브랜드 로고 다중 필터
+let onlineOfflineFilter = "all"; // "all" | "online" | "offline" — getChannelMode() 실제 데이터 기반
 // '내 주변 인기 이벤트'는 GPS 결과에 따라 스스로 보임/숨김을 결정하는데,
 // 필터 활성 시 억지로 숨겼다가 필터 해제 시 "원래 있었으면 다시 보이게" 복원하려면
 // 그 원래 상태(위치 기반으로 실제 보여줄 데이터가 있었는지)를 따로 기억해둬야 함.

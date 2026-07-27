@@ -65,8 +65,54 @@
     
   </header>
 
-  <!-- ===== Category Tabs ===== -->
+  <!-- ===== Category Tabs (분야 - 그대로 유지) ===== -->
   <nav class="category-tabs" id="categoryTabs"></nav>
+
+  <!-- ===== 필터바: 브랜드/혜택/지역/더보기 (선택 즉시 아래 결과 반영) ===== -->
+  <div class="filter-bar-wrap">
+    <div class="filter-bar-row">
+      <button type="button" class="filter-bar-btn" id="filterBtnBrand" data-sheet="brand">브랜드 <span class="filter-chev">⌄</span></button>
+      <button type="button" class="filter-bar-btn" id="filterBtnBenefit" data-sheet="benefit">혜택 <span class="filter-chev">⌄</span></button>
+      <button type="button" class="filter-bar-btn" id="filterBtnMore" data-sheet="more">더보기 <span class="filter-chev">⌄</span></button>
+    </div>
+    <div class="selected-filter-row" id="selectedFilterRow" hidden></div>
+  </div>
+
+  <!-- ===== 필터 시트: 브랜드 (검색 + 인기브랜드 + 전체목록, 다중선택) ===== -->
+  <div class="sheet-overlay" id="filterSheetBrand">
+    <div class="bottom-sheet filter-sheet">
+      <button class="sheet-close" id="filterSheetBrandClose" aria-label="닫기">✕</button>
+      <h2 class="filter-sheet-title">브랜드 선택</h2>
+      <div class="filter-sheet-search">
+        <input type="text" id="brandSheetSearch" placeholder="브랜드 검색">
+      </div>
+      <div id="brandSheetPopular"></div>
+      <p class="filter-sheet-sublabel">전체 브랜드</p>
+      <div class="filter-sheet-list" id="brandSheetList"></div>
+      <button type="button" class="filter-sheet-apply-btn" id="brandSheetApply">선택 완료</button>
+    </div>
+  </div>
+
+  <!-- ===== 필터 시트: 혜택 (단일선택) ===== -->
+  <div class="sheet-overlay" id="filterSheetBenefit">
+    <div class="bottom-sheet filter-sheet">
+      <button class="sheet-close" id="filterSheetBenefitClose" aria-label="닫기">✕</button>
+      <h2 class="filter-sheet-title">혜택 선택</h2>
+      <div class="filter-sheet-list" id="benefitSheetList"></div>
+      <button type="button" class="filter-sheet-apply-btn" id="benefitSheetApply">선택 완료</button>
+    </div>
+  </div>
+
+  <!-- ===== 필터 시트: 더보기 (온라인/오프라인 — 실제 데이터로 판정 가능한 조건만) ===== -->
+  <div class="sheet-overlay" id="filterSheetMore">
+    <div class="bottom-sheet filter-sheet">
+      <button class="sheet-close" id="filterSheetMoreClose" aria-label="닫기">✕</button>
+      <h2 class="filter-sheet-title">추가 필터</h2>
+      <p class="filter-sheet-sublabel">온라인 / 오프라인</p>
+      <div class="filter-sheet-list" id="moreSheetOnlineOffline"></div>
+      <button type="button" class="filter-sheet-apply-btn" id="moreSheetApply">적용하기</button>
+    </div>
+  </div>
 
   <!-- ===== 2단 필터: 브랜드 로고(카테고리 탭에서만) + 혜택 조건(항상) ===== -->
   <div class="brand-filter-wrap" id="brandFilterWrap" hidden>
@@ -74,7 +120,7 @@
     <button type="button" class="brand-filter-toggle" id="brandFilterToggle" hidden>더보기 ⌄</button>
   </div>
 
-  <div class="filter-row">
+  <div class="filter-row" hidden>
     <div class="discount-tabs" id="discountTabs">
       <button class="discount-pill active" data-discount="all">전체</button>
       <button class="discount-pill" data-discount="1+1">1+1</button>

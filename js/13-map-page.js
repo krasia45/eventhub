@@ -199,6 +199,11 @@ function runMapPageSearch() {
     filtered = filtered.filter(ev => matchesDiscountFilter(ev, mapPageCurrentBenefit));
   }
 
+  // 브랜드 필터 (다중선택, 홈과 동일한 데이터 체계)
+  if (mapPageSelectedBrands.size > 0) {
+    filtered = filtered.filter(ev => mapPageSelectedBrands.has(ev.brand));
+  }
+
   // 검색어 필터 (브랜드/제목/태그/채널/혜택)
   if (mapPageSearchTerm) {
     const q = mapPageSearchTerm.toLowerCase();
@@ -480,9 +485,12 @@ let mapSheetDragging = false;
 
 function initMapSheetSnapPoints() {
   const viewH = document.querySelector(".map-page-view")?.clientHeight || window.innerHeight;
-  MAP_SHEET_SNAP.collapsed = 130;                 // 하단: 기존 90 → 조금 더 올림
-  MAP_SHEET_SNAP.mid = Math.round(viewH * 0.48);   // 중단: 기존 38% → 조금 더 올림
-  MAP_SHEET_SNAP.expanded = viewH;                 // 상단: 검색창까지 덮도록 화면 전체 높이까지
+  // 상단(검색창+분야탭+필터바) 실제 렌더링 높이를 재서, 시트를 끝까지 올렸을 때
+  // 검색창 바로 밑에 딱 붙도록 한다(화면 전체를 덮어 검색창까지 가리지 않게).
+  const topOverlayH = document.querySelector(".map-top-overlay")?.offsetHeight || 0;
+  MAP_SHEET_SNAP.collapsed = 130;                        // 하단: 살짝만 보임
+  MAP_SHEET_SNAP.mid = Math.round(viewH * 0.48);          // 중단
+  MAP_SHEET_SNAP.expanded = viewH - topOverlayH;          // 상단: 검색창 바로 밑까지만
 }
 
 function setMapSheetHeight(px, { animate = false } = {}) {
@@ -573,31 +581,20 @@ function snapMapSheetToNearest(currentPx, velocity) {
 
 /* ---------- 카테고리 + 혜택 필터 ---------- */
 let mapPageCurrentBenefit = "all";
+let mapPageSelectedBrands = new Set();
 
 function renderMapPageFilters() {
   const row = document.getElementById("mapPageFilterRow");
-  const cats = [
-    { id: "all", label: "전체" },
-    { id: "popup", label: "팝업·컬처" },
-    { id: "fashion", label: "패션" },
-    { id: "beauty", label: "뷰티" },
-    { id: "food", label: "카페·디저트" },
-    { id: "living", label: "라이프스타일" },
-  ];
-  const benefits = [
-    { id: "1+1", label: "1+1" },
-    { id: "50plus", label: "50%↑" },
-    { id: "free", label: "무료·증정" },
-    { id: "limited", label: "선착순·한정" },
-  ];
+  // 홈의 CATEGORIES와 동일한 분야 체계(순서 포함)를 그대로 사용 — 홈에서 "뷰티"의 이벤트는
+  // 지도에서도 같은 "뷰티" 이벤트여야 한다는 원칙(스펙 8번)에 따라 별도 목록을 두지 않는다.
+  const cats = CATEGORIES.map(c => ({ id: c.id, label: c.label }));
+
   row.innerHTML =
     cats.map(c => `
       <button type="button" class="map-page-filter-chip ${mapPageCurrentCategory === c.id ? "active" : ""}" data-cat="${c.id}">${c.label}</button>
     `).join("") +
     `<span class="map-page-filter-divider"></span>` +
-    benefits.map(b => `
-      <button type="button" class="map-page-filter-chip benefit ${mapPageCurrentBenefit === b.id ? "active" : ""}" data-benefit="${b.id}">${b.label}</button>
-    `).join("");
+    `<button type="button" class="map-page-filter-chip benefit ${(mapPageCurrentBenefit !== "all" || mapPageSelectedBrands.size > 0) ? "active" : ""}" id="mapFilterMoreBtn">필터${mapPageSelectedBrands.size > 0 ? ` ${mapPageSelectedBrands.size}` : ""}</button>`;
 
   row.querySelectorAll(".map-page-filter-chip[data-cat]").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -606,15 +603,66 @@ function renderMapPageFilters() {
       runMapPageSearch();
     });
   });
-  row.querySelectorAll(".map-page-filter-chip[data-benefit]").forEach(btn => {
+  document.getElementById("mapFilterMoreBtn").addEventListener("click", openMapFilterSheet);
+}
+
+/* 지도의 "필터" 버튼 — 지도 특성상 UI를 단순화해 브랜드(다중)+혜택(단일)만 한 시트에서 고른다.
+   (지역/더보기는 지도 자체가 이미 위치기반 발견 도구라 홈처럼 따로 두지 않는다) */
+function openMapFilterSheet() {
+  mapFilterSheetActive = true;
+  renderMapFilterSheetContent();
+  document.getElementById("filterSheetBenefit").classList.add("open");
+  document.body.style.overflow = "hidden";
+  pushModalHistory(closeMapFilterSheet);
+}
+function closeMapFilterSheet() {
+  document.getElementById("filterSheetBenefit").classList.remove("open");
+  document.body.style.overflow = "";
+  mapFilterSheetActive = false;
+}
+function renderMapFilterSheetContent() {
+  const titleEl = document.querySelector("#filterSheetBenefit .filter-sheet-title");
+  titleEl.textContent = "필터";
+  const listEl = document.getElementById("benefitSheetList");
+
+  const pool = getMapPageAllEvents().filter(ev => mapPageCurrentCategory === "all" || ev.category === mapPageCurrentCategory);
+  const seen = new Set();
+  const brands = [];
+  pool.forEach(ev => { if (!seen.has(ev.brand) && !ev.id.startsWith("mock-")) { seen.add(ev.brand); brands.push(ev); } });
+
+  const brandHtml = brands.length ? `
+    <p class="filter-sheet-sublabel" style="padding-left:0;">브랜드</p>
+    <div class="filter-sheet-list brand-chip-grid" style="padding:0 0 12px;">
+      ${brands.map(ev => `
+        <button type="button" class="brand-sheet-chip ${mapPageSelectedBrands.has(ev.brand) ? "checked" : ""}" data-brand="${escapeHtml(ev.brand)}">
+          <span>${escapeHtml(ev.brand)}</span><span class="brand-sheet-check">✓</span>
+        </button>`).join("")}
+    </div>` : "";
+
+  const benefitHtml = `
+    <p class="filter-sheet-sublabel" style="padding-left:0;">혜택</p>
+    ${BENEFIT_SHEET_OPTIONS.map(b => `
+      <button type="button" class="filter-sheet-radio map-benefit-radio ${mapPageCurrentBenefit === b.id ? "checked" : ""}" data-benefit="${b.id}">
+        <span>${b.label}</span><span class="radio-dot"></span>
+      </button>`).join("")}`;
+
+  listEl.innerHTML = brandHtml + benefitHtml;
+
+  listEl.querySelectorAll(".brand-sheet-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const brand = chip.dataset.brand;
+      if (mapPageSelectedBrands.has(brand)) mapPageSelectedBrands.delete(brand); else mapPageSelectedBrands.add(brand);
+      renderMapFilterSheetContent();
+    });
+  });
+  listEl.querySelectorAll(".map-benefit-radio").forEach(btn => {
     btn.addEventListener("click", () => {
-      // 같은 칩 다시 누르면 해제 (토글)
-      mapPageCurrentBenefit = mapPageCurrentBenefit === btn.dataset.benefit ? "all" : btn.dataset.benefit;
-      renderMapPageFilters();
-      runMapPageSearch();
+      mapPageCurrentBenefit = btn.dataset.benefit;
+      renderMapFilterSheetContent();
     });
   });
 }
+let mapFilterSheetActive = false; // #filterSheetBenefit을 지도가 잠깐 빌려 쓰는 중인지 표시
 
 /* ---------- 검색창 ----------
    지역명이면 지도 이동 → 그 지역 검색, 아니면 텍스트 매칭 검색 */

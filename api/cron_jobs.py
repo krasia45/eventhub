@@ -30,12 +30,14 @@ from _supabase_client import sb_select, sb_update, sb_insert
 
 FAIL_THRESHOLD = 2  # 링크 점검: 이 횟수만큼 연속 실패해야 비활성화
 
-CANDIDATE_CATEGORIES = ["fashion", "beauty", "food", "popup"]
+CANDIDATE_CATEGORIES = ["fashion", "beauty", "food", "popup", "convenience"]
 CANDIDATE_CATEGORY_LABEL = {
     "fashion": "패션", "beauty": "뷰티", "food": "카페·디저트", "popup": "팝업·컬처",
+    "convenience": "편의점",
 }
-# "living(라이프스타일)"은 일부러 뺐습니다 — 실제 웹검색 테스트 결과, B2B 박람회에
-# 오염되는 구조적 문제가 있어 자동스캔에서 제외했습니다(수동등록은 그대로 가능).
+# "living(라이프스타일)"은 실제 이벤트 조사 결과 타깃(10-20대 여성) 이벤트 유형과 안 맞아서
+# 카테고리 자체를 없앴습니다(프론트 CATEGORIES에서도 제거됨).
+# "convenience(편의점)"는 GS25·CU·세븐일레븐 등 1+1·2+1 행사가 실제로 확인되어 새로 추가했습니다.
 
 
 class handler(BaseHTTPRequestHandler):

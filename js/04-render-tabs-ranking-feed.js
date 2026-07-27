@@ -70,7 +70,7 @@ function renderCategoryTabs() {
       currentSubTag = null;   // 서브카테고리도 초기화
       rankingShowCount = 5;   // 카테고리 바뀌면 더보기 상태도 초기화
       renderCategoryTabs();
-      renderBrandFilter();
+      renderFilterBar();
       renderSubcatRow();
       renderPopupRegionBanner();
       renderFeed();
@@ -79,7 +79,7 @@ function renderCategoryTabs() {
     });
   });
 
-  renderBrandFilter();
+  renderFilterBar();
   renderSubcatRow();
 }
 
@@ -124,108 +124,264 @@ document.getElementById("feedSortRow").addEventListener("click", (e) => {
    나머지는 "더보기"를 눌러야 아래로 펼쳐지는 방식 — 한눈에 훑을 수 있는 양만 먼저 노출해
    피로감을 줄인다. 몇 개가 한 줄에 들어가는지는 화면 폭마다 달라서, 실제로 렌더링한 뒤
    줄바꿈된 지점을 오프셋으로 측정해서 판단한다(고정 개수로 자르지 않음 — 기기별로 정확함). */
-function renderBrandFilter() {
-  const outerWrap = document.getElementById("brandFilterWrap");
-  const wrap = document.getElementById("brandFilterRow");
-  const toggleBtn = document.getElementById("brandFilterToggle");
+/* =========================================================
+   필터바: 브랜드 / 혜택 / 지역 / 더보기
+   =========================================================
+   - 브랜드: 다중선택 (selectedBrands, 기존 그대로)
+   - 혜택: 단일선택 (currentDiscountFilter, 기존 그대로)
+   - 지역: 단일선택, "내 위치"는 gpsFilterActive, "인기 지역"은 currentRegionFilter
+     (둘 다 기존에 있던 변수 — 팝업 지역배너가 쓰던 currentRegionFilter를 그대로 재사용)
+   - 더보기: 온라인/오프라인만 (getChannelMode()로 실제 channel 텍스트에서 판정 가능한
+     조건이라 넣음. "참여방식"/"대상"은 구조화된 데이터가 없어서 넣지 않음 — 보고서 참고)
+   ========================================================= */
 
-  if (currentCategory === "all") {
-    outerWrap.hidden = true;
-    wrap.innerHTML = "";
-    return;
-  }
+const REGION_SHEET_OPTIONS = [
+  { kw: "#성수동", label: "성수동" },
+  { kw: "#홍대·연남", label: "홍대·연남" },
+  { kw: "#더현대서울", label: "더현대서울" },
+  { kw: "#압구정로데오", label: "압구정로데오" },
+  { kw: "#한남동", label: "한남동" },
+  { kw: "#강남역", label: "강남역" },
+];
+const BENEFIT_SHEET_OPTIONS = [
+  { id: "all", label: "전체" },
+  { id: "1+1", label: "1+1" },
+  { id: "50plus", label: "50% 이상 할인" },
+  { id: "free", label: "무료·증정" },
+  { id: "coupon", label: "쿠폰" },
+  { id: "point", label: "적립·캐시백" },
+  { id: "limited", label: "선착순·한정" },
+];
+// "사은품·증정"/"체험 무료"/"한정 혜택"은 참고 이미지에 있었지만 넣지 않았다 —
+// 이미 free(무료·증정)가 "무료|증정|체험단|사은품|샘플"을, limited가 "선착순|한정"을
+// 매칭하고 있어서 별도 옵션으로 나눠도 실제로 구분되는 이벤트가 거의 없다.
+// (정확성 원칙: 카드에서 구분이 안 되는 걸 필터만 세분화하면 오히려 혼란만 커짐)
 
-  // 현재 카테고리에 실제로 존재하는 브랜드만 중복 없이 추출
-  const brandsInCategory = [];
-  const seen = new Set();
-  EVENTS.filter(ev => ev.category === currentCategory && isEventLive(ev)).forEach(ev => {
-    if (!seen.has(ev.brand)) {
-      seen.add(ev.brand);
-      brandsInCategory.push(ev);
-    }
-  });
+let filterSheetOpen = null; // "brand" | "benefit" | "more" | null
 
-  if (brandsInCategory.length === 0) {
-    outerWrap.hidden = true;
-    wrap.innerHTML = "";
-    return;
-  }
-
-  outerWrap.hidden = false;
-  wrap.classList.remove("expanded");
-  toggleBtn.textContent = "더보기 ⌄";
-  toggleBtn.hidden = true;
-
-  wrap.innerHTML = brandsInCategory.map(ev => `
-    <button class="brand-filter-chip ${selectedBrands.has(ev.brand) ? "selected" : ""}" data-brand="${escapeHtml(ev.brand)}">
-      <img class="brand-filter-logo" src="${getLogoUrl(ev.domain)}" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" alt="${escapeHtml(ev.brand)}">
-      <span>${escapeHtml(ev.brand)}</span>
-    </button>
-  `).join("");
-
-  wrap.querySelectorAll(".brand-filter-chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-      const brand = chip.dataset.brand;
-      if (selectedBrands.has(brand)) {
-        selectedBrands.delete(brand);
-        chip.classList.remove("selected");
-      } else {
-        selectedBrands.add(brand);
-        chip.classList.add("selected");
-      }
-      renderFeed();
-      renderRanking();
-      updateDiscoverySectionsVisibility();
-    });
-  });
-
-  wrap.querySelectorAll(".brand-filter-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
-
-  // 실제로 그려진 뒤, 몇 번째 칩부터 다음 줄로 넘어갔는지 측정해서
-  // 두 줄 이상이면(=한 줄에 다 안 들어가면) "더보기" 버튼을 보여준다.
-  requestAnimationFrame(() => {
-    const chips = [...wrap.querySelectorAll(".brand-filter-chip")];
-    if (chips.length === 0) return;
-    const firstTop = chips[0].offsetTop;
-    const wraps = chips.some(chip => chip.offsetTop > firstTop);
-    toggleBtn.hidden = !wraps;
-  });
+function openFilterSheet(name) {
+  filterSheetOpen = name;
+  const overlay = document.getElementById(`filterSheet${name[0].toUpperCase()}${name.slice(1)}`);
+  if (name === "brand") renderBrandSheetContent();
+  if (name === "benefit") renderBenefitSheetContent();
+  if (name === "more") renderMoreSheetContent();
+  overlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+  pushModalHistory(() => closeFilterSheet(name));
+}
+function closeFilterSheet(name) {
+  const overlay = document.getElementById(`filterSheet${name[0].toUpperCase()}${name.slice(1)}`);
+  overlay.classList.remove("open");
+  document.body.style.overflow = "";
+  filterSheetOpen = null;
 }
 
-document.getElementById("brandFilterToggle").addEventListener("click", () => {
-  const wrap = document.getElementById("brandFilterRow");
-  const toggleBtn = document.getElementById("brandFilterToggle");
-  const nowExpanded = wrap.classList.toggle("expanded");
-  toggleBtn.textContent = nowExpanded ? "접기 ⌃" : "더보기 ⌄";
+document.querySelectorAll(".filter-bar-btn").forEach(btn => {
+  btn.addEventListener("click", () => openFilterSheet(btn.dataset.sheet));
+});
+["Brand", "Benefit", "More"].forEach(name => {
+  const key = name.toLowerCase();
+  document.getElementById(`filterSheet${name}Close`).addEventListener("click", () => {
+    closeFilterSheet(key);
+    popModalHistory();
+  });
 });
 
-/* ---------- Discount Quick Filters (1+1 / 50%+) ----------
-   '전체' 칩 없이 토글 방식: 켜진 칩을 다시 누르면 해제되어 전체 노출.
-   (무신사·에이블리·지그재그 등 주요 커머스 앱의 보조필터 표준 패턴) */
-function bindDiscountTabs() {
-  const wrap = document.getElementById("discountTabs");
-  const allBtn = wrap.querySelector('[data-discount="all"]');
-  wrap.querySelectorAll(".discount-pill").forEach(btn => {
+/* ---------- 브랜드 시트: 검색 + 인기브랜드(조회수 상위) + 전체목록, 다중선택 ---------- */
+function renderBrandSheetContent() {
+  const pool = EVENTS.filter(ev => isEventLive(ev) && (currentCategory === "all" || ev.category === currentCategory));
+  const seen = new Set();
+  const brands = [];
+  pool.forEach(ev => { if (!seen.has(ev.brand)) { seen.add(ev.brand); brands.push(ev); } });
+
+  const popular = [...brands].sort((a, b) => getEventScore(b.id) - getEventScore(a.id)).slice(0, 6);
+
+  const renderChip = (ev) => `
+    <button type="button" class="brand-sheet-chip ${selectedBrands.has(ev.brand) ? "checked" : ""}" data-brand="${escapeHtml(ev.brand)}">
+      <img class="brand-filter-logo" src="${getLogoUrl(ev.domain)}" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" alt="">
+      <span>${escapeHtml(ev.brand)}</span>
+      <span class="brand-sheet-check">✓</span>
+    </button>`;
+
+  document.getElementById("brandSheetPopular").innerHTML = popular.length
+    ? `<p class="filter-sheet-sublabel">🔥 인기 브랜드</p><div class="filter-sheet-list brand-chip-grid">${popular.map(renderChip).join("")}</div>`
+    : "";
+
+  const renderList = (query) => {
+    const filtered = query
+      ? brands.filter(ev => ev.brand.toLowerCase().includes(query.toLowerCase()))
+      : brands;
+    const listEl = document.getElementById("brandSheetList");
+    listEl.innerHTML = filtered.length
+      ? filtered.map(ev => `
+          <label class="brand-sheet-row">
+            <input type="checkbox" data-brand="${escapeHtml(ev.brand)}" ${selectedBrands.has(ev.brand) ? "checked" : ""}>
+            <img class="brand-filter-logo" src="${getLogoUrl(ev.domain)}" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}" alt="">
+            <span>${escapeHtml(ev.brand)}</span>
+          </label>`).join("")
+      : `<p class="filter-sheet-empty">일치하는 브랜드가 없어요.</p>`;
+
+    listEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener("change", () => {
+        if (cb.checked) selectedBrands.add(cb.dataset.brand);
+        else selectedBrands.delete(cb.dataset.brand);
+      });
+    });
+    listEl.querySelectorAll(".brand-filter-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+  };
+  renderList("");
+
+  document.getElementById("brandSheetPopular").querySelectorAll(".brand-sheet-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const brand = chip.dataset.brand;
+      if (selectedBrands.has(brand)) selectedBrands.delete(brand); else selectedBrands.add(brand);
+      renderBrandSheetContent(); // 인기칩+목록 체크상태 동기화 위해 다시 그림
+    });
+  });
+  document.getElementById("brandSheetPopular").querySelectorAll(".brand-filter-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
+
+  const searchInput = document.getElementById("brandSheetSearch");
+  searchInput.value = "";
+  searchInput.oninput = () => renderList(searchInput.value.trim());
+}
+document.getElementById("brandSheetApply").addEventListener("click", () => {
+  closeFilterSheet("brand");
+  popModalHistory();
+  trackFilterUse(`brand:${[...selectedBrands].join(",")}`);
+  renderFilterBar();
+  renderFeed();
+  renderRanking();
+  updateDiscoverySectionsVisibility();
+});
+
+/* ---------- 혜택 시트: 단일선택 (기존 currentDiscountFilter 그대로) ---------- */
+function renderBenefitSheetContent() {
+  const listEl = document.getElementById("benefitSheetList");
+  listEl.innerHTML = BENEFIT_SHEET_OPTIONS.map(b => `
+    <button type="button" class="filter-sheet-radio ${currentDiscountFilter === b.id ? "checked" : ""}" data-benefit="${b.id}">
+      <span>${b.label}</span><span class="radio-dot"></span>
+    </button>`).join("");
+  listEl.querySelectorAll(".filter-sheet-radio").forEach(btn => {
     btn.addEventListener("click", () => {
-      const isAllBtn = btn.dataset.discount === "all";
-      const isActive = btn.classList.contains("active");
-      wrap.querySelectorAll(".discount-pill").forEach(b => b.classList.remove("active"));
-      if (isAllBtn || isActive) {
-        // '전체'를 눌렀거나, 이미 선택된 칩을 다시 눌러 해제한 경우 → 전체로 복귀
-        currentDiscountFilter = "all";
-        allBtn.classList.add("active");
-      } else {
-        currentDiscountFilter = btn.dataset.discount;
-        btn.classList.add("active");
+      currentDiscountFilter = btn.dataset.benefit;
+      renderBenefitSheetContent();
+    });
+  });
+}
+document.getElementById("benefitSheetApply").addEventListener("click", () => {
+  // #filterSheetBenefit은 홈의 "혜택" 시트와 지도의 "필터" 시트가 같은 DOM을 공유한다
+  // (기능이 겹쳐서 새로 안 만들고 재사용 — mapFilterSheetActive로 지금 어느 쪽인지 구분)
+  if (typeof mapFilterSheetActive !== "undefined" && mapFilterSheetActive) {
+    closeMapFilterSheet();
+    popModalHistory();
+    renderMapPageFilters();
+    runMapPageSearch();
+    return;
+  }
+  closeFilterSheet("benefit");
+  popModalHistory();
+  trackFilterUse(`discount:${currentDiscountFilter}`);
+  renderFilterBar();
+  renderFeed();
+  renderRanking();
+  updateDiscoverySectionsVisibility();
+});
+
+/* ---------- 더보기 시트: 온라인/오프라인 (실제 channel 텍스트 기반, getChannelMode 재사용) ---------- */
+function renderMoreSheetContent() {
+  const options = [
+    { id: "all", label: "전체" },
+    { id: "online", label: "온라인" },
+    { id: "offline", label: "오프라인" },
+  ];
+  const listEl = document.getElementById("moreSheetOnlineOffline");
+  listEl.innerHTML = options.map(o => `
+    <button type="button" class="filter-sheet-radio ${onlineOfflineFilter === o.id ? "checked" : ""}" data-oo="${o.id}">
+      <span>${o.label}</span><span class="radio-dot"></span>
+    </button>`).join("");
+  listEl.querySelectorAll(".filter-sheet-radio").forEach(btn => {
+    btn.addEventListener("click", () => {
+      onlineOfflineFilter = btn.dataset.oo;
+      renderMoreSheetContent();
+    });
+  });
+}
+document.getElementById("moreSheetApply").addEventListener("click", () => {
+  closeFilterSheet("more");
+  popModalHistory();
+  trackFilterUse(`onlineoffline:${onlineOfflineFilter}`);
+  renderFilterBar();
+  renderFeed();
+  renderRanking();
+  updateDiscoverySectionsVisibility();
+});
+
+/* ---------- 필터바 버튼 라벨 + 선택된 필터 칩 표시 (전부 청록색) ---------- */
+function renderFilterBar() {
+  const brandBtn = document.getElementById("filterBtnBrand");
+  const benefitBtn = document.getElementById("filterBtnBenefit");
+  const moreBtn = document.getElementById("filterBtnMore");
+
+  brandBtn.classList.toggle("selected", selectedBrands.size > 0);
+  brandBtn.innerHTML = selectedBrands.size > 0 ? `브랜드 <b>${selectedBrands.size}</b> <span class="filter-chev">⌄</span>` : `브랜드 <span class="filter-chev">⌄</span>`;
+
+  benefitBtn.classList.toggle("selected", currentDiscountFilter !== "all");
+  const benefitLabel = BENEFIT_SHEET_OPTIONS.find(b => b.id === currentDiscountFilter)?.label;
+  benefitBtn.innerHTML = currentDiscountFilter !== "all" ? `${benefitLabel} <span class="filter-chev">⌄</span>` : `혜택 <span class="filter-chev">⌄</span>`;
+
+  moreBtn.classList.toggle("selected", onlineOfflineFilter !== "all");
+  moreBtn.innerHTML = `더보기 <span class="filter-chev">⌄</span>`;
+
+  renderSelectedFilterChips();
+}
+
+/* 선택된 조건을 [뷰티 ×][미샤 ×][1+1 ×] 형태로 표시. 각 X는 해당 필터만 개별 해제. */
+function renderSelectedFilterChips() {
+  const row = document.getElementById("selectedFilterRow");
+  const chips = [];
+
+  // 분야(카테고리)도 선택칩에 같이 보여준다 (발견모드 스킵 여부와는 별개 — 그냥 "지금 뭘 보고 있는지" 표시용)
+  if (currentCategory !== "all") {
+    const cat = CATEGORIES.find(c => c.id === currentCategory);
+    chips.push({ type: "category", value: currentCategory, label: cat ? cat.label : currentCategory });
+  }
+  selectedBrands.forEach(b => chips.push({ type: "brand", value: b, label: b }));
+  if (currentDiscountFilter !== "all") {
+    chips.push({ type: "benefit", value: currentDiscountFilter, label: BENEFIT_SHEET_OPTIONS.find(x => x.id === currentDiscountFilter)?.label });
+  }
+  if (gpsFilterActive) chips.push({ type: "region", value: "gps", label: "내 위치" });
+  if (currentRegionFilter) chips.push({ type: "region", value: currentRegionFilter, label: REGION_SHEET_OPTIONS.find(r => r.kw === currentRegionFilter)?.label });
+  if (onlineOfflineFilter !== "all") chips.push({ type: "oo", value: onlineOfflineFilter, label: onlineOfflineFilter === "online" ? "온라인" : "오프라인" });
+
+  if (chips.length === 0) { row.hidden = true; row.innerHTML = ""; return; }
+  row.hidden = false;
+  row.innerHTML = chips.map(c => `
+    <span class="selected-filter-chip" data-type="${c.type}" data-value="${escapeHtml(c.value)}">${escapeHtml(c.label)} <button type="button" class="selected-filter-remove" aria-label="필터 해제">✕</button></span>
+  `).join("");
+
+  row.querySelectorAll(".selected-filter-chip").forEach(chipEl => {
+    chipEl.querySelector(".selected-filter-remove").addEventListener("click", () => {
+      const { type, value } = chipEl.dataset;
+      if (type === "category") {
+        currentCategory = "all";
+        trackFilterUse("category:all");
+        renderCategoryTabs();
+        renderSubcatRow();
+        renderPopupRegionBanner();
       }
-      trackFilterUse(`discount:${currentDiscountFilter}`);
+      else if (type === "brand") selectedBrands.delete(value);
+      else if (type === "benefit") currentDiscountFilter = "all";
+      else if (type === "region" && value === "gps") { if (gpsFilterActive) toggleGpsFilter(); }
+      else if (type === "region") currentRegionFilter = null;
+      else if (type === "oo") onlineOfflineFilter = "all";
+      renderFilterBar();
+      renderPopupRegionBanner();
       renderFeed();
       renderRanking();
       updateDiscoverySectionsVisibility();
     });
   });
 }
-
 document.getElementById("gpsFilterChip").addEventListener("click", toggleGpsFilter);
 
 /* ---------- Render: Ranking (조회수·좋아요 기반 실제 랭킹, 카테고리별) ---------- */
@@ -304,9 +460,29 @@ function getChannelMode(ev) {
   return (ev.lat != null && ev.lng != null) ? "오프라인" : "온라인";
 }
 
+/* 오프라인 이벤트일 때 카드에 "오프라인 · 성수" 처럼 지역명을 같이 보여주기 위한 추출 함수.
+   지역 목록/키워드는 KEYWORD_MATCH_CONFIG에 이미 있는 것(성수/홍대 등)을 그대로 재사용한다
+   (탭에서 지역 필터를 뺐다고 지역 정보 자체를 안 보여주는 게 아니라, 카드에 자연스럽게 노출한다). */
+function getChannelRegionLabel(ev) {
+  const text = ev.channel || "";
+  for (const [kw, cfg] of Object.entries(KEYWORD_MATCH_CONFIG)) {
+    if (!cfg.textHints || !kw.startsWith("#")) continue;
+    if (!["#성수동", "#홍대·연남", "#더현대서울", "#압구정로데오", "#한남동", "#강남역"].includes(kw)) continue;
+    if (cfg.textHints.some(hint => text.includes(hint))) {
+      return kw.replace("#", "").split("·")[0]; // "#홍대·연남" → "홍대"처럼 짧게
+    }
+  }
+  return null;
+}
+
 function renderEventCardHtml(ev) {
   // 거리 표시는 "내 주변 인기 이벤트" 섹션에서만 — 전체 피드에서는 20km 필터를 켜도 표시하지 않음
   const distanceLabel = "";
+  // 온라인/오프라인 배지: 오프라인이면 "오프라인 · 성수"처럼 지역명을 같이 보여준다.
+  // (상단 필터에서 지역을 뺀 대신, 지역 정보 자체는 이렇게 카드에서 자연스럽게 노출한다)
+  const channelMode = getChannelMode(ev);
+  const channelRegion = channelMode !== "온라인" ? getChannelRegionLabel(ev) : null;
+  const channelModeLabel = channelRegion ? `${channelMode} · ${channelRegion}` : channelMode;
   const merchantBadge = ev.merchantType === "소상공인"
     ? `<span class="card-merchant-badge">소상공인</span>`
     : "";
@@ -345,9 +521,9 @@ function renderEventCardHtml(ev) {
         </div>
         <p class="card-title">${escapeHtml(ev.title)}</p>
         ${subtitleHtml}
-        <p class="card-discount-row">${cardDiscountText}</p>
         ${conditionsHtml}
-        <span class="card-mode-row">${getChannelMode(ev)}</span>
+        <p class="card-discount-row">${cardDiscountText}</p>
+        <span class="card-mode-row">${channelModeLabel}</span>
         ${distanceLabel}
         <div class="card-stats">
           <span><svg class="meta-ic" viewBox="0 0 24 24" width="12" height="12" fill="none"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="2"/></svg> ${formatCount((eventStatsCache[ev.id] || {}).views || 0)}</span>

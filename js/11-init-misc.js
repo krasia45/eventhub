@@ -3,7 +3,6 @@
 const urlRefCode = new URLSearchParams(window.location.search).get("ref");
 if (urlRefCode) localStorage.setItem("eventhub-pending-ref", urlRefCode);
 
-bindDiscountTabs();
 loadEventsFromApi(); // 내부에서 renderCategoryTabs/renderRanking/renderFeed까지 트리거함
 loadWeather(); // 위치 권한 없으면 서울 기준으로 기본 표시
 renderAiKeywordChips(); // 기본(비로그인) 상태 — 로그인하면 onAuthStateChange에서 다시 그려짐

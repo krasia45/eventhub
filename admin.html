@@ -164,7 +164,7 @@
 
 <script>
 function getKey() {
-  return document.getElementById("adminKey").value.trim() || localStorage.getItem("eventhub-admin-key") || "";
+  return document.getElementById("adminKey").value.trim() || sessionStorage.getItem("eventhub-admin-key") || "";
 }
 
 /* ── 주소 → 좌표 변환 ──
@@ -368,7 +368,7 @@ async function registerManual() {
 async function loadCandidates() {
   const key = getKey();
   if (!key) { alert("관리자 키를 입력해주세요."); return; }
-  localStorage.setItem("eventhub-admin-key", key);
+  sessionStorage.setItem("eventhub-admin-key", key);
 
   const res = await fetch(`/api/admin_candidates?key=${encodeURIComponent(key)}`);
   const data = await res.json();
@@ -507,7 +507,7 @@ async function reject(id) {
 async function loadInquiries() {
   const key = getKey();
   if (!key) { alert("관리자 키를 입력해주세요."); return; }
-  localStorage.setItem("eventhub-admin-key", key);
+  sessionStorage.setItem("eventhub-admin-key", key);
 
   const listEl = document.getElementById("inquiryList");
   listEl.innerHTML = `<p class="empty">불러오는 중...</p>`;
@@ -558,7 +558,7 @@ const CATEGORY_LABEL_MAP = { fashion: "패션", beauty: "뷰티", food: "카페�
 async function loadPublishedEvents() {
   const key = getKey();
   if (!key) { alert("관리자 키를 입력해주세요."); return; }
-  localStorage.setItem("eventhub-admin-key", key);
+  sessionStorage.setItem("eventhub-admin-key", key);
 
   const search = document.getElementById("eventsSearchInput").value.trim();
   const category = document.getElementById("eventsCategoryFilter").value;
@@ -704,7 +704,7 @@ async function deleteEventConfirm(id) {
 }
 
 // 저장된 키가 있으면 자동으로 채워넣기
-const savedKey = localStorage.getItem("eventhub-admin-key");
+const savedKey = sessionStorage.getItem("eventhub-admin-key");
 if (savedKey) document.getElementById("adminKey").value = savedKey;
 </script>
 
