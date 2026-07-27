@@ -258,30 +258,32 @@ function renderMapPageList(events, totalCount) {
     listEl.innerHTML = `<p class="map-page-empty">이 지역에는 표시할 이벤트가 없어요.<br>지도를 이동한 뒤 '현재 지역에서 찾기'를 눌러보세요.</p>`;
     return;
   }
-  listEl.innerHTML = events.map((ev, idx) => `
-    <div class="map-page-list-item ${mapPageSelectedId === ev.id ? "active-pin" : ""}" data-id="${ev.id}">
-      <span class="map-page-list-rank ${idx < 3 ? "top" : ""}">${idx + 1}</span>
-      <img class="map-page-list-thumb" src="${ev.image}" alt="" loading="lazy" onerror="handleImageError(this)">
-      <div class="map-page-list-body">
-        <p class="map-page-list-brand">${escapeHtml(ev.brand)}${ev.id.startsWith("mock-") ? '<span class="map-page-mock-badge">예시</span>' : ""}</p>
-        <p class="map-page-list-title">${escapeHtml(ev.title)}</p>
-        <p class="map-page-list-meta">${escapeHtml(ev.discount || "")} · ${escapeHtml(ev.channel || "")}</p>
+  // 네이버지도의 "인기 장소" 2열 그리드를 참고 — 왼쪽부터 1,2등 순서로 채워짐
+  listEl.innerHTML = `<div class="map-page-grid">` + events.map((ev, idx) => `
+    <div class="map-card ${mapPageSelectedId === ev.id ? "active-pin" : ""}" data-id="${ev.id}">
+      <div class="map-card-media">
+        <img class="map-card-thumb" src="${ev.image}" alt="" loading="lazy" onerror="handleImageError(this)">
+        <span class="map-card-rank ${idx < 3 ? "top" : ""}">${idx + 1}</span>
+        ${ev.id.startsWith("mock-") ? '<span class="map-page-mock-badge map-card-mock-badge">예시</span>' : ""}
       </div>
-      <button type="button" class="map-page-detail-btn" data-id="${ev.id}" aria-label="상세보기">
-        상세<svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
+      <div class="map-card-body">
+        <p class="map-card-brand">${escapeHtml(ev.brand)}</p>
+        <p class="map-card-title">${escapeHtml(ev.title)}</p>
+        <p class="map-card-meta">${escapeHtml(ev.discount || "")}</p>
+      </div>
+      <button type="button" class="map-card-detail-btn" data-id="${ev.id}" aria-label="상세보기">상세 ›</button>
     </div>
-  `).join("");
+  `).join("") + `</div>`;
 
   // 카드 본문 클릭 → 상세로 가지 않고, 지도에서 해당 위치를 강조 (네이버지도 패턴)
-  listEl.querySelectorAll(".map-page-list-item").forEach(item => {
+  listEl.querySelectorAll(".map-card").forEach(item => {
     item.addEventListener("click", () => {
       selectMapPageEvent(item.dataset.id, { scrollList: false });
     });
   });
 
   // "상세" 버튼만 상세페이지로 — 지도는 닫지 않아서, 상세를 닫으면 지도로 돌아온다
-  listEl.querySelectorAll(".map-page-detail-btn").forEach(btn => {
+  listEl.querySelectorAll(".map-card-detail-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const ev = mapPageResults.find(x => x.id === btn.dataset.id);
@@ -303,11 +305,11 @@ function selectMapPageEvent(id, { scrollList = true } = {}) {
   const ev = mapPageResults.find(e => e.id === id);
 
   // 리스트 하이라이트
-  document.querySelectorAll(".map-page-list-item").forEach(el => {
+  document.querySelectorAll(".map-card").forEach(el => {
     el.classList.toggle("active-pin", el.dataset.id === id);
   });
   if (scrollList) {
-    const listItem = document.querySelector(`.map-page-list-item[data-id="${id}"]`);
+    const listItem = document.querySelector(`.map-card[data-id="${id}"]`);
     if (listItem) listItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
@@ -367,6 +369,8 @@ async function openMapPage() {
   renderMapPageFilters();
   await initMapPageMap();
   runMapPageSearch();
+  initMapSheetSnapPoints();
+  setMapSheetHeight(MAP_SHEET_SNAP.mid, { animate: false }); // 처음엔 중단 상태로 시작
 }
 
 function closeMapPage() {
@@ -464,31 +468,106 @@ document.getElementById("mapLocateBtn").addEventListener("click", async () => {
   }
 });
 
-/* ---------- 바텀시트 접기/펼치기 (당근 패턴) ----------
-   상태 2개: collapsed(살짝만 보임, 지도 넓게) ↔ expanded(리스트 넓게).
-   지도 드래그 시 자동 collapsed, 핸들 탭/스와이프로 사용자가 직접 전환. */
-function collapseMapSheet() {
-  document.getElementById("mapBottomSheet").classList.add("collapsed");
+/* ---------- 바텀시트: 자유 드래그 (네이버지도 패턴) ----------
+   버튼으로 2단계 토글하던 방식 대신, 핸들을 손가락으로 잡고 있는 동안
+   실시간으로 시트 높이가 따라오고, 손을 떼면 가장 가까운 스냅 지점(하단/중단/상단)
+   으로 스르륵 붙는다. "현재 지역에서 찾기"/현재위치 버튼도 시트 높이를 따라 실시간으로
+   그 바로 위에 유동적으로 붙는다. 시트가 상단(리스트 꽉 참)까지 올라가면 지도가 거의
+   안 보이니 두 버튼은 자동으로 숨긴다. */
+const MAP_SHEET_SNAP = { collapsed: 90, mid: null, expanded: null }; // mid/expanded는 화면 높이 기준으로 초기화 시 계산
+let mapSheetHeight = 0;
+let mapSheetDragging = false;
+
+function initMapSheetSnapPoints() {
+  const viewH = document.querySelector(".map-page-view")?.clientHeight || window.innerHeight;
+  MAP_SHEET_SNAP.mid = Math.round(viewH * 0.38);
+  MAP_SHEET_SNAP.expanded = Math.round(viewH * 0.85);
 }
-function expandMapSheet() {
-  document.getElementById("mapBottomSheet").classList.remove("collapsed");
+
+function setMapSheetHeight(px, { animate = false } = {}) {
+  const sheet = document.getElementById("mapBottomSheet");
+  sheet.style.transition = animate ? "height 0.28s cubic-bezier(0.22,1,0.36,1)" : "none";
+  sheet.style.height = `${px}px`;
+  mapSheetHeight = px;
+
+  // 시트 위 플로팅 버튼들을 시트 바로 위, 유동적으로 따라가게 함
+  const gap = 14;
+  const refreshBtn = document.getElementById("mapRefreshBtn");
+  const locateBtn = document.getElementById("mapLocateBtn");
+  const nearFullyExpanded = px >= MAP_SHEET_SNAP.expanded - 40; // 리스트가 거의 꽉 찬 상태 → 지도 버튼 불필요
+  [refreshBtn, locateBtn].forEach(btn => {
+    btn.style.transition = animate ? "bottom 0.28s cubic-bezier(0.22,1,0.36,1)" : "none";
+    btn.style.bottom = `${px + gap}px`;
+    btn.style.display = nearFullyExpanded ? "none" : "";
+  });
 }
+
+function collapseMapSheet() { setMapSheetHeight(MAP_SHEET_SNAP.collapsed, { animate: true }); }
+function expandMapSheet() { setMapSheetHeight(MAP_SHEET_SNAP.mid, { animate: true }); }
+
+function snapMapSheetToNearest(currentPx, velocity) {
+  const points = [MAP_SHEET_SNAP.collapsed, MAP_SHEET_SNAP.mid, MAP_SHEET_SNAP.expanded];
+  // 빠르게 튕기듯 놓으면(velocity) 그 방향의 다음 지점으로, 아니면 가장 가까운 지점으로
+  let target;
+  if (Math.abs(velocity) > 0.5) {
+    target = velocity < 0
+      ? points.find(p => p > currentPx) || points[points.length - 1]  // 위로 튕김 → 다음 큰 지점
+      : [...points].reverse().find(p => p < currentPx) || points[0];  // 아래로 튕김 → 다음 작은 지점
+  } else {
+    target = points.reduce((a, b) => Math.abs(b - currentPx) < Math.abs(a - currentPx) ? b : a);
+  }
+  setMapSheetHeight(target, { animate: true });
+}
+
 (function initMapSheetHandle() {
   const handle = document.getElementById("mapSheetHandle");
-  const sheet = document.getElementById("mapBottomSheet");
-  let startY = null;
+  let startY = null, startHeight = 0, lastY = 0, lastT = 0, velocity = 0;
 
-  handle.addEventListener("click", () => {
-    sheet.classList.toggle("collapsed");
-  });
-  handle.addEventListener("touchstart", (e) => { startY = e.touches[0].clientY; }, { passive: true });
-  handle.addEventListener("touchend", (e) => {
+  function onDragStart(y) {
+    mapSheetDragging = true;
+    startY = y; lastY = y; lastT = Date.now(); velocity = 0;
+    startHeight = mapSheetHeight;
+  }
+  function onDragMove(y) {
     if (startY == null) return;
-    const dy = e.changedTouches[0].clientY - startY;
-    if (dy > 24) collapseMapSheet();       // 아래로 스와이프 → 접기
-    else if (dy < -24) expandMapSheet();   // 위로 스와이프 → 펼치기
+    const now = Date.now();
+    const dt = now - lastT || 1;
+    velocity = (y - lastY) / dt; // px/ms, 양수=아래로 이동 중
+    lastY = y; lastT = now;
+
+    const delta = startY - y; // 위로 끌수록 양수
+    const next = Math.min(MAP_SHEET_SNAP.expanded, Math.max(MAP_SHEET_SNAP.collapsed, startHeight + delta));
+    setMapSheetHeight(next, { animate: false });
+  }
+  function onDragEnd() {
+    if (startY == null) return;
+    snapMapSheetToNearest(mapSheetHeight, velocity);
     startY = null;
-  }, { passive: true });
+    mapSheetDragging = false;
+  }
+
+  handle.addEventListener("touchstart", (e) => onDragStart(e.touches[0].clientY), { passive: true });
+  handle.addEventListener("touchmove", (e) => onDragMove(e.touches[0].clientY), { passive: true });
+  handle.addEventListener("touchend", onDragEnd, { passive: true });
+
+  // 데스크톱 브라우저 테스트를 위한 마우스 드래그 지원
+  handle.addEventListener("mousedown", (e) => {
+    onDragStart(e.clientY);
+    const onMove = (ev) => onDragMove(ev.clientY);
+    const onUp = () => {
+      onDragEnd();
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  });
+
+  // 핸들을 그냥 탭(드래그 없이 클릭)하면 collapsed↔mid 토글 (기존 습관 유지)
+  handle.addEventListener("click", () => {
+    if (mapSheetHeight <= MAP_SHEET_SNAP.collapsed + 10) expandMapSheet();
+    else collapseMapSheet();
+  });
 })();
 
 /* ---------- 카테고리 + 혜택 필터 ---------- */

@@ -309,9 +309,14 @@ function pushModalHistory(closeFn, url) {
 // 여기서는 히스토리 스택만 정리한다. history.back()이 이전 URL로 자동 복원해준다.
 function popModalHistory() {
   if (modalCloseStack.length === 0) return;
-  modalCloseStack.pop();
+  // ⚠️ 이전엔 pop만 하고 실행을 안 해서, openFromProfile()이 "닫고 나서 프로필 재오픈"으로
+  // 교체해둔 close함수가 X버튼 클릭 시에는 무시되고 그냥 홈이 보이는 버그가 있었다.
+  // (시스템 뒤로가기 popstate 핸들러만 스택의 함수를 실행하고 있었음)
+  // 스택에서 꺼낸 함수를 여기서도 실행하면, X버튼이든 뒤로가기든 항상 같은 결과가 되어 통일된다.
+  const closeFn = modalCloseStack.pop();
   suppressNextPopstate = true;
   history.back();
+  closeFn();
 }
 
 window.addEventListener("popstate", () => {

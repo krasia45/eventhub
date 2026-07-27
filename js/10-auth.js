@@ -437,7 +437,20 @@ async function openOnboarding(editMode = false, existingKeywords = []) {
   document.getElementById("onboardingEmail").value = currentUser?.email || "";
   onboardingOverlay.classList.add("open");
   document.body.style.overflow = "hidden";
+  pushModalHistory(closeOnboardingSheet);
 }
+
+/* 온보딩(키워드 설정) 닫기 — X버튼과 저장완료 둘 다 이 함수를 거치게 통일.
+   (이전엔 히스토리 스택에 아예 등록이 안 돼 있어서 뒤로가기가 이 화면을 못 닫고
+   건너뛰었고, 닫기 버튼 자체도 없었다.) */
+function closeOnboardingSheet() {
+  onboardingOverlay.classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.getElementById("onboardingCloseBtn").addEventListener("click", () => {
+  closeOnboardingSheet();
+  popModalHistory();
+});
 
 document.getElementById("onboardingSubmitBtn").addEventListener("click", async () => {
   if (!supabaseClient || !currentUser) { showToast("로그인 상태를 확인해주세요."); return; }
@@ -455,8 +468,8 @@ document.getElementById("onboardingSubmitBtn").addEventListener("click", async (
     return;
   }
 
-  onboardingOverlay.classList.remove("open");
-  document.body.style.overflow = "";
+  closeOnboardingSheet();
+  popModalHistory();
   showToast(onboardingEditMode ? "키워드가 저장됐어요 ✅" : "환영해요! 맞춤 추천이 준비됐어요 🎉");
 
   if (onboardingEditMode) {
