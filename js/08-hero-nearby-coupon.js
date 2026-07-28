@@ -230,6 +230,12 @@ document.querySelectorAll(".nav-item").forEach(btn => {
 const couponWalletOverlay = document.getElementById("couponWalletOverlay");
 
 function openCouponWallet() {
+  currentWalletTab = "all";
+  walletSelectedBrand = null;
+  document.getElementById("walletTabRow").querySelectorAll(".wallet-tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("walletTabRow").querySelector('[data-wallet-tab="all"]').classList.add("active");
+  document.getElementById("walletBrandTabBtn").innerHTML = `브랜드 <span class="filter-chev">⌄</span>`;
+  document.getElementById("walletBrandDropdown").hidden = true;
   renderCouponWallet();
   couponWalletOverlay.classList.add("open");
   document.body.style.overflow = "hidden";
@@ -243,34 +249,43 @@ function closeCouponWallet() {
   document.querySelector('.nav-item[data-nav="home"]').classList.add("active");
 }
 
-let currentWalletTab = "all";
+let currentWalletTab = "all"; // "all" | "brand"
+let walletSelectedBrand = null;
+let walletSortMode = "recent"; // "recent"(최신저장순) | "closing"(만료임박순)
+let walletShowEnded = false;   // 기본은 방문예정 위주로 — 종료된 쿠폰은 원하면 토글해서 봄
 
 function renderCouponWallet() {
   const listEl = document.getElementById("couponWalletList");
-  const likedList = EVENTS.filter(ev => likedEvents.has(ev.id));
+  // likedEvents는 Set이라 삽입 순서를 그대로 보존한다 — 이 순서를 뒤집으면 "최근에 찜한 게 먼저" 정렬이 된다.
+  let likedList = [...likedEvents].map(id => EVENTS.find(ev => ev.id === id)).filter(Boolean).reverse();
 
-  // 탭별 분류: 방문 예정 = 아직 안 끝난 것, 종료 = dday가 "종료"
-  const upcoming = likedList.filter(ev => ev.dday !== "종료");
-  const ended = likedList.filter(ev => ev.dday === "종료");
-  const shown = currentWalletTab === "upcoming" ? upcoming
-    : currentWalletTab === "ended" ? ended : likedList;
+  if (!walletShowEnded) likedList = likedList.filter(ev => ev.dday !== "종료");
+  if (currentWalletTab === "brand" && walletSelectedBrand) {
+    likedList = likedList.filter(ev => ev.brand === walletSelectedBrand);
+  }
 
-  // 탭 라벨에 개수 반영
-  const tabRow = document.getElementById("walletTabRow");
-  tabRow.querySelector('[data-wallet-tab="all"]').textContent = `전체 ${likedList.length}`;
-  tabRow.querySelector('[data-wallet-tab="upcoming"]').textContent = `방문 예정 ${upcoming.length}`;
-  tabRow.querySelector('[data-wallet-tab="ended"]').textContent = `종료 ${ended.length}`;
+  if (walletSortMode === "closing") {
+    // 종료 안 된 것 먼저(마감 빠른 순), 종료된 건 맨 뒤
+    likedList = [...likedList].sort((a, b) => {
+      if (a.dday === "종료" && b.dday !== "종료") return 1;
+      if (a.dday !== "종료" && b.dday === "종료") return -1;
+      return new Date(a.periodEnd) - new Date(b.periodEnd);
+    });
+  }
 
-  if (likedList.length === 0) {
+  const allLiked = [...likedEvents].map(id => EVENTS.find(ev => ev.id === id)).filter(Boolean);
+  document.getElementById("walletTabRow").querySelector('[data-wallet-tab="all"]').textContent = `전체 ${allLiked.length}`;
+
+  if (allLiked.length === 0) {
     listEl.innerHTML = `<li class="empty-state">아직 관심 등록한 이벤트가 없어요. 이벤트 상세에서 ♡를 눌러보세요!</li>`;
     return;
   }
-  if (shown.length === 0) {
-    listEl.innerHTML = `<li class="empty-state">${currentWalletTab === "ended" ? "종료된 이벤트가 없어요." : "방문 예정인 이벤트가 없어요."}</li>`;
+  if (likedList.length === 0) {
+    listEl.innerHTML = `<li class="empty-state">${walletSelectedBrand ? `${escapeHtml(walletSelectedBrand)}의 쿠폰이 없어요.` : "표시할 쿠폰이 없어요."}</li>`;
     return;
   }
 
-  listEl.innerHTML = shown.map(ev => `
+  listEl.innerHTML = likedList.map(ev => `
     <li class="coupon-wallet-item ${ev.dday === "종료" ? "wallet-item-ended" : ""}" data-id="${ev.id}">
       <img class="coupon-wallet-logo" src="${getLogoUrl(ev.domain)}" alt="${escapeHtml(ev.brand)} 로고" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}">
       <div class="coupon-wallet-info">
@@ -302,6 +317,74 @@ function renderCouponWallet() {
     });
   });
 }
+
+/* ---------- 브랜드별 모아보기 드롭다운 ----------
+   원래 의도: 여러 브랜드에 흩어진 내 쿠폰을 브랜드 단위로 묶어서 보는 것.
+   찜한 이벤트에 실제로 존재하는 브랜드만 나열한다(안 찜한 브랜드는 안 보여줌). */
+function renderWalletBrandDropdown() {
+  const dropdown = document.getElementById("walletBrandDropdown");
+  const allLiked = [...likedEvents].map(id => EVENTS.find(ev => ev.id === id)).filter(Boolean);
+  const brandCount = {};
+  allLiked.forEach(ev => { brandCount[ev.brand] = (brandCount[ev.brand] || 0) + 1; });
+  const brands = Object.keys(brandCount).sort((a, b) => brandCount[b] - brandCount[a]);
+
+  if (brands.length === 0) {
+    dropdown.innerHTML = `<p class="wallet-brand-empty">찜한 이벤트가 없어요.</p>`;
+    return;
+  }
+  dropdown.innerHTML = brands.map(b => `
+    <button type="button" class="wallet-brand-item ${walletSelectedBrand === b ? "active" : ""}" data-brand="${escapeHtml(b)}">
+      <span>${escapeHtml(b)}</span><span class="wallet-brand-count">${brandCount[b]}</span>
+    </button>
+  `).join("");
+  dropdown.querySelectorAll(".wallet-brand-item").forEach(btn => {
+    btn.addEventListener("click", () => {
+      walletSelectedBrand = btn.dataset.brand;
+      currentWalletTab = "brand";
+      document.getElementById("walletTabRow").querySelectorAll(".wallet-tab").forEach(t => t.classList.remove("active"));
+      document.getElementById("walletBrandTabBtn").classList.add("active");
+      document.getElementById("walletBrandTabBtn").innerHTML = `${escapeHtml(walletSelectedBrand)} <span class="filter-chev">⌄</span>`;
+      dropdown.hidden = true;
+      renderCouponWallet();
+    });
+  });
+}
+document.getElementById("walletBrandTabBtn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const dropdown = document.getElementById("walletBrandDropdown");
+  const nowOpen = dropdown.hidden;
+  if (nowOpen) renderWalletBrandDropdown();
+  dropdown.hidden = !nowOpen;
+});
+document.getElementById("walletTabRow").querySelector('[data-wallet-tab="all"]').addEventListener("click", () => {
+  currentWalletTab = "all";
+  walletSelectedBrand = null;
+  document.getElementById("walletBrandDropdown").hidden = true;
+  document.getElementById("walletTabRow").querySelectorAll(".wallet-tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("walletTabRow").querySelector('[data-wallet-tab="all"]').classList.add("active");
+  document.getElementById("walletBrandTabBtn").innerHTML = `브랜드 <span class="filter-chev">⌄</span>`;
+  renderCouponWallet();
+});
+document.addEventListener("click", (e) => {
+  const dropdown = document.getElementById("walletBrandDropdown");
+  if (!dropdown.hidden && !dropdown.contains(e.target) && e.target.id !== "walletBrandTabBtn" && !document.getElementById("walletBrandTabBtn").contains(e.target)) {
+    dropdown.hidden = true;
+  }
+});
+
+/* ---------- 정렬 + 종료쿠폰 토글 ---------- */
+document.getElementById("walletSortRow").querySelectorAll(".wallet-sort-chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    walletSortMode = chip.dataset.walletSort;
+    document.querySelectorAll(".wallet-sort-chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    renderCouponWallet();
+  });
+});
+document.getElementById("walletShowEnded").addEventListener("change", (e) => {
+  walletShowEnded = e.target.checked;
+  renderCouponWallet();
+});
 
 document.getElementById("couponWalletClose").addEventListener("click", () => { closeCouponWallet(); popModalHistory(); });
 document.getElementById("couponWalletClearBtn").addEventListener("click", () => {

@@ -362,6 +362,8 @@
   font-weight: 700;
   color: var(--text-2);
 }
+.map-page-more-btn[hidden] { display: none; } /* [hidden]보다 .map-page-more-btn의 display:block 명시도가
+  더 높아서 JS로 hidden을 줘도 계속 보이던 문제 — 클래스를 붙여 명시도를 올려서 확실히 숨긴다 */
 .map-page-kakao-map {
   width: 100%;
   height: 100%;

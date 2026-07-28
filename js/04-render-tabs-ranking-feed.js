@@ -372,11 +372,9 @@ function renderSelectedFilterChips() {
   const row = document.getElementById("selectedFilterRow");
   const chips = [];
 
-  // 분야(카테고리)도 선택칩에 같이 보여준다 (발견모드 스킵 여부와는 별개 — 그냥 "지금 뭘 보고 있는지" 표시용)
-  if (currentCategory !== "all") {
-    const cat = CATEGORIES.find(c => c.id === currentCategory);
-    chips.push({ type: "category", role: "neutral", value: currentCategory, label: cat ? cat.label : currentCategory });
-  }
+  // ⚠️ 예전엔 분야(카테고리)도 선택칩에 같이 보여줬는데 뺐다 — 상단 카테고리탭이 이미
+  // 주황색으로 선택 상태를 표시하고 있어서 중복이었고, 게다가 이 칩 색(neutral=mint)이
+  // 혜택 칩 색(청록)과 비슷해서 "이게 혜택인가?" 헷갈리게 만드는 문제가 있었다.
   selectedBrands.forEach(b => chips.push({ type: "brand", role: "brand", value: b, label: b }));
   if (currentDiscountFilter !== "all") {
     chips.push({ type: "benefit", role: "benefit", value: currentDiscountFilter, label: BENEFIT_SHEET_OPTIONS.find(x => x.id === currentDiscountFilter)?.label });
@@ -395,14 +393,7 @@ function renderSelectedFilterChips() {
   row.querySelectorAll(".selected-filter-chip").forEach(chipEl => {
     chipEl.querySelector(".selected-filter-remove").addEventListener("click", () => {
       const { type, value } = chipEl.dataset;
-      if (type === "category") {
-        currentCategory = "all";
-        trackFilterUse("category:all");
-        renderCategoryTabs();
-        renderSubcatRow();
-        renderPopupRegionBanner();
-      }
-      else if (type === "brand") selectedBrands.delete(value);
+      if (type === "brand") selectedBrands.delete(value);
       else if (type === "benefit") currentDiscountFilter = "all";
       else if (type === "region" && value === "gps") { if (gpsFilterActive) toggleGpsFilter(); }
       else if (type === "region") currentRegionFilter = null;

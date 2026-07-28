@@ -536,9 +536,10 @@ function setMapSheetHeight(px, { animate = false } = {}) {
     btn.style.bottom = `${px + gap}px`;
     btn.style.display = nearFullyExpanded ? "none" : "";
   });
-  // 길찾기 버튼은 "현재 위치" 버튼 바로 아래(버튼높이 42px + 간격 8px)에 붙인다
+  // 길찾기 버튼은 "현재 위치" 버튼 바로 위(버튼높이 42px + 간격 8px = 50px 더 높은 위치)에 놓는다.
+  // (예전엔 -50을 해서 오히려 시트 쪽으로 내려가 시트 뒤에 가려지는 버그가 있었음 — +50이 맞음)
   directionsBtn.style.transition = animate ? "bottom 0.28s cubic-bezier(0.22,1,0.36,1)" : "none";
-  directionsBtn.style.bottom = `${px + gap - 50}px`;
+  directionsBtn.style.bottom = `${px + gap + 50}px`;
   directionsBtn.style.display = nearFullyExpanded ? "none" : "";
 
   updateMapMoreBtnVisibility();
@@ -564,11 +565,13 @@ function snapMapSheetToNearest(currentPx, velocity) {
 (function initMapSheetHandle() {
   const handle = document.getElementById("mapSheetHandle");
   let startY = null, startHeight = 0, lastY = 0, lastT = 0, velocity = 0;
+  let wasDragged = false; // 실제로 손가락이 움직였는지 — 터치 후 발생하는 합성 click과 구분하기 위함
 
   function onDragStart(y) {
     mapSheetDragging = true;
     startY = y; lastY = y; lastT = Date.now(); velocity = 0;
     startHeight = mapSheetHeight;
+    wasDragged = false;
   }
   function onDragMove(y) {
     if (startY == null) return;
@@ -578,6 +581,7 @@ function snapMapSheetToNearest(currentPx, velocity) {
     lastY = y; lastT = now;
 
     const delta = startY - y; // 위로 끌수록 양수
+    if (Math.abs(delta) > 5) wasDragged = true; // 5px 이상 움직였으면 "진짜 드래그"로 판정
     const next = Math.min(MAP_SHEET_SNAP.expanded, Math.max(MAP_SHEET_SNAP.collapsed, startHeight + delta));
     setMapSheetHeight(next, { animate: false });
   }
@@ -607,6 +611,9 @@ function snapMapSheetToNearest(currentPx, velocity) {
 
   // 핸들을 그냥 탭(드래그 없이 클릭)하면 collapsed↔mid 토글 (기존 습관 유지)
   handle.addEventListener("click", () => {
+    // 드래그 직후 브라우저가 추가로 발생시키는 합성 click은 무시한다 —
+    // 안 그러면 방금 정확히 스냅된 위치를 이 토글이 덮어써서 "가끔 엉뚱한 자리로 튀는" 버그가 생긴다.
+    if (wasDragged) { wasDragged = false; return; }
     if (mapSheetHeight <= MAP_SHEET_SNAP.collapsed + 10) expandMapSheet();
     else collapseMapSheet();
   });

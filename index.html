@@ -404,11 +404,21 @@
           <h2 class="coupon-wallet-title">🎟 내 쿠폰함</h2>
           <button class="wallet-clear-all-btn" id="couponWalletClearBtn">전체 삭제</button>
         </div>
-        <p class="coupon-wallet-sub">관심 등록한 이벤트의 쿠폰을 한눈에 모아봤어요</p>
+        <p class="coupon-wallet-sub">관심 등록한 이벤트의 쿠폰을 브랜드별로 모아봤어요</p>
         <div class="wallet-tab-row" id="walletTabRow">
           <button class="wallet-tab active" data-wallet-tab="all">전체</button>
-          <button class="wallet-tab" data-wallet-tab="upcoming">방문 예정</button>
-          <button class="wallet-tab" data-wallet-tab="ended">종료된 이벤트</button>
+          <button class="wallet-tab" id="walletBrandTabBtn" data-wallet-tab="brand">브랜드 <span class="filter-chev">⌄</span></button>
+        </div>
+        <div class="wallet-brand-dropdown" id="walletBrandDropdown" hidden></div>
+        <div class="wallet-sub-row">
+          <div class="wallet-sort-row" id="walletSortRow">
+            <button class="wallet-sort-chip active" data-wallet-sort="recent">최신 저장순</button>
+            <button class="wallet-sort-chip" data-wallet-sort="closing">만료 임박순</button>
+          </div>
+          <label class="wallet-ended-toggle">
+            <input type="checkbox" id="walletShowEnded">
+            <span>종료된 쿠폰도 보기</span>
+          </label>
         </div>
         <ul class="coupon-wallet-list" id="couponWalletList"></ul>
       </div>
