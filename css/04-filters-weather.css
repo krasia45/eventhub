@@ -288,7 +288,16 @@
   top: -1.5px; /* ⌄ 문자는 폰트마다 실제 잉크가 문자 박스 아래쪽에 몰려있어서, align-items:center로도
     시각적으로는 아래처져 보이는 경우가 많다 — 살짝 끌어올려서 옆 텍스트와 시각적으로 중앙 맞춤 */
 }
-.filter-bar-btn b { color: inherit; }
+.filter-bar-btn b {
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  /* ⚠️ 데스크톱 크롬에선 문제없었는데, 모바일 브라우저(특히 iOS Safari)는 <b> 태그의
+     라인박스 metrics를 미묘하게 다르게 계산해서 살짝 위로 떠 보이는 문제가 있었다.
+     display:inline-flex로 브라우저 기본 텍스트 baseline 정렬에 안 기대고 명시적으로
+     중앙정렬을 강제해서, 어느 브라우저에서든 동일하게 보이게 한다. */
+}
 
 /* 선택 시: 브랜드/혜택/더보기가 각자 다른 역할색으로 — 세 필터가 서로 다른 성격임을 색으로 구분 */
 .filter-bar-btn.role-brand.selected {

@@ -68,20 +68,12 @@
 
 .nearby-card {
   flex: 0 0 150px;
+  min-width: 0;     /* flex item 기본값(min-width:auto)이 내부 텍스트 길이에 따라
+    카드를 flex-basis보다 넓게 늘려버리던 문제 방지 — 이게 "카드마다 크기가 다르게
+    보이던" 버그의 근본 원인이었다 */
+  overflow: hidden;  /* 혹시라도 내부 콘텐츠가 넘치면 카드 밖으로 안 새어나가고 잘리게(안전장치) */
   cursor: pointer;
   transition: transform 0.12s ease;
-}
-/* "내 주변 인기 이벤트" 섹션에서만 3.5개가 보이도록 폭 조정 — .nearby-card 클래스를
-   같이 쓰는 "오늘 마감임박" 섹션은 이 선택자 범위 밖이라 기존 150px 그대로 유지됨 */
-#nearbySection .nearby-card {
-  flex: 0 0 calc((100vw - 68px) / 3.5); /* 좌우패딩16px*2 + gap12px*3을 뺀 나머지를 3.5등분 */
-}
-/* "오늘 마감임박" 섹션도 동일한 gap(12px)을 쓰므로 같은 계산식을 그대로 적용 */
-#endingTodayScroll .nearby-card {
-  flex: 0 0 calc((100vw - 68px) / 3.5);
-}
-@media (min-width: 900px) {
-  #nearbySection .nearby-card, #endingTodayScroll .nearby-card { flex: 0 0 150px; } /* 데스크톱은 원래 고정폭 유지 */
 }
 .nearby-card:active { transform: scale(0.97); }
 .nearby-card-media { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: var(--radius-sm); overflow: hidden; background: #f0f0f2; }
@@ -130,6 +122,8 @@
   min-width: 0;
 }
 .nearby-card-title {
+  width: 100%; /* -webkit-box는 부모 폭을 자동 상속 안 해서, 이게 없으면 긴 제목일 때
+    이 요소가 카드보다 넓어지려 하고 flex item인 카드 자체도 같이 늘어나던 문제가 있었다 */
   font-size: 12.5px;
   font-weight: 700;
   color: var(--text-1);

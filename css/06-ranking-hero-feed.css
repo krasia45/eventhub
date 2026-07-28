@@ -316,6 +316,8 @@
 }
 
 .card-title {
+  width: 100%; /* -webkit-box가 부모(카드) 폭을 자동 상속 안 해서, 맞춤이벤트처럼 가로스크롤
+    안에서 이 카드를 재사용할 때 긴 제목이 카드를 늘려버리던 문제 방지 */
   font-size: 13.5px;
   font-weight: 700;
   color: var(--text-1);
