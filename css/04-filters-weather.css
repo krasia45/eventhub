@@ -280,7 +280,14 @@
   white-space: nowrap;
 }
 .filter-bar-btn .filter-bar-icon { opacity: 0.75; flex-shrink: 0; } /* 아이콘이 텍스트보다 튀지 않게 */
-.filter-bar-btn .filter-chev { font-size: 13px; font-weight: 700; opacity: 0.85; }
+.filter-bar-btn .filter-chev {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.85;
+  position: relative;
+  top: -1.5px; /* ⌄ 문자는 폰트마다 실제 잉크가 문자 박스 아래쪽에 몰려있어서, align-items:center로도
+    시각적으로는 아래처져 보이는 경우가 많다 — 살짝 끌어올려서 옆 텍스트와 시각적으로 중앙 맞춤 */
+}
 .filter-bar-btn b { color: inherit; }
 
 /* 선택 시: 브랜드/혜택/더보기가 각자 다른 역할색으로 — 세 필터가 서로 다른 성격임을 색으로 구분 */

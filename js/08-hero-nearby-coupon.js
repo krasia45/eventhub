@@ -93,13 +93,13 @@ function renderEndingTodaySection() {
       <div class="nearby-card ending-today-card" data-id="${ev.id}">
         <div class="nearby-card-media">
           <img src="${getEventThumbnail(ev)}" alt="${escapeHtml(ev.title)}" loading="lazy" onerror="handleImageError(this)">
+          <span class="nearby-rank-num ${idx < 3 ? "nearby-rank-hot" : "nearby-rank-alt"}">${idx + 1}</span>
           <button class="card-like-btn nearby-like ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
             <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
           </button>
         </div>
         <div class="nearby-card-brand-row">
           <span class="card-brand-left">
-            <span class="nearby-rank-num ${idx < 3 ? "nearby-rank-hot" : "nearby-rank-alt"}">${idx + 1}</span>
             ${logoHtml}
             <p class="nearby-card-brand">${escapeHtml(ev.brand)}</p>
           </span>
@@ -160,13 +160,13 @@ async function renderNearbySection() {
       <div class="nearby-card" data-id="${ev.id}">
         <div class="nearby-card-media">
           <img src="${getEventThumbnail(ev)}" alt="${escapeHtml(ev.title)}" loading="lazy" onerror="handleImageError(this)">
+          <span class="nearby-rank-num ${idx < 3 ? "nearby-rank-hot" : "nearby-rank-alt"}">${idx + 1}</span>
           <button class="card-like-btn nearby-like ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
             <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
           </button>
         </div>
         <div class="nearby-card-brand-row">
           <span class="card-brand-left">
-            <span class="nearby-rank-num ${idx < 3 ? "nearby-rank-hot" : "nearby-rank-alt"}">${idx + 1}</span>
             ${logoHtml}
             <p class="nearby-card-brand">${escapeHtml(ev.brand)}</p>
           </span>

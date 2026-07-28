@@ -94,22 +94,41 @@
   gap: 4px;
   margin-top: 8px;
 }
-.nearby-card-brand-row .card-brand-logo-sm { width: 14px; height: 14px; }
+.nearby-card-brand-row .card-brand-left { min-width: 0; } /* 안에 있는 브랜드명이 축소/말줄임 가능하도록 */
+.nearby-card-brand-row .card-brand-logo-sm { width: 17px; height: 17px; flex-shrink: 0; } /* 좁은 카드에서도 한눈에 알아볼 수 있게 살짝 키움 */
+/* 순위 배지는 브랜드명 줄이 아니라 이미지 위 왼쪽 위에 오버레이로 — 카드가 좁아져도
+   브랜드명 표시 공간을 로고+텍스트에 온전히 쓸 수 있게 (좋아요 버튼은 오른쪽에 있어 안 겹침) */
+.nearby-card-media .nearby-rank-num {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
 .nearby-rank-num {
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 800;
 }
 .nearby-rank-hot { background: var(--accent); }
 .nearby-rank-alt { background: var(--mint-dark); }
-.nearby-card-brand { font-size: 10.5px; color: var(--accent-dark); font-weight: 700; }
+.nearby-card-brand {
+  font-size: 10.5px;
+  color: var(--accent-dark);
+  font-weight: 700;
+  white-space: nowrap; /* ⚠️ 이게 없어서 카드가 좁아지면 "스타벅스"가 "스/타/벅/스"로
+    한 글자씩 세로로 쌓이던 버그였다 — 한글은 공백 없이도 글자단위 줄바꿈이 가능해서 생긴 문제 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
 .nearby-card-title {
   font-size: 12.5px;
   font-weight: 700;
