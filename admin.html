@@ -373,6 +373,17 @@ async function registerManual() {
   }
 }
 
+// 백엔드 CANDIDATE_CATEGORIES와 동일한 목록 — 카테고리를 하나씩 나눠서 호출하면
+// 요청 하나당 웹검색 1개 카테고리분(15~20초 내외)만 처리해서, 5개를 한 번에 순차
+// 처리하다 Vercel 60초 제한을 넘겨 "Unexpected token 'A'..." 에러가 나던 문제를 피한다.
+const SCAN_CATEGORIES = [
+  { id: "fashion", label: "패션" },
+  { id: "beauty", label: "뷰티" },
+  { id: "food", label: "카페·디저트" },
+  { id: "popup", label: "팝업·전시" },
+  { id: "convenience", label: "편의점" },
+];
+
 async function runScanNow() {
   const key = getKey();
   if (!key) { alert("관리자 키를 입력해주세요."); return; }
@@ -381,28 +392,46 @@ async function runScanNow() {
   const btn = document.getElementById("runScanBtn");
   const statusEl = document.getElementById("scanStatus");
   btn.disabled = true;
-  btn.textContent = "⏳ 수집 중이에요... (카테고리마다 웹검색이라 시간이 좀 걸려요)";
-  statusEl.textContent = "";
+  statusEl.style.color = "#666";
 
-  try {
-    const res = await fetch(`/api/cron_jobs?job=candidates_scan&key=${encodeURIComponent(key)}`, { method: "POST" });
-    const data = await res.json();
-    if (!res.ok) {
-      statusEl.textContent = `❌ 실패: ${data.error || "알 수 없는 오류"}`;
-      statusEl.style.color = "#d33";
-    } else {
-      statusEl.textContent = `✅ 이번 실행에서 ${data.candidates_found}개 발견, ${data.candidates_saved}개 새로 저장됐어요.` +
-        (data.errors && data.errors.length ? ` (일부 카테고리 오류: ${data.errors.map(e => e.category).join(", ")})` : "");
-      statusEl.style.color = "#2a8f4d";
-      loadCandidates(); // 방금 쌓인 후보를 목록에 바로 반영
+  let totalFound = 0, totalSaved = 0;
+  const failedCategories = [];
+
+  for (let i = 0; i < SCAN_CATEGORIES.length; i++) {
+    const cat = SCAN_CATEGORIES[i];
+    btn.textContent = `⏳ 수집 중... (${i + 1}/${SCAN_CATEGORIES.length}) ${cat.label}`;
+    statusEl.textContent = `${cat.label} 검색 중이에요...`;
+
+    try {
+      const res = await fetch(`/api/cron_jobs?job=candidates_scan&category=${cat.id}&key=${encodeURIComponent(key)}`, { method: "POST" });
+      const rawText = await res.text();
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        // Vercel이 타임아웃 등으로 JSON이 아닌 자체 에러페이지를 내려준 경우 —
+        // 이 카테고리만 실패 처리하고 나머지 카테고리는 계속 진행한다.
+        throw new Error(`서버 응답이 올바르지 않아요(${res.status})`);
+      }
+      if (!res.ok) throw new Error(data.error || "알 수 없는 오류");
+      totalFound += data.candidates_found || 0;
+      totalSaved += data.candidates_saved || 0;
+    } catch (e) {
+      failedCategories.push(`${cat.label}(${e.message})`);
     }
-  } catch (e) {
-    statusEl.textContent = `❌ 요청 실패: ${e.message}`;
-    statusEl.style.color = "#d33";
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "🔎 지금 바로 이벤트 수집 실행 (매일 새벽 3시 자동실행과 별개)";
   }
+
+  if (failedCategories.length === 0) {
+    statusEl.textContent = `✅ 5개 카테고리 전부 완료 — ${totalFound}개 발견, ${totalSaved}개 새로 저장됐어요.`;
+    statusEl.style.color = "#2a8f4d";
+  } else {
+    statusEl.textContent = `⚠️ ${totalFound}개 발견, ${totalSaved}개 저장 — 실패한 카테고리: ${failedCategories.join(", ")}`;
+    statusEl.style.color = "#d33";
+  }
+  loadCandidates(); // 이번에 쌓인 후보를 목록에 바로 반영
+
+  btn.disabled = false;
+  btn.textContent = "🔎 지금 바로 이벤트 수집 실행 (매일 새벽 3시 자동실행과 별개)";
 }
 
 async function loadCandidates() {

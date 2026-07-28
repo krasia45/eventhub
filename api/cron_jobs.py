@@ -86,11 +86,22 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": "ANTHROPIC_API_KEY가 설정되지 않았습니다."})
             return
 
+        # ⚠️ 카테고리 5개를 한 요청 안에서 전부 순차로 돌리면(웹검색이라 카테고리당
+        # 15~20초 이상 걸릴 수 있음), Vercel 함수 제한(maxDuration 60초)을 넘겨서
+        # 강제종료되고 그 결과 JSON이 아닌 Vercel 자체 에러페이지가 응답으로 와서
+        # 프론트의 res.json()이 깨지는 문제가 있었다("가끔씩 되긴 하는데" 증상과 일치).
+        # ?category=하나만 지정하면 그 카테고리만 처리해서 훨씬 빠르게 끝난다 — 관리자가
+        # "지금 바로 실행" 버튼을 누를 때는 카테고리별로 나눠서 여러 번 호출하는 방식으로
+        # 이 타임아웃을 원천적으로 피한다(admin.html 쪽 수정과 세트).
+        query = parse_qs(urlparse(self.path).query)
+        only_category = query.get("category", [""])[0]
+        categories_to_scan = [only_category] if only_category in CANDIDATE_CATEGORIES else CANDIDATE_CATEGORIES
+
         total_found = 0
         total_saved = 0
         scan_errors = []
 
-        for category in CANDIDATE_CATEGORIES:
+        for category in categories_to_scan:
             try:
                 candidates = self._scan_category(anthropic_key, category)
                 total_found += len(candidates)
@@ -105,6 +116,7 @@ class handler(BaseHTTPRequestHandler):
 
         self._send_json(200, {
             "success": True,
+            "categories_scanned": categories_to_scan,
             "candidates_found": total_found,
             "candidates_saved": total_saved,
             "errors": scan_errors,
@@ -122,6 +134,12 @@ class handler(BaseHTTPRequestHandler):
 1. 실제로 검색해서 확인한 것만 포함해. 검색 결과가 없거나 불확실하면 그 항목은 아예 빼.
 2. 각 항목에는 반드시 정보를 확인한 실제 출처 URL(source_url)을 포함해.
 3. 이미 종료된 프로모션(종료일이 오늘 이전)은 포함하지 마.
+3-1. ⚠️ 정보 출처 자체가 오래된 게 아닌지 반드시 확인해. 검색 결과에 뜬 기사/게시물의 작성일·게시일을
+   직접 확인하고, 오늘({datetime.now().strftime('%Y-%m-%d')}) 기준으로 최근 것(최대한 최근 1~2개월
+   이내, 아무리 길어도 이벤트 기간이 실제로 안 끝났다고 명확히 확인되는 경우가 아니면 6개월 이상
+   지난 글은 절대 포함하지 마)이 아니면 무조건 제외해. "2014년", "2019년" 처럼 몇 년 전 기사에서
+   찾은 정보를, 종료일을 못 찾았다는 이유로 "아직 진행 중"이라고 추측해서 넣는 게 가장 흔한 실수야
+   — 확신이 안 서면 넣지 말고 그냥 빼.
 4. 확신이 서지 않는 할인율/기간은 "정확한 조건은 공식 채널 확인 필요"라고 명시해.
 5. "쿠폰 총정리", "할인코드 모음" 같은 제휴 마케팅/블로그성 사이트는 출처로 쓰지 마 — 스스로 "참고용 가이드"라고 밝히거나 실제 브랜드 공지가 아닌, 과거 패턴을 짜깁기한 글이 많아서 부정확해. 반드시 브랜드 공식 채널이나 신뢰할 수 있는 언론 기사를 출처로 써.
 6. 일반 소비자 대상 이벤트만 포함해. 사업자/업계 관계자 대상 박람회·전시회·컨퍼런스(예: OO페어, OO엑스포, OO쇼)는 제외해.
