@@ -22,6 +22,21 @@ function escapeHtml(str) {
     .replace(/'/g, "&#39;");
 }
 
+/* 이미지가 여러 장인 이벤트(카드뉴스 형태로 여러 장에 정보를 나눠 담은 게시물) 지원.
+   DB 스키마를 새로 안 늘리고, channel 필드와 동일한 기존 관행(여러 개면 줄바꿈으로 구분)을
+   그대로 재사용한다 — 기존 단일 이미지 데이터도 그대로 호환된다(줄바꿈 없으면 1개짜리 배열). */
+function getEventImages(ev) {
+  return (ev.image || "").split("\n").map(s => s.trim()).filter(Boolean);
+}
+/* 카드처럼 좁은 공간에서는 항상 "브랜드가 정한 원본 순서"의 첫 장만 대표이미지로 쓴다. */
+function getEventThumbnail(ev) {
+  // ⚠️ 예전엔 `|| ev.image`로 원본 문자열을 폴백에 뒀는데, image가 공백/줄바꿈만 있는
+  // 경우(getEventImages가 다 걸러내서 빈 배열) 그 무의미한 공백 문자열이 그대로 img
+  // src에 들어가버리는 버그가 있었다. 진짜 이미지가 하나도 없으면 그냥 빈 문자열을 줘서
+  // 기존 handleImageError(onerror) 폴백이 정상적으로 대체 이미지를 보여주게 한다.
+  return getEventImages(ev)[0] || "";
+}
+
 /* Supabase 클라이언트 (로그인/회원 데이터용) — anon key는 공개용 키라 노출돼도 안전합니다.
    실제 데이터 보호는 서버가 아니라 RLS(Row Level Security) 정책이 담당합니다.
    ⚠️ 아래 두 값을 실제 Supabase 프로젝트 값으로 바꿔주세요. */

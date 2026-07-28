@@ -280,7 +280,7 @@
   white-space: nowrap;
 }
 .filter-bar-btn .filter-bar-icon { opacity: 0.75; flex-shrink: 0; } /* 아이콘이 텍스트보다 튀지 않게 */
-.filter-bar-btn .filter-chev { font-size: 10px; opacity: 0.7; }
+.filter-bar-btn .filter-chev { font-size: 13px; font-weight: 700; opacity: 0.85; }
 .filter-bar-btn b { color: inherit; }
 
 /* 선택 시: 브랜드/혜택/더보기가 각자 다른 역할색으로 — 세 필터가 서로 다른 성격임을 색으로 구분 */
@@ -307,6 +307,8 @@
   gap: 6px;
   padding: 8px 0 4px; /* filter-bar-wrap의 자식이라 좌우 padding은 부모 것만 적용(중복 방지) */
 }
+.selected-filter-row[hidden] { display: none; } /* display:flex가 [hidden]보다 명시도 높아
+  JS로 숨겨도 계속 보이던 버그 — 클래스 붙여서 확실히 숨김 */
 .selected-filter-chip {
   display: inline-flex;
   align-items: center;

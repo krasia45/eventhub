@@ -9,10 +9,30 @@ function openSheet(eventId) {
 
   recordRecentlyViewed(eventId);
 
-  const sheetImageEl = document.getElementById("sheetImage");
-  sheetImageEl.onerror = () => handleImageError(sheetImageEl);
-  sheetImageEl.src = ev.image;
-  sheetImageEl.alt = ev.title;
+  // 이미지가 여러 장(카드뉴스 형태로 정보를 나눠 담은 게시물)이면 브랜드가 만든 원본 순서
+  // 그대로 스와이프 캐러셀로 보여준다 — EventHub가 임의로 순서를 바꾸거나 재조립하지 않는다.
+  const images = getEventImages(ev);
+  const carouselEl = document.getElementById("sheetPhotoCarousel");
+  const dotsEl = document.getElementById("sheetPhotoDots");
+  carouselEl.innerHTML = images.map((src, i) => `
+    <img class="sheet-photo" src="${src}" alt="${escapeHtml(ev.title)}${images.length > 1 ? ` (${i + 1}/${images.length})` : ""}"
+      loading="${i === 0 ? "eager" : "lazy"}" onerror="handleImageError(this)">
+  `).join("");
+
+  if (images.length > 1) {
+    dotsEl.hidden = false;
+    dotsEl.innerHTML = images.map((_, i) => `<span class="sheet-photo-dot ${i === 0 ? "active" : ""}"></span>`).join("");
+    // 스와이프 중 현재 몇 번째 사진인지 점으로 실시간 표시
+    carouselEl.onscroll = () => {
+      const idx = Math.round(carouselEl.scrollLeft / carouselEl.clientWidth);
+      dotsEl.querySelectorAll(".sheet-photo-dot").forEach((d, i) => d.classList.toggle("active", i === idx));
+    };
+  } else {
+    dotsEl.hidden = true;
+    dotsEl.innerHTML = "";
+    carouselEl.onscroll = null;
+  }
+  carouselEl.scrollLeft = 0; // 시트를 열 때마다 항상 첫 장부터 보이게
 
   const brandRowLogoEl = document.getElementById("sheetBrandRowLogo");
   brandRowLogoEl.src = getLogoUrl(ev.domain);

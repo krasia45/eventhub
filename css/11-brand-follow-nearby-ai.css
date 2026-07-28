@@ -71,6 +71,18 @@
   cursor: pointer;
   transition: transform 0.12s ease;
 }
+/* "내 주변 인기 이벤트" 섹션에서만 3.5개가 보이도록 폭 조정 — .nearby-card 클래스를
+   같이 쓰는 "오늘 마감임박" 섹션은 이 선택자 범위 밖이라 기존 150px 그대로 유지됨 */
+#nearbySection .nearby-card {
+  flex: 0 0 calc((100vw - 68px) / 3.5); /* 좌우패딩16px*2 + gap12px*3을 뺀 나머지를 3.5등분 */
+}
+/* "오늘 마감임박" 섹션도 동일한 gap(12px)을 쓰므로 같은 계산식을 그대로 적용 */
+#endingTodayScroll .nearby-card {
+  flex: 0 0 calc((100vw - 68px) / 3.5);
+}
+@media (min-width: 900px) {
+  #nearbySection .nearby-card, #endingTodayScroll .nearby-card { flex: 0 0 150px; } /* 데스크톱은 원래 고정폭 유지 */
+}
 .nearby-card:active { transform: scale(0.97); }
 .nearby-card-media { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: var(--radius-sm); overflow: hidden; background: #f0f0f2; }
 .nearby-card-media img { width: 100%; height: 100%; object-fit: cover; }

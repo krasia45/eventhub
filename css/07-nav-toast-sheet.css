@@ -243,6 +243,39 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
   object-fit: cover;
 }
 
+/* ── 이미지 여러 장 캐러셀 (카드뉴스 형태 게시물 지원) ──
+   브랜드가 만든 원본 이미지 순서를 그대로 스와이프로 보여준다. 이미지가 1장뿐이면
+   그냥 기존과 완전히 동일하게 보인다(스크롤할 게 없어서 자연스럽게 정적 이미지처럼 보임). */
+.sheet-photo-carousel {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.sheet-photo-carousel::-webkit-scrollbar { display: none; }
+.sheet-photo-carousel .sheet-photo {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+.sheet-photo-dots {
+  position: absolute;
+  left: 0; right: 0; bottom: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  z-index: 2;
+}
+.sheet-photo-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.55);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.sheet-photo-dot.active { background: #fff; transform: scale(1.25); }
+
 .sheet-brand-row {
   display: flex;
   align-items: center;
@@ -335,6 +368,10 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
   padding: 14px 0;
   border-bottom: 1px solid #F3F4F6;
 }
+.info-row[hidden] { display: none; } /* ⚠️ display:flex가 [hidden]보다 명시도 높아서 JS로
+  숨겨도 계속 보이던 버그. 이벤트 상세의 "조건"/"대상" 행이 값 없을 때도 빈 줄로 계속
+  표시되고 있었을 가능성이 높다 — "조건 없으면 빈 공간 안 만든다"는 요구사항이 이 버그
+  때문에 실제로는 안 지켜지고 있었을 수 있는 중요한 수정. */
 .info-row:last-child { border-bottom: none; }
 .info-row-icon {
   flex-shrink: 0;

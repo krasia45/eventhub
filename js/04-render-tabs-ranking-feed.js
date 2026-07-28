@@ -446,7 +446,7 @@ function renderRanking() {
   list.innerHTML = rankedEvents.map((ev, idx) => `
     <li class="rank-row" data-id="${ev.id}">
       <span class="rank-num ${idx < 3 ? "rank-num-hot" : "rank-num-alt"}">${idx + 1}</span>
-      <img class="rank-thumb" src="${ev.image}" alt="" loading="lazy" onerror="handleImageError(this)">
+      <img class="rank-thumb" src="${getEventThumbnail(ev)}" alt="" loading="lazy" onerror="handleImageError(this)">
       <div class="rank-row-info">
         <p class="rank-row-brand"><img class="rank-row-brand-logo" src="${getLogoUrl(ev.domain)}" alt="" data-domain="${ev.domain}" data-brand="${escapeHtml(ev.brand)}"> ${escapeHtml(ev.brand)}</p>
         <p class="rank-row-title">${escapeHtml(ev.title)}</p>
@@ -532,7 +532,7 @@ function renderEventCardHtml(ev) {
   return `
     <div class="event-card" data-id="${ev.id}">
       <div class="card-media">
-        <img class="card-photo" src="${ev.image}" alt="${escapeHtml(ev.title)}" loading="lazy" onerror="handleImageError(this)">
+        <img class="card-photo" src="${getEventThumbnail(ev)}" alt="${escapeHtml(ev.title)}" loading="lazy" onerror="handleImageError(this)">
         <button class="card-like-btn ${likedEvents.has(ev.id) ? "liked" : ""}" data-id="${ev.id}" aria-label="관심 이벤트로 등록">
           <span class="card-like-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.7-9.3-9C1.3 8 3.6 4.9 6.9 4.9c2 0 3.6 1.1 4.4 2.6h1.4c.8-1.5 2.4-2.6 4.4-2.6 3.3 0 5.6 3.1 4.2 6.6-1.8 4.3-9.3 9-9.3 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
         </button>

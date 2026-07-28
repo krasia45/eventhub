@@ -39,10 +39,14 @@
 .ai-feed-grid::-webkit-scrollbar { display: none; }
 .ai-feed-grid .event-card {
   flex: 0 0 auto;
-  width: 136px;
+  width: calc((100vw - 62px) / 3.5); /* 모바일: 좌우패딩16px*2 + gap10px*3 을 뺀 나머지를 3.5등분
+    → 카드 3개 + 다음 카드 절반이 딱 보이게 (사용자 요청) */
   scroll-snap-align: start;
   background: #DAF4F6;
   border: 1px solid #C9E9EC;
+}
+@media (min-width: 900px) {
+  .ai-feed-grid .event-card { width: 136px; } /* 데스크톱은 원래 고정폭 그대로 유지 */
 }
 .ai-feed-grid .event-card .card-media {
   margin: 8px 8px 0;

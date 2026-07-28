@@ -42,14 +42,32 @@ CANDIDATE_CATEGORY_LABEL = {
 
 class handler(BaseHTTPRequestHandler):
 
+    def do_GET(self):
+        # ⚠️ Vercel 공식 문서(vercel.com/docs/cron-jobs): "Vercel makes an HTTP GET
+        # request"라고 명시돼 있다 — 즉 Cron이 실제로 호출하는 방식은 GET인데, 이 핸들러가
+        # do_POST만 갖고 있어서 GET 요청이 오면 Python이 자동으로 501(지원 안 하는 메서드)로
+        # 거부하고 있었다. 이게 "승인 대기 후보가 계속 0개"였던 근본 원인 — 매일 새벽 3시마다
+        # Vercel이 호출을 시도했어도 요청 자체가 처리되지 못하고 있었던 것.
+        self.do_POST()
+
     def do_POST(self):
+        # 인증 방식 두 가지를 모두 허용한다:
+        # 1) Vercel이 매일 새벽 자동 실행할 때 보내는 CRON_SECRET (Authorization 헤더)
+        # 2) 관리자가 admin.html에서 "지금 바로 실행" 버튼을 눌렀을 때 보내는 ADMIN_SECRET
+        #    (다른 admin API들과 동일하게 ?key= 쿼리파라미터) — 둘 중 하나만 맞으면 통과.
+        query = parse_qs(urlparse(self.path).query)
         cron_secret = os.environ.get("CRON_SECRET", "")
         auth_header = self.headers.get("Authorization", "")
-        if cron_secret and auth_header != f"Bearer {cron_secret}":
+        is_cron_auth = (not cron_secret) or (auth_header == f"Bearer {cron_secret}")
+
+        admin_secret = os.environ.get("ADMIN_SECRET", "")
+        provided_key = query.get("key", [""])[0]
+        is_admin_auth = bool(admin_secret) and provided_key == admin_secret
+
+        if not is_cron_auth and not is_admin_auth:
             self._send_json(401, {"error": "인증되지 않은 요청입니다."})
             return
 
-        query = parse_qs(urlparse(self.path).query)
         job = query.get("job", [""])[0]
 
         if job == "candidates_scan":

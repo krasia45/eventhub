@@ -276,7 +276,7 @@ function renderMapPageList(events, totalCount) {
   listEl.innerHTML = `<div class="map-page-grid">` + events.map((ev, idx) => `
     <div class="map-card ${mapPageSelectedId === ev.id ? "active-pin" : ""}" data-id="${ev.id}">
       <div class="map-card-media">
-        <img class="map-card-thumb" src="${ev.image}" alt="" loading="lazy" onerror="handleImageError(this)">
+        <img class="map-card-thumb" src="${getEventThumbnail(ev)}" alt="" loading="lazy" onerror="handleImageError(this)">
         <span class="map-card-rank ${idx < 3 ? "top" : ""}">${idx + 1}</span>
         ${ev.id.startsWith("mock-") ? '<span class="map-page-mock-badge map-card-mock-badge">예시</span>' : ""}
       </div>

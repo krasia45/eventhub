@@ -38,6 +38,7 @@
   padding: 8px 20px;
   border-radius: 999px;
 }
+.ranking-more-btn[hidden] { display: none; } /* display:block이 [hidden]을 이기던 버그 수정 */
 .ranking-more-btn:active { opacity: 0.6; }
 
 .ranking-list {
@@ -407,6 +408,7 @@
   scrollbar-width: none;
   margin-bottom: 10px;
 }
+.subcat-row[hidden] { display: none; } /* display:flex가 [hidden]을 이기던 버그 수정 */
 .subcat-row::-webkit-scrollbar { display: none; }
 .subcat-chip {
   flex-shrink: 0;
