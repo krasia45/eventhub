@@ -379,7 +379,9 @@ function renderSelectedFilterChips() {
   if (currentDiscountFilter !== "all") {
     chips.push({ type: "benefit", role: "benefit", value: currentDiscountFilter, label: BENEFIT_SHEET_OPTIONS.find(x => x.id === currentDiscountFilter)?.label });
   }
-  if (gpsFilterActive) chips.push({ type: "region", role: "neutral", value: "gps", label: "내 위치" });
+  // ⚠️ "내 주변 20km" 토글(gpsFilterActive)은 내주변 섹션 자체의 표시 모드일 뿐이라, 상단
+  // 필터바(브랜드/혜택/더보기) 결과 모드의 선택칩으로는 안 보여준다 — 지역 개념 자체를
+  // 상단에서 이미 뺐는데 여기서 "내 위치"로 다시 노출되면 일관성이 깨지고 혼란을 준다.
   if (currentRegionFilter) chips.push({ type: "region", role: "neutral", value: currentRegionFilter, label: REGION_SHEET_OPTIONS.find(r => r.kw === currentRegionFilter)?.label });
   if (onlineOfflineFilter !== "all") chips.push({ type: "oo", role: "more", value: onlineOfflineFilter, label: onlineOfflineFilter === "online" ? "온라인" : "오프라인" });
   moreSelections.forEach(m => chips.push({ type: "moreExtra", role: "more", value: m, label: MORE_SHEET_OPTIONS.find(o => o.id === m)?.label }));

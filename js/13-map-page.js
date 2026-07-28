@@ -382,9 +382,14 @@ async function openMapPage() {
   pushModalHistory(closeMapPage);
   renderMapPageFilters();
   await initMapPageMap();
-  runMapPageSearch();
+  // ⚠️ 예전엔 runMapPageSearch()를 먼저 불러서, 그 안의 "더 많은 이벤트 보기" 버튼 계산이
+  // mapSheetHeight가 아직 0(초기값)인 상태에서 실행됐다. 그러면 "하단(collapsed)"으로
+  // 잘못 판정돼서 버튼이 처음부터 숨겨진 채로 시작됐다(특히 지도 로딩이 빠른 웹에서 잘 드러남).
+  // 시트 높이를 먼저 확정한 뒤에 검색/렌더링해야 정확하다.
+  await new Promise(requestAnimationFrame); // 레이아웃이 실제로 확정된 뒤에 측정하도록 한 프레임 대기
   initMapSheetSnapPoints();
   setMapSheetHeight(MAP_SHEET_SNAP.mid, { animate: false }); // 처음엔 중단 상태로 시작
+  runMapPageSearch();
 }
 
 function closeMapPage() {

@@ -329,7 +329,7 @@ function renderWalletBrandDropdown() {
   const brands = Object.keys(brandCount).sort((a, b) => brandCount[b] - brandCount[a]);
 
   if (brands.length === 0) {
-    dropdown.innerHTML = `<p class="wallet-brand-empty">찜한 이벤트가 없어요.</p>`;
+    dropdown.innerHTML = `<p class="wallet-brand-empty">쿠폰함에 담긴 이벤트가 없어요.</p>`;
     return;
   }
   dropdown.innerHTML = brands.map(b => `
@@ -390,7 +390,7 @@ document.getElementById("couponWalletClose").addEventListener("click", () => { c
 document.getElementById("couponWalletClearBtn").addEventListener("click", () => {
   const likedList = EVENTS.filter(ev => likedEvents.has(ev.id));
   if (likedList.length === 0) return;
-  if (!confirm(`찜한 이벤트 ${likedList.length}개를 전부 삭제할까요?`)) return;
+  if (!confirm(`쿠폰함에 담긴 ${likedList.length}개를 전부 삭제할까요?`)) return;
   likedList.forEach(ev => toggleLike(ev.id));
   renderCouponWallet();
 });
