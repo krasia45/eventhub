@@ -185,6 +185,7 @@ let currentCategory = "all";
 let currentDiscountFilter = "all"; // "all" | "1+1" | "50plus"
 let selectedBrands = new Set(); // 카테고리 탭에서만 사용되는 브랜드 로고 다중 필터
 let onlineOfflineFilter = "all"; // "all" | "online" | "offline" — getChannelMode() 실제 데이터 기반
+let moreSelections = new Set(); // "entry"(응모) | "appOnly"(앱전용) — 온오프라인과 달리 다중선택
 // '내 주변 인기 이벤트'는 GPS 결과에 따라 스스로 보임/숨김을 결정하는데,
 // 필터 활성 시 억지로 숨겼다가 필터 해제 시 "원래 있었으면 다시 보이게" 복원하려면
 // 그 원래 상태(위치 기반으로 실제 보여줄 데이터가 있었는지)를 따로 기억해둬야 함.

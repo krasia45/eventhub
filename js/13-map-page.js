@@ -170,6 +170,7 @@ let mapPageCurrentCategory = "all";
 let mapPageSearchTerm = "";
 let mapPageResults = [];        // 현재 검색 결과 (지도+리스트 공통 데이터)
 let mapPageVisibleCount = 20;   // 리스트/마커에 현재까지 표시 중인 개수
+let mapPageHasMoreContent = false; // 콘텐츠상 "더보기"가 필요한지 (시트 위치 조건과 별개로 관리)
 const MAP_PAGE_PAGE_SIZE = 20;
 let mapPageMoved = false;       // 지도를 움직였는지 (버튼 표시용)
 let mapPageInitialized = false;
@@ -250,8 +251,16 @@ function renderMapPageResults() {
   renderMapPageList(visible, mapPageResults.length);
   renderMapPageMarkers(visible);
 
+  mapPageHasMoreContent = mapPageResults.length > mapPageVisibleCount;
+  updateMapMoreBtnVisibility();
+}
+
+/* "더 많은 이벤트 보기" 버튼: 콘텐츠가 더 있어도(mapPageHasMoreContent), 시트가 하단(collapsed)
+   근처로 접혀서 리스트가 거의 안 보이는 상태면 굳이 안 보여준다 — 중단·상단일 때만 노출. */
+function updateMapMoreBtnVisibility() {
   const moreBtn = document.getElementById("mapPageMoreBtn");
-  moreBtn.hidden = mapPageResults.length <= mapPageVisibleCount;
+  const sheetNearCollapsed = mapSheetHeight <= MAP_SHEET_SNAP.collapsed + 20;
+  moreBtn.hidden = !mapPageHasMoreContent || sheetNearCollapsed;
 }
 
 function renderMapPageList(events, totalCount) {
@@ -473,6 +482,20 @@ document.getElementById("mapLocateBtn").addEventListener("click", async () => {
   }
 });
 
+/* 길찾기: 카카오맵 공식 길찾기 URL(/link/to/이름,위도,경도)을 새 탭으로 연다.
+   앱이 설치돼 있으면 카카오맵 앱으로, 없으면 모바일웹/PC웹 카카오맵으로 자동 연결된다
+   (카카오 공식 문서에 명시된 동작 — 별도 앱설치 감지 로직 불필요). */
+document.getElementById("mapDirectionsBtn").addEventListener("click", () => {
+  const ev = mapPageResults.find(e => e.id === mapPageSelectedId);
+  if (!ev) {
+    showToast("먼저 지도나 목록에서 이벤트를 선택해주세요 📍");
+    return;
+  }
+  const name = encodeURIComponent(`${ev.brand} ${ev.title}`.slice(0, 40));
+  const url = `https://map.kakao.com/link/to/${name},${ev.lat},${ev.lng}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+});
+
 /* ---------- 바텀시트: 자유 드래그 (네이버지도 패턴) ----------
    버튼으로 2단계 토글하던 방식 대신, 핸들을 손가락으로 잡고 있는 동안
    실시간으로 시트 높이가 따라오고, 손을 떼면 가장 가까운 스냅 지점(하단/중단/상단)
@@ -485,12 +508,15 @@ let mapSheetDragging = false;
 
 function initMapSheetSnapPoints() {
   const viewH = document.querySelector(".map-page-view")?.clientHeight || window.innerHeight;
-  // 상단(검색창+분야탭+필터바) 실제 렌더링 높이를 재서, 시트를 끝까지 올렸을 때
-  // 검색창 바로 밑에 딱 붙도록 한다(화면 전체를 덮어 검색창까지 가리지 않게).
-  const topOverlayH = document.querySelector(".map-top-overlay")?.offsetHeight || 0;
+  // 검색창(.map-search-bar)만의 실제 높이를 재서, 시트를 끝까지 올리면 검색창 바로 밑에 딱
+  // 붙도록 한다. 카테고리탭·필터바(.map-page-filter-row)는 여기 포함 안 시켜서, 시트가 최대로
+  // 올라오면 그 밑의 카테고리탭까지 자연스럽게 덮이게 한다.
+  const searchBarH = document.querySelector(".map-search-bar")?.offsetHeight || 0;
+  const searchBarTop = document.querySelector(".map-top-overlay")?.offsetTop || 0;
+  const searchBarPaddingTop = 10; // .map-top-overlay의 상단 padding(safe-area 제외 고정분)
   MAP_SHEET_SNAP.collapsed = 130;                        // 하단: 살짝만 보임
   MAP_SHEET_SNAP.mid = Math.round(viewH * 0.48);          // 중단
-  MAP_SHEET_SNAP.expanded = viewH - topOverlayH;          // 상단: 검색창 바로 밑까지만
+  MAP_SHEET_SNAP.expanded = viewH - (searchBarTop + searchBarPaddingTop + searchBarH); // 상단: 검색창 바로 밑까지만
 }
 
 function setMapSheetHeight(px, { animate = false } = {}) {
@@ -503,12 +529,19 @@ function setMapSheetHeight(px, { animate = false } = {}) {
   const gap = 14;
   const refreshBtn = document.getElementById("mapRefreshBtn");
   const locateBtn = document.getElementById("mapLocateBtn");
+  const directionsBtn = document.getElementById("mapDirectionsBtn");
   const nearFullyExpanded = px >= MAP_SHEET_SNAP.expanded - 40; // 리스트가 거의 꽉 찬 상태 → 지도 버튼 불필요
   [refreshBtn, locateBtn].forEach(btn => {
     btn.style.transition = animate ? "bottom 0.28s cubic-bezier(0.22,1,0.36,1)" : "none";
     btn.style.bottom = `${px + gap}px`;
     btn.style.display = nearFullyExpanded ? "none" : "";
   });
+  // 길찾기 버튼은 "현재 위치" 버튼 바로 아래(버튼높이 42px + 간격 8px)에 붙인다
+  directionsBtn.style.transition = animate ? "bottom 0.28s cubic-bezier(0.22,1,0.36,1)" : "none";
+  directionsBtn.style.bottom = `${px + gap - 50}px`;
+  directionsBtn.style.display = nearFullyExpanded ? "none" : "";
+
+  updateMapMoreBtnVisibility();
 }
 
 function collapseMapSheet() { setMapSheetHeight(MAP_SHEET_SNAP.collapsed, { animate: true }); }

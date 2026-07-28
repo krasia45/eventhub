@@ -288,6 +288,17 @@ document.getElementById("benefitSheetApply").addEventListener("click", () => {
 });
 
 /* ---------- 더보기 시트: 온라인/오프라인 (실제 channel 텍스트 기반, getChannelMode 재사용) ---------- */
+const MORE_SHEET_OPTIONS = [
+  { id: "entry", label: "응모 이벤트" },
+  { id: "appOnly", label: "앱 전용 이벤트" },
+];
+// 참고 이미지엔 "체험 이벤트"/"브랜드 공식 이벤트"/"기간 한정 이벤트"도 있었지만 안 넣었다.
+// - 체험 이벤트: 이미 혜택>무료·증정이 "체험단" 키워드를 매칭하고 있어 완전히 중복됨.
+// - 기간 한정 이벤트: 이미 혜택>선착순·한정이 "한정" 키워드를 매칭하고 있어 완전히 중복됨.
+// - 브랜드 공식 이벤트: EventHub는 admin 승인을 거친 이벤트만 게시하므로 전부 "공식"이라,
+//   이 필터로 걸러지는/안 걸러지는 이벤트가 실제로 없다(항상 전부 매칭 = 의미 없는 필터).
+//   → "가짜 데이터는 만들지 않는다" 원칙에 따라 뺐다.
+
 function renderMoreSheetContent() {
   const options = [
     { id: "all", label: "전체" },
@@ -305,6 +316,20 @@ function renderMoreSheetContent() {
       renderMoreSheetContent();
     });
   });
+
+  // 응모/앱전용은 온오프라인과 달리 상호배타적이지 않아 체크박스(다중선택)로 둔다
+  const extraEl = document.getElementById("moreSheetExtra");
+  extraEl.innerHTML = MORE_SHEET_OPTIONS.map(o => `
+    <label class="filter-sheet-checkbox-row">
+      <input type="checkbox" data-more="${o.id}" ${moreSelections.has(o.id) ? "checked" : ""}>
+      <span>${o.label}</span>
+    </label>`).join("");
+  extraEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener("change", () => {
+      if (cb.checked) moreSelections.add(cb.dataset.more);
+      else moreSelections.delete(cb.dataset.more);
+    });
+  });
 }
 document.getElementById("moreSheetApply").addEventListener("click", () => {
   closeFilterSheet("more");
@@ -317,20 +342,27 @@ document.getElementById("moreSheetApply").addEventListener("click", () => {
 });
 
 /* ---------- 필터바 버튼 라벨 + 선택된 필터 칩 표시 (전부 청록색) ---------- */
+const FILTER_BAR_ICONS = {
+  brand: `<svg class="filter-bar-icon" viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M11.5 3h5.5a2 2 0 0 1 2 2v5.5a2 2 0 0 1-.6 1.4l-8 8a2 2 0 0 1-2.8 0l-6-6a2 2 0 0 1 0-2.8l8-8a2 2 0 0 1 1.4-.6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/></svg>`,
+  benefit: `<svg class="filter-bar-icon" viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M4 9h16v3H4V9Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M5 12h14v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 9v11M12 9c-1.4 0-3-1-3-2.5S10 4 11.2 4.8C12 5.3 12 7 12 9Zm0 0c1.4 0 3-1 3-2.5S14 4 12.8 4.8C12 5.3 12 7 12 9Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
+  more: `<svg class="filter-bar-icon" viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="6" r="1.8" fill="currentColor" stroke="var(--card-bg)" stroke-width="1.5"/><circle cx="16" cy="12" r="1.8" fill="currentColor" stroke="var(--card-bg)" stroke-width="1.5"/><circle cx="10" cy="18" r="1.8" fill="currentColor" stroke="var(--card-bg)" stroke-width="1.5"/></svg>`,
+};
+
 function renderFilterBar() {
   const brandBtn = document.getElementById("filterBtnBrand");
   const benefitBtn = document.getElementById("filterBtnBenefit");
   const moreBtn = document.getElementById("filterBtnMore");
 
   brandBtn.classList.toggle("selected", selectedBrands.size > 0);
-  brandBtn.innerHTML = selectedBrands.size > 0 ? `브랜드 <b>${selectedBrands.size}</b> <span class="filter-chev">⌄</span>` : `브랜드 <span class="filter-chev">⌄</span>`;
+  brandBtn.innerHTML = FILTER_BAR_ICONS.brand + (selectedBrands.size > 0 ? `브랜드 <b>${selectedBrands.size}</b> <span class="filter-chev">⌄</span>` : `브랜드 <span class="filter-chev">⌄</span>`);
 
   benefitBtn.classList.toggle("selected", currentDiscountFilter !== "all");
   const benefitLabel = BENEFIT_SHEET_OPTIONS.find(b => b.id === currentDiscountFilter)?.label;
-  benefitBtn.innerHTML = currentDiscountFilter !== "all" ? `${benefitLabel} <span class="filter-chev">⌄</span>` : `혜택 <span class="filter-chev">⌄</span>`;
+  benefitBtn.innerHTML = FILTER_BAR_ICONS.benefit + (currentDiscountFilter !== "all" ? `${benefitLabel} <span class="filter-chev">⌄</span>` : `혜택 <span class="filter-chev">⌄</span>`);
 
-  moreBtn.classList.toggle("selected", onlineOfflineFilter !== "all");
-  moreBtn.innerHTML = `더보기 <span class="filter-chev">⌄</span>`;
+  const moreCount = (onlineOfflineFilter !== "all" ? 1 : 0) + moreSelections.size;
+  moreBtn.classList.toggle("selected", moreCount > 0);
+  moreBtn.innerHTML = FILTER_BAR_ICONS.more + (moreCount > 0 ? `더보기 <b>${moreCount}</b> <span class="filter-chev">⌄</span>` : `더보기 <span class="filter-chev">⌄</span>`);
 
   renderSelectedFilterChips();
 }
@@ -343,20 +375,21 @@ function renderSelectedFilterChips() {
   // 분야(카테고리)도 선택칩에 같이 보여준다 (발견모드 스킵 여부와는 별개 — 그냥 "지금 뭘 보고 있는지" 표시용)
   if (currentCategory !== "all") {
     const cat = CATEGORIES.find(c => c.id === currentCategory);
-    chips.push({ type: "category", value: currentCategory, label: cat ? cat.label : currentCategory });
+    chips.push({ type: "category", role: "neutral", value: currentCategory, label: cat ? cat.label : currentCategory });
   }
-  selectedBrands.forEach(b => chips.push({ type: "brand", value: b, label: b }));
+  selectedBrands.forEach(b => chips.push({ type: "brand", role: "brand", value: b, label: b }));
   if (currentDiscountFilter !== "all") {
-    chips.push({ type: "benefit", value: currentDiscountFilter, label: BENEFIT_SHEET_OPTIONS.find(x => x.id === currentDiscountFilter)?.label });
+    chips.push({ type: "benefit", role: "benefit", value: currentDiscountFilter, label: BENEFIT_SHEET_OPTIONS.find(x => x.id === currentDiscountFilter)?.label });
   }
-  if (gpsFilterActive) chips.push({ type: "region", value: "gps", label: "내 위치" });
-  if (currentRegionFilter) chips.push({ type: "region", value: currentRegionFilter, label: REGION_SHEET_OPTIONS.find(r => r.kw === currentRegionFilter)?.label });
-  if (onlineOfflineFilter !== "all") chips.push({ type: "oo", value: onlineOfflineFilter, label: onlineOfflineFilter === "online" ? "온라인" : "오프라인" });
+  if (gpsFilterActive) chips.push({ type: "region", role: "neutral", value: "gps", label: "내 위치" });
+  if (currentRegionFilter) chips.push({ type: "region", role: "neutral", value: currentRegionFilter, label: REGION_SHEET_OPTIONS.find(r => r.kw === currentRegionFilter)?.label });
+  if (onlineOfflineFilter !== "all") chips.push({ type: "oo", role: "more", value: onlineOfflineFilter, label: onlineOfflineFilter === "online" ? "온라인" : "오프라인" });
+  moreSelections.forEach(m => chips.push({ type: "moreExtra", role: "more", value: m, label: MORE_SHEET_OPTIONS.find(o => o.id === m)?.label }));
 
   if (chips.length === 0) { row.hidden = true; row.innerHTML = ""; return; }
   row.hidden = false;
   row.innerHTML = chips.map(c => `
-    <span class="selected-filter-chip" data-type="${c.type}" data-value="${escapeHtml(c.value)}">${escapeHtml(c.label)} <button type="button" class="selected-filter-remove" aria-label="필터 해제">✕</button></span>
+    <span class="selected-filter-chip role-${c.role}" data-type="${c.type}" data-value="${escapeHtml(c.value)}">${escapeHtml(c.label)} <button type="button" class="selected-filter-remove" aria-label="필터 해제">✕</button></span>
   `).join("");
 
   row.querySelectorAll(".selected-filter-chip").forEach(chipEl => {
@@ -374,6 +407,7 @@ function renderSelectedFilterChips() {
       else if (type === "region" && value === "gps") { if (gpsFilterActive) toggleGpsFilter(); }
       else if (type === "region") currentRegionFilter = null;
       else if (type === "oo") onlineOfflineFilter = "all";
+      else if (type === "moreExtra") moreSelections.delete(value);
       renderFilterBar();
       renderPopupRegionBanner();
       renderFeed();

@@ -125,6 +125,7 @@
   scrollbar-width: none;
   position: sticky;
   top: var(--header-height, 84px);
+  box-sizing: border-box;
   z-index: 29;
   background: var(--bg);
   max-width: var(--max-page);

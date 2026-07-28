@@ -269,23 +269,36 @@
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   padding: 8px 14px;
   border-radius: 999px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  color: var(--text-2);
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  color: #5E6472;
   font-size: 12.5px;
   font-weight: 700;
   white-space: nowrap;
 }
-.filter-bar-btn.selected {
-  background: var(--mint-light);
-  border-color: var(--mint);
-  color: var(--mint-dark);
-}
+.filter-bar-btn .filter-bar-icon { opacity: 0.75; flex-shrink: 0; } /* 아이콘이 텍스트보다 튀지 않게 */
 .filter-bar-btn .filter-chev { font-size: 10px; opacity: 0.7; }
 .filter-bar-btn b { color: inherit; }
+
+/* 선택 시: 브랜드/혜택/더보기가 각자 다른 역할색으로 — 세 필터가 서로 다른 성격임을 색으로 구분 */
+.filter-bar-btn.role-brand.selected {
+  background: #FFF4EA;
+  border-color: #FF6B00;
+  color: #FF6B00;
+}
+.filter-bar-btn.role-benefit.selected {
+  background: #4ED8E8;
+  border-color: #4ED8E8;
+  color: #FFFFFF;
+}
+.filter-bar-btn.role-more.selected {
+  background: #EEF0FF;
+  border-color: #7886F5;
+  color: #4B5BD8;
+}
 
 /* 선택된 조건 표시 행: [뷰티 ×][미샤 ×][1+1 ×] — 전부 청록색으로 통일 */
 .selected-filter-row {
@@ -303,11 +316,18 @@
   gap: 4px;
   padding: 5px 6px 5px 11px;
   border-radius: 999px;
-  background: var(--mint);
+  background: var(--mint); /* 기본(neutral): 카테고리·지역 칩 — 역할 색상이 없는 것들 */
   color: #fff;
   font-size: 11.5px;
   font-weight: 700;
 }
+/* 브랜드/혜택/더보기 칩은 위 필터바 버튼과 같은 역할색을 그대로 이어받는다 —
+   "이 칩이 어느 필터에서 왔는지" 색만 봐도 알 수 있게 */
+.selected-filter-chip.role-brand { background: #FFF4EA; color: #FF6B00; }
+.selected-filter-chip.role-brand .selected-filter-remove { background: rgba(255,107,0,0.16); color: #FF6B00; }
+.selected-filter-chip.role-benefit { background: #4ED8E8; color: #FFFFFF; }
+.selected-filter-chip.role-more { background: #EEF0FF; color: #4B5BD8; }
+.selected-filter-chip.role-more .selected-filter-remove { background: rgba(75,91,216,0.14); color: #4B5BD8; }
 .selected-filter-remove {
   width: 16px; height: 16px;
   border-radius: 50%;
@@ -347,8 +367,8 @@
 }
 .brand-sheet-chip .brand-filter-logo { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
 .brand-sheet-chip .brand-sheet-check { display: none; color: var(--mint-dark); font-weight: 800; }
-.brand-sheet-chip.checked { background: var(--mint-light); border-color: var(--mint); }
-.brand-sheet-chip.checked .brand-sheet-check { display: inline; }
+.brand-sheet-chip.checked { background: #FFF4EA; border-color: #FF6B00; }
+.brand-sheet-chip.checked .brand-sheet-check { display: inline; color: #FF6B00; }
 .brand-sheet-row {
   display: flex; align-items: center; gap: 10px;
   padding: 11px 0;
@@ -356,7 +376,7 @@
   font-size: 13.5px; font-weight: 600;
 }
 .brand-sheet-row .brand-filter-logo { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
-.brand-sheet-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--mint); }
+.brand-sheet-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #FF6B00; }
 
 /* 혜택/더보기 라디오 스타일 */
 .filter-sheet-radio {
@@ -372,8 +392,23 @@
   border-radius: 50%;
   border: 2px solid var(--border);
 }
-.filter-sheet-radio.checked { color: var(--mint-dark); font-weight: 800; }
-.filter-sheet-radio.checked .radio-dot { border-color: var(--mint); background: var(--mint); box-shadow: inset 0 0 0 3px #fff; }
+.filter-sheet-radio.checked { font-weight: 800; }
+#filterSheetBenefit .filter-sheet-radio.checked { color: #29AEB8; } /* 혜택=청록, 흰배경 위라 살짝 진하게 */
+#filterSheetBenefit .filter-sheet-radio.checked .radio-dot { border-color: #4ED8E8; background: #4ED8E8; box-shadow: inset 0 0 0 3px #fff; }
+#filterSheetMore .filter-sheet-radio.checked { color: #4B5BD8; }
+#filterSheetMore .filter-sheet-radio.checked .radio-dot { border-color: #7886F5; background: #7886F5; box-shadow: inset 0 0 0 3px #fff; }
+
+.filter-sheet-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.filter-sheet-checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #7886F5; }
 
 /* 지역 시트 */
 .region-sheet-mylocation-btn {

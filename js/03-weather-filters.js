@@ -189,7 +189,7 @@ function isAnyFilterActive() {
   // 분야(카테고리)는 포함 안 함 — 카테고리만 고른 상태는 여전히 "발견 모드"로 유지한다
   // (최종 시안 이미지: 뷰티 카테고리를 선택해도 실시간·맞춤·주변 섹션이 그대로 보임)
   return selectedBrands.size > 0 || currentDiscountFilter !== "all" || !!currentSubTag
-    || !!currentRegionFilter || gpsFilterActive || onlineOfflineFilter !== "all";
+    || !!currentRegionFilter || gpsFilterActive || onlineOfflineFilter !== "all" || moreSelections.size > 0;
 }
 
 /* 필터가 활성화되면 필터를 반영 안 하는 발견형 콘텐츠(AI추천/히어로배너/내주변)와
@@ -251,6 +251,14 @@ function getFilteredEvents() {
       if (onlineOfflineFilter === "offline") return mode === "오프라인" || mode === "온오프라인";
       return true;
     });
+  }
+
+  // 더보기 > 응모/앱전용 — 온오프라인과 달리 다중선택(OR 조건)이라 하나라도 걸리면 통과
+  if (moreSelections.has("entry")) {
+    list = list.filter(ev => /응모|추첨|래플/.test(`${ev.discount} ${ev.title} ${ev.conditions || ""}`));
+  }
+  if (moreSelections.has("appOnly")) {
+    list = list.filter(ev => /앱\s*(전용|다운로드|설치|회원)/.test(`${ev.channel || ""} ${ev.conditions || ""}`));
   }
 
   if (endingSoonFilterActive) {
