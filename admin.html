@@ -115,6 +115,7 @@
 
 <div class="manual-form">
   <input type="text" id="manualBrand" placeholder="브랜드명 (예: 비긴스 X 투어스)">
+  <input type="text" id="manualDomain" placeholder="브랜드 웹사이트 도메인 (예: starbucks.co.kr) — 이것만 넣으면 로고가 자동으로 뜹니다. 없으면 비워두세요.">
   <input type="text" id="manualTitle" placeholder="이벤트 제목/설명 (예: 협업 팝업스토어)">
   <select id="manualCategory">
     <option value="popup">팝업·전시</option>
@@ -132,7 +133,8 @@
   <textarea id="manualDesc" rows="3" placeholder="상세안내 — 상세페이지에 그대로 노출되는 내용이에요. 요약하지 말고, 실제 이벤트 내용(대상 상품, 조건, 특전 등)을 있는 그대로 적어주세요."></textarea>
   <p style="font-size:11.5px;color:#999;margin:-6px 0 0;">💡 참여방법에 서로 다른 정보(시간/장소/조건 등)를 한 줄에 이어쓰면 상세페이지에 뭉쳐서 보여요. 꼭 줄마다 하나씩 나눠 입력해주세요.</p>
   <input type="text" id="manualSourceUrl" placeholder="출처 URL (인스타 게시물 링크 등, 검증용)">
-  <textarea id="manualImage" rows="2" placeholder="이미지 URL — 카드뉴스처럼 여러 장이면 브랜드가 올린 순서 그대로 한 줄에 하나씩 넣어주세요(첫 줄이 목록/카드의 대표이미지가 돼요). 없으면 비워두면 회색 기본이미지로 대체돼요."></textarea>
+  <input type="text" id="manualThumbnail" placeholder="대표이미지 URL — 홈 화면·목록에 작게 보이는 썸네일이에요. 없으면 비워두면 회색 기본이미지로 대체돼요.">
+  <textarea id="manualDetailImages" rows="2" placeholder="상세페이지 이미지 URL — 카드뉴스처럼 여러 장을 상세페이지에서 넘겨보게 하려면, 브랜드가 올린 순서 그대로 한 줄에 하나씩 넣어주세요. 대표이미지도 자동으로 첫 장에 포함돼요. 없으면 비워두세요."></textarea>
   <button onclick="registerManual()">추가하기</button>
 </div>
 <p class="register-status" id="manualStatus"></p>
@@ -348,7 +350,15 @@ async function registerManual() {
   const channel = document.getElementById("manualChannel").value.trim();
   const desc = document.getElementById("manualDesc").value.trim();
   const sourceUrl = document.getElementById("manualSourceUrl").value.trim();
-  const image = document.getElementById("manualImage").value.trim();
+  const domain = document.getElementById("manualDomain").value.trim();
+  // 대표이미지 + 상세이미지들을 합쳐서 기존 image 필드 형식(줄바꿈 구분)으로 만든다.
+  // 대표이미지가 항상 맨 앞에 오게 해서, 카드/목록의 썸네일로 정확히 그게 쓰이도록 한다.
+  const thumbnail = document.getElementById("manualThumbnail").value.trim();
+  const detailImagesRaw = document.getElementById("manualDetailImages").value.trim();
+  const detailImages = detailImagesRaw ? detailImagesRaw.split("\n").map(s => s.trim()).filter(Boolean) : [];
+  const allImages = [thumbnail, ...detailImages].filter(Boolean);
+  // 대표이미지를 안 넣고 상세이미지만 넣은 경우를 대비해 중복 제거(같은 URL을 두 번 넣었을 때도 안전)
+  const image = [...new Set(allImages)].join("\n");
   const statusEl = document.getElementById("manualStatus");
 
   if (!brand || !title || !start || !end) {
@@ -364,6 +374,7 @@ async function registerManual() {
       body: JSON.stringify({
         key, mode: "manual", category,
         brand, title, discount, channel, desc,
+        domain: domain || null,
         conditions: conditions || null,
         targetAudience: targetAudience || null,
         periodStart: start, periodEnd: end,

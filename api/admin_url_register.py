@@ -263,6 +263,7 @@ class handler(BaseHTTPRequestHandler):
         period_end = (data.get("periodEnd") or "").strip()
         source_url = data.get("sourceUrl")
         manual_image = (data.get("image") or "").strip()
+        manual_domain = (data.get("domain") or "").strip()
 
         if not brand or not title or not period_start or not period_end:
             self._send_json(400, {"error": "브랜드명, 제목, 시작일, 종료일은 필수예요."})
@@ -290,7 +291,7 @@ class handler(BaseHTTPRequestHandler):
             "target_audience": target_audience,
             "tags": [],
             "image": manual_image,
-            "domain": "",
+            "domain": manual_domain,
             "link": source_url or "",
             "source_url": source_url or "",
             "source_type": "manual",
