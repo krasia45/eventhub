@@ -22,6 +22,10 @@
       "dest": "/api/admin_url_register.py"
     },
     {
+      "src": "/api/admin_upload_image",
+      "dest": "/api/admin_upload_image.py"
+    },
+    {
       "src": "/api/cron_jobs",
       "dest": "/api/cron_jobs.py"
     },

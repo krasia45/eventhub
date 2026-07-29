@@ -171,3 +171,52 @@ def sb_admin_generate_magiclink(email, timeout=10):
             return json.loads(res.read())
     except urllib.error.HTTPError as e:
         _raise_with_body(e)
+
+
+# ============================================================
+# Supabase Storage (관리자 페이지에서 이벤트 이미지를 업로드할 때 사용).
+# PostgREST(/rest/v1)와는 다른 API(/storage/v1)라 별도 헬퍼로 분리한다.
+# ============================================================
+
+def sb_storage_ensure_bucket(bucket, timeout=10):
+    """버킷이 없으면 새로 만든다(이미 있으면 409가 나는데, 그건 정상이므로 무시한다).
+    public=True로 만들어야 업로드한 이미지를 로그인 없이 누구나 볼 수 있다(이벤트 카드에 써야 하니까)."""
+    url = f"{_base_url()}/storage/v1/bucket"
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    headers = {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    body = json.dumps({"id": bucket, "name": bucket, "public": True}).encode("utf-8")
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            res.read()
+    except urllib.error.HTTPError as e:
+        if e.code == 409:  # 이미 버킷이 있음 — 정상, 무시
+            return
+        _raise_with_body(e)
+
+
+def sb_storage_upload(bucket, path, file_bytes, content_type, timeout=15):
+    """파일을 업로드하고 공개 URL을 리턴한다. 버킷이 없으면 한 번 자동으로 만들고 재시도한다."""
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    if not key:
+        raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되지 않았습니다.")
+    url = f"{_base_url()}/storage/v1/object/{bucket}/{path}"
+    headers = {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": content_type,
+        "x-upsert": "true",  # 같은 경로에 이미 파일이 있으면 덮어쓰기(에러 대신)
+    }
+    req = urllib.request.Request(url, data=file_bytes, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            res.read()
+    except urllib.error.HTTPError as e:
+        if e.code == 404:  # 버킷 자체가 없음 — 한 번 만들고 재시도
+            sb_storage_ensure_bucket(bucket)
+            req2 = urllib.request.Request(url, data=file_bytes, headers=headers, method="POST")
+            with urllib.request.urlopen(req2, timeout=timeout) as res2:
+                res2.read()
+        else:
+            _raise_with_body(e)
+    return f"{_base_url()}/storage/v1/object/public/{bucket}/{path}"
