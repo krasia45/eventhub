@@ -117,13 +117,15 @@
   <input type="text" id="manualBrand" placeholder="브랜드명 (예: 비긴스 X 투어스)">
   <input type="text" id="manualTitle" placeholder="이벤트 제목/설명 (예: 협업 팝업스토어)">
   <select id="manualCategory">
-    <option value="popup">팝업·컬처</option>
+    <option value="popup">팝업·전시</option>
     <option value="fashion">패션</option>
     <option value="beauty">뷰티</option>
     <option value="food">카페·디저트</option>
-    <option value="living">라이프스타일</option>
+    <option value="convenience">편의점</option>
   </select>
   <input type="text" id="manualDiscount" placeholder="혜택 (예: 최대 50% 할인 / 5,000원 쿠폰 / 응모 시 스타벅스 기프티콘 / 참여 시 적립금 최대 1만원)">
+  <input type="text" id="manualConditions" placeholder="참여 조건 (예: 네이버페이 결제 시에만 적용, 1인 1회 한정 — 없으면 비워두세요)">
+  <input type="text" id="manualTargetAudience" placeholder="참여 대상 (예: 신규 가입자 한정, 앱 회원 전용 — 없으면 비워두세요)">
   <input type="date" id="manualStart">
   <input type="date" id="manualEnd">
   <textarea id="manualChannel" rows="2" placeholder="참여방법/운영시간/주소 등 — 정보가 여러 개면 꼭 줄바꿈으로 구분해주세요&#10;예)&#10;서울 성동구 연무장길 101&#10;11:00-21:00&#10;구매 시 1인 1개 한정"></textarea>
@@ -332,6 +334,8 @@ async function registerManual() {
   const title = document.getElementById("manualTitle").value.trim();
   const category = document.getElementById("manualCategory").value;
   const discount = document.getElementById("manualDiscount").value.trim();
+  const conditions = document.getElementById("manualConditions").value.trim();
+  const targetAudience = document.getElementById("manualTargetAudience").value.trim();
   const start = document.getElementById("manualStart").value;
   const end = document.getElementById("manualEnd").value;
   const channel = document.getElementById("manualChannel").value.trim();
@@ -353,6 +357,8 @@ async function registerManual() {
       body: JSON.stringify({
         key, mode: "manual", category,
         brand, title, discount, channel, desc,
+        conditions: conditions || null,
+        targetAudience: targetAudience || null,
         periodStart: start, periodEnd: end,
         sourceUrl: sourceUrl || null,
         image: image || null,
@@ -479,6 +485,7 @@ async function loadCandidates() {
         <input type="text" placeholder="도메인 (예: oliveyoung.co.kr)" class="f-domain" value="${c.domain || ""}">
         <input type="text" placeholder="링크 (비우면 출처 URL 사용)" class="f-link" value="${c.link || ""}">
         <input type="text" placeholder="조건 (예: 네이버페이 결제 시에만 적용)" class="f-conditions" style="grid-column: 1 / -1;" value="${c.conditions || ""}">
+        <input type="text" placeholder="대상 (예: 신규 가입자 한정, 앱 회원 전용)" class="f-target" style="grid-column: 1 / -1;" value="${c.target_audience || ""}">
         <textarea placeholder="상세안내 — 상세페이지에 그대로 노출돼요. 실제 내용 맞는지 확인 후 승인해주세요." class="f-desc" rows="3" style="grid-column: 1 / -1;">${escapeAttr(c.desc || "")}</textarea>
         <div class="btn-row">
           <button class="btn-approve" onclick="approve('${c.id}')">✓ 승인하고 게시</button>
@@ -551,6 +558,7 @@ async function approve(id) {
       domain: card.querySelector(".f-domain").value,
       link: card.querySelector(".f-link").value,
       conditions: card.querySelector(".f-conditions").value,
+      targetAudience: card.querySelector(".f-target").value,
       desc: card.querySelector(".f-desc").value,
     }),
   });

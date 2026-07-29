@@ -255,16 +255,21 @@ class handler(BaseHTTPRequestHandler):
         title = (data.get("title") or "").strip()
         category = (data.get("category") or "").strip()
         discount = (data.get("discount") or "").strip()
+        conditions = (data.get("conditions") or "").strip()
+        target_audience = (data.get("targetAudience") or "").strip()
         channel = (data.get("channel") or "").strip()
         desc = (data.get("desc") or "").strip()
         period_start = (data.get("periodStart") or "").strip()
         period_end = (data.get("periodEnd") or "").strip()
         source_url = data.get("sourceUrl")
+        manual_image = (data.get("image") or "").strip()
 
         if not brand or not title or not period_start or not period_end:
             self._send_json(400, {"error": "브랜드명, 제목, 시작일, 종료일은 필수예요."})
             return
-        if category not in ("fashion", "beauty", "food", "popup", "living"):
+        # ⚠️ 이 목록이 실제 카테고리 체계(편의점 추가, 라이프스타일 제거)와 안 맞아서,
+        # 프론트 드롭다운을 고쳐도 편의점으로 등록하면 여기서 400으로 거부될 뻔했다.
+        if category not in ("fashion", "beauty", "food", "popup", "convenience"):
             self._send_json(400, {"error": "카테고리를 선택해주세요."})
             return
 
@@ -281,13 +286,15 @@ class handler(BaseHTTPRequestHandler):
             "period_end": period_end,
             "channel": channel,
             "desc": desc,
+            "conditions": conditions,
+            "target_audience": target_audience,
             "tags": [],
-            "image": "",
+            "image": manual_image,
             "domain": "",
             "link": source_url or "",
             "source_url": source_url or "",
             "source_type": "manual",
-            "ai_confidence_note": "관리자가 수동으로 입력했습니다. 이미지/도메인은 승인 시 직접 채워주세요.",
+            "ai_confidence_note": "관리자가 수동으로 입력했습니다." + ("" if manual_image else " 이미지가 비어있어요 — 승인 전 채워주는 걸 권장해요."),
             "status": "pending",
         }
 
@@ -297,7 +304,7 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": f"저장 중 오류: {str(e)}"})
             return
 
-        self._send_json(200, {"success": True, "extracted": {"title": title, "image": ""}})
+        self._send_json(200, {"success": True, "extracted": {"title": title, "image": manual_image}})
 
     def _handle_geocode(self, data):
         """admin.html 승인 화면에서 입력한 주소/장소명을 좌표(lat/lng)로 변환.

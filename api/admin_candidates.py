@@ -161,6 +161,7 @@ class handler(BaseHTTPRequestHandler):
                 "period_end": c.get("period_end"),
                 "channel": c.get("channel", ""),
                 "conditions": data.get("conditions") or c.get("conditions", ""),
+                "target_audience": data.get("targetAudience") or c.get("target_audience", ""),
                 "desc": data.get("desc") or c.get("desc", ""),
                 "tags": c.get("tags", []),
                 "image": data.get("image") or c.get("image", ""),
