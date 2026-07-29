@@ -36,9 +36,17 @@ class handler(BaseHTTPRequestHandler):
     # ── 이벤트 목록 조회 (기존 events.py) ──
     def do_GET(self):
         try:
+            from datetime import date
+            today = date.today().isoformat()
             rows = sb_select("events", {
                 "select": "*,event_stats(views,likes)",
                 "is_active": "eq.true",
+                # ⚠️ 예전엔 종료일이 지난 이벤트도 API가 그대로 다 내려주고, 프론트의
+                # isEventLive()가 화면에서만 숨기고 있었다. 프론트 필터를 안 거치는 경로가
+                # 생기면(신규 화면 추가 등) 종료된 이벤트가 노출될 위험이 있어서, 서버
+                # 응답 단계에서도 한 번 더 막는 이중 방어를 추가한다. period_end가 없는
+                # (상시 진행) 이벤트는 그대로 포함되도록 or 조건으로 처리.
+                "or": f"(period_end.is.null,period_end.gte.{today})",
                 "order": "created_at.desc",
             })
 

@@ -61,8 +61,43 @@ class handler(BaseHTTPRequestHandler):
 
         if query.get("resource", [""])[0] == "events":
             self._get_published_events(query)
+        elif query.get("resource", [""])[0] == "review_needed":
+            self._get_review_needed_events()
         else:
             self._get_pending_candidates()
+
+    # 관리자가 매번 이메일을 안 봐도, 관리자페이지 안에서 "지금 뭘 확인해야 하는지" 한눈에
+    # 보이게 하기 위한 리소스. 세 가지 사유로 뽑는다:
+    #   1) 링크 확인이 최근에 1번 실패함(link_fail_count>=1, 아직 비활성화 임계치는 아님)
+    #   2) 종료일이 지났는데 아직 is_active=true로 남아있는 이례 케이스
+    #      (링크는 살아있어서 자동 비활성화 로직을 안 탄 경우 — 실제로는 내려야 함)
+    #   3) 승인(등록)된 지 30일 이상 지남 — 정보가 여전히 정확한지 관리자가 한 번 다시 봐야 함
+    REVIEW_STALE_DAYS = 30
+
+    def _get_review_needed_events(self):
+        try:
+            from datetime import date, timedelta
+            today = date.today()
+            stale_before = (today - timedelta(days=self.REVIEW_STALE_DAYS)).isoformat()
+            rows = sb_select("events", {
+                "select": "id,category,brand,title,period_end,link_fail_count,created_at,is_active",
+                "is_active": "eq.true",
+                "or": f"(link_fail_count.gte.1,period_end.lt.{today.isoformat()},created_at.lt.{stale_before})",
+                "order": "created_at.asc",
+                "limit": "100",
+            })
+            for r in rows:
+                reasons = []
+                if (r.get("link_fail_count") or 0) >= 1:
+                    reasons.append("link_warning")
+                if r.get("period_end") and r["period_end"] < today.isoformat():
+                    reasons.append("ended_but_active")
+                if r.get("created_at") and r["created_at"][:10] < stale_before:
+                    reasons.append("stale_30days")
+                r["review_reasons"] = reasons
+            self._send_json(200, rows)
+        except Exception as e:
+            self._send_json(500, {"error": str(e)})
 
     def _get_pending_candidates(self):
         try:

@@ -91,9 +91,16 @@ function renderSubcatRow() {
   const row = document.getElementById("subcatRow");
   if (currentCategory === "all") { row.hidden = true; row.innerHTML = ""; return; }
   // 현재 카테고리 이벤트들의 태그를 빈도순으로 뽑아 서브카테고리로 사용 (데이터 기반이라 빈 칩이 없음)
+  // ⚠️ 상단 분야 카테고리명(예: "편의점")과 똑같은 이름의 태그는 서브카테고리에서 제외한다 —
+  // 안 그러면 "카페·디저트" 카테고리 안에 "편의점"이라는 태그가 붙은 이벤트가 있을 때, 이미
+  // 상단에 별도 "편의점" 카테고리가 있는데 하위 태그로도 똑같이 "편의점"이 떠서 헷갈리게 된다.
+  const categoryLabels = new Set(CATEGORIES.map(c => c.label));
   const tagCount = {};
   EVENTS.filter(ev => ev.category === currentCategory && isEventLive(ev))
-    .forEach(ev => (ev.tags || []).forEach(t => { tagCount[t] = (tagCount[t] || 0) + 1; }));
+    .forEach(ev => (ev.tags || []).forEach(t => {
+      if (categoryLabels.has(t)) return; // 상단 카테고리명과 겹치는 태그는 건너뜀
+      tagCount[t] = (tagCount[t] || 0) + 1;
+    }));
   const tags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([t]) => t);
   if (tags.length === 0) { row.hidden = true; row.innerHTML = ""; return; }
 
