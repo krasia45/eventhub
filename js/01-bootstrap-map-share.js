@@ -37,6 +37,23 @@ function getEventThumbnail(ev) {
   return getEventImages(ev)[0] || "";
 }
 
+/* "상세안내" 텍스트 안에 이미지 URL을 그냥 한 줄로 섞어 넣을 수 있게 지원한다.
+   관리자가 "상세안내"와 "상세페이지 이미지"를 별도 칸으로 헷갈려서 이미지 URL을 텍스트
+   칸에 넣는 바람에 이미지가 하나도 안 뜨던 문제가 있었다 — 아예 필드를 하나로 합쳐서,
+   그 줄이 이미지 URL처럼 생겼으면 이미지로, 아니면 텍스트 단락으로 순서 그대로 보여준다. */
+const IMAGE_URL_LINE_PATTERN = /^https?:\/\/\S+\.(jpg|jpeg|png|webp|gif|avif)(\?\S*)?$/i;
+
+function renderMixedTextAndImages(text) {
+  const lines = (text || "").split("\n").map(s => s.trim()).filter(Boolean);
+  if (lines.length === 0) return "";
+  return lines.map(line => {
+    if (IMAGE_URL_LINE_PATTERN.test(line)) {
+      return `<img class="sheet-desc-inline-img" src="${line}" alt="" loading="lazy" onerror="this.style.display='none'">`;
+    }
+    return `<p>${escapeHtml(line)}</p>`;
+  }).join("");
+}
+
 /* Supabase 클라이언트 (로그인/회원 데이터용) — anon key는 공개용 키라 노출돼도 안전합니다.
    실제 데이터 보호는 서버가 아니라 RLS(Row Level Security) 정책이 담당합니다.
    ⚠️ 아래 두 값을 실제 Supabase 프로젝트 값으로 바꿔주세요. */

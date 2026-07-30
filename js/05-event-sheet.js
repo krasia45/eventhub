@@ -14,10 +14,28 @@ function openSheet(eventId) {
   const images = getEventImages(ev);
   const carouselEl = document.getElementById("sheetPhotoCarousel");
   const dotsEl = document.getElementById("sheetPhotoDots");
+  const heroEl = document.querySelector(".sheet-hero");
   carouselEl.innerHTML = images.map((src, i) => `
     <img class="sheet-photo" src="${src}" alt="${escapeHtml(ev.title)}${images.length > 1 ? ` (${i + 1}/${images.length})` : ""}"
       loading="${i === 0 ? "eager" : "lazy"}" onerror="handleImageError(this)">
   `).join("");
+
+  // 대표이미지(첫 장)의 실제 가로세로 비율에 맞춰 히어로 영역 높이를 자동 조정한다.
+  // object-fit:contain만으로는 여백(레터박스)이 생길 뿐 "화면을 꽉 채우면서 안 잘리게"는
+  // 안 되므로, 비율을 직접 계산해서 컨테이너 자체를 그 비율에 맞게 늘리거나 줄인다.
+  // 최소/최대 제한을 둬서 극단적으로 길거나 납작한 이미지가 화면을 망가뜨리지 않게 한다.
+  const firstImg = carouselEl.querySelector("img");
+  if (firstImg) {
+    const applyHeroHeight = () => {
+      if (!firstImg.naturalWidth || !firstImg.naturalHeight) return;
+      const ratio = firstImg.naturalHeight / firstImg.naturalWidth;
+      const width = heroEl.clientWidth || window.innerWidth;
+      const idealHeight = Math.round(width * ratio);
+      heroEl.style.height = `${Math.min(480, Math.max(200, idealHeight))}px`;
+    };
+    if (firstImg.complete) applyHeroHeight();
+    else firstImg.addEventListener("load", applyHeroHeight, { once: true });
+  }
 
   if (images.length > 1) {
     dotsEl.hidden = false;
@@ -48,7 +66,10 @@ function openSheet(eventId) {
     .split(/\s+\+\s+/).map(s => s.trim()).filter(Boolean)
     .map(b => `<span class="benefit-chip">${benefitIc}${escapeHtml(b)}</span>`).join("");
   document.getElementById("sheetPeriod").textContent = ev.period || "";
-  document.getElementById("sheetDesc").textContent = ev.desc;
+  // ⚠️ "상세안내"와 "상세페이지 이미지"가 별도 입력칸이라 관리자가 헷갈려서(이미지 URL을
+  // 텍스트 칸에 넣는 등) 이미지가 안 뜨는 문제가 실제로 있었다. 이제 desc 하나로 통합해서,
+  // 줄 단위로 "이 줄이 이미지 URL이면 이미지로, 아니면 텍스트로" 순서대로 섞어서 보여준다.
+  document.getElementById("sheetDesc").innerHTML = renderMixedTextAndImages(ev.desc);
 
   // 참여방법: 텍스트에 줄바꿈이 있으면 번호 목록으로, 없으면 그냥 한 줄로 표시
   const channelEl = document.getElementById("sheetChannel");

@@ -179,8 +179,8 @@ def sb_admin_generate_magiclink(email, timeout=10):
 # ============================================================
 
 def sb_storage_ensure_bucket(bucket, timeout=10):
-    """버킷이 없으면 새로 만든다(이미 있으면 409가 나는데, 그건 정상이므로 무시한다).
-    public=True로 만들어야 업로드한 이미지를 로그인 없이 누구나 볼 수 있다(이벤트 카드에 써야 하니까)."""
+    """버킷이 없으면 새로 만든다. 이미 있어서 실패하는 경우(다양한 상태코드/메시지로 옴)는
+    조용히 무시한다 — 어차피 그 다음에 실제 업로드를 재시도하면서 진짜 문제인지 다시 드러난다."""
     url = f"{_base_url()}/storage/v1/bucket"
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
     headers = {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
@@ -189,10 +189,8 @@ def sb_storage_ensure_bucket(bucket, timeout=10):
     try:
         with urllib.request.urlopen(req, timeout=timeout) as res:
             res.read()
-    except urllib.error.HTTPError as e:
-        if e.code == 409:  # 이미 버킷이 있음 — 정상, 무시
-            return
-        _raise_with_body(e)
+    except urllib.error.HTTPError:
+        pass  # 이미 있어서든 뭐든, 여기서 실패해도 업로드 재시도에서 진짜 문제면 다시 드러남
 
 
 def sb_storage_upload(bucket, path, file_bytes, content_type, timeout=15):
@@ -212,11 +210,21 @@ def sb_storage_upload(bucket, path, file_bytes, content_type, timeout=15):
         with urllib.request.urlopen(req, timeout=timeout) as res:
             res.read()
     except urllib.error.HTTPError as e:
-        if e.code == 404:  # 버킷 자체가 없음 — 한 번 만들고 재시도
+        # ⚠️ Supabase Storage는 "버킷이 없음"을 HTTP 404가 아니라 HTTP 400으로 응답하면서,
+        # 응답 본문 JSON 안에만 {"statusCode":"404","code":"NoSuchBucket",...}을 담아 보낸다.
+        # 예전엔 e.code(HTTP 상태코드)가 404인지만 확인했는데, 실제로는 400이 오니까 이 분기를
+        # 전혀 못 타고 그대로 원본 에러가 관리자 화면에 노출되던 버그였다. 바디 내용으로 판정한다.
+        try:
+            body = json.loads(e.read().decode("utf-8", errors="ignore"))
+        except Exception:
+            body = {}
+        is_no_bucket = body.get("code") == "NoSuchBucket" or str(body.get("statusCode")) == "404"
+
+        if is_no_bucket:
             sb_storage_ensure_bucket(bucket)
             req2 = urllib.request.Request(url, data=file_bytes, headers=headers, method="POST")
             with urllib.request.urlopen(req2, timeout=timeout) as res2:
                 res2.read()
         else:
-            _raise_with_body(e)
+            raise RuntimeError(f"Supabase Storage 오류: {json.dumps(body, ensure_ascii=False)}") from e
     return f"{_base_url()}/storage/v1/object/public/{bucket}/{path}"

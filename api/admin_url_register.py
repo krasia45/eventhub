@@ -265,6 +265,23 @@ class handler(BaseHTTPRequestHandler):
         manual_image = (data.get("image") or "").strip()
         manual_domain = (data.get("domain") or "").strip()
 
+        # ⚠️ 도메인 입력칸은 로고 자동화의 핵심인데, 새로 추가된 필드라 관리자가 깜빡하고
+        # 비워두는 경우가 실제로 있었다("도메인 안 넣으면 로고가 아예 안 뜨고 이니셜로 대체됨").
+        # 출처 URL은 거의 항상 입력하는 필드이므로, 도메인을 안 넣었으면 여기서 자동으로
+        # 추출을 시도한다. 다만 인스타그램/페이스북 같은 SNS 플랫폼 도메인은 브랜드 자체의
+        # 로고가 아니므로(그 플랫폼 로고가 뜨면 오히려 더 헷갈림) 추출 대상에서 제외한다.
+        if not manual_domain and source_url:
+            SNS_PLATFORM_DOMAINS = {
+                "instagram.com", "facebook.com", "twitter.com", "x.com", "youtube.com",
+                "blog.naver.com", "post.naver.com", "tiktok.com", "threads.net",
+            }
+            try:
+                extracted = urlparse(source_url).netloc.replace("www.", "").lower()
+                if extracted and extracted not in SNS_PLATFORM_DOMAINS:
+                    manual_domain = extracted
+            except Exception:
+                pass
+
         if not brand or not title or not period_start or not period_end:
             self._send_json(400, {"error": "브랜드명, 제목, 시작일, 종료일은 필수예요."})
             return

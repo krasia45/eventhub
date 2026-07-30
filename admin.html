@@ -130,16 +130,15 @@
   <input type="date" id="manualStart">
   <input type="date" id="manualEnd">
   <textarea id="manualChannel" rows="2" placeholder="참여방법/운영시간/주소 등 — 정보가 여러 개면 꼭 줄바꿈으로 구분해주세요&#10;예)&#10;서울 성동구 연무장길 101&#10;11:00-21:00&#10;구매 시 1인 1개 한정"></textarea>
-  <textarea id="manualDesc" rows="3" placeholder="상세안내 — 상세페이지에 그대로 노출되는 내용이에요. 요약하지 말고, 실제 이벤트 내용(대상 상품, 조건, 특전 등)을 있는 그대로 적어주세요."></textarea>
+  <textarea id="manualDesc" rows="6" placeholder="상세안내 — 상세페이지에 그대로 노출돼요. 텍스트와 이미지를 자유롭게 섞어 쓸 수 있어요: 한 줄에는 설명 글을, 이미지를 넣고 싶은 자리에는 그 줄에 이미지 URL만 단독으로 넣으면 자동으로 사진으로 보여요. 순서 그대로 나와요.&#10;예)&#10;선착순 1만명에게 할인 쿠폰을 드려요.&#10;https://example.com/photo1.jpg&#10;앱에서 쿠폰함을 확인해주세요.&#10;https://example.com/photo2.jpg"></textarea>
   <p style="font-size:11.5px;color:#999;margin:-6px 0 0;">💡 참여방법에 서로 다른 정보(시간/장소/조건 등)를 한 줄에 이어쓰면 상세페이지에 뭉쳐서 보여요. 꼭 줄마다 하나씩 나눠 입력해주세요.</p>
-  <input type="text" id="manualSourceUrl" placeholder="출처 URL (인스타 게시물 링크 등, 검증용)">
+  <input type="text" id="manualSourceUrl" placeholder="출처 URL (인스타 게시물 링크 등, 검증용) — 비워두면 대표이미지 도메인 자동추출도 안 돼요">
   <div class="image-upload-box">
-    <p style="font-size:12.5px;color:#666;margin-bottom:6px;">📤 URL을 몰라도 돼요 — 캡쳐한 사진 파일을 선택하면 자동으로 업로드되고 아래 칸에 URL이 채워져요. 여러 장 한 번에 선택 가능(첫 번째 사진이 자동으로 대표이미지가 돼요).</p>
+    <p style="font-size:12.5px;color:#666;margin-bottom:6px;">📤 URL을 몰라도 돼요 — 캡쳐한 사진 파일을 선택하면 자동으로 업로드돼요. 첫 번째 사진은 대표이미지 칸에, 나머지는 위 "상세안내" 칸 끝에 자동으로 추가돼요.</p>
     <input type="file" id="imageUploadInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
     <p class="register-status" id="imageUploadStatus"></p>
   </div>
   <input type="text" id="manualThumbnail" placeholder="대표이미지 URL — 홈 화면·목록에 작게 보이는 썸네일이에요. 없으면 비워두면 회색 기본이미지로 대체돼요.">
-  <textarea id="manualDetailImages" rows="2" placeholder="상세페이지 이미지 URL — 카드뉴스처럼 여러 장을 상세페이지에서 넘겨보게 하려면, 브랜드가 올린 순서 그대로 한 줄에 하나씩 넣어주세요. 대표이미지도 자동으로 첫 장에 포함돼요. 없으면 비워두세요."></textarea>
   <button onclick="registerManual()">추가하기</button>
 </div>
 <p class="register-status" id="manualStatus"></p>
@@ -381,14 +380,15 @@ document.getElementById("imageUploadInput").addEventListener("change", async (e)
     }
   }
 
-  // 첫 번째 업로드분은 대표이미지 칸에, 나머지는 상세이미지 칸에 이어붙인다.
-  // 기존 칸에 이미 값이 있으면 덮어쓰지 않고 뒤에 이어붙여서, 여러 번 나눠 업로드해도 안전하다.
+  // 첫 번째 업로드분은 대표이미지 칸에, 나머지는 "상세안내" 칸 끝에 이미지 URL 줄로 이어붙인다.
+  // (상세안내는 텍스트+이미지가 줄 단위로 섞이는 필드라, 이미지 URL 한 줄만 추가하면
+  // 상세페이지에서 자동으로 사진으로 렌더링된다.) 기존 칸에 값이 있으면 안 지우고 뒤에 이어붙인다.
   const thumbEl = document.getElementById("manualThumbnail");
-  const detailEl = document.getElementById("manualDetailImages");
+  const descEl = document.getElementById("manualDesc");
   const rest = thumbEl.value.trim() ? uploadedUrls : uploadedUrls.slice(1);
   if (!thumbEl.value.trim() && uploadedUrls.length > 0) thumbEl.value = uploadedUrls[0];
   if (rest.length > 0) {
-    detailEl.value = detailEl.value.trim() ? `${detailEl.value.trim()}\n${rest.join("\n")}` : rest.join("\n");
+    descEl.value = descEl.value.trim() ? `${descEl.value.trim()}\n${rest.join("\n")}` : rest.join("\n");
   }
 
   statusEl.textContent = `✅ ${uploadedUrls.length}장 업로드 완료! 아래 칸에 자동으로 채워졌어요.`;
@@ -409,17 +409,10 @@ async function registerManual() {
   const start = document.getElementById("manualStart").value;
   const end = document.getElementById("manualEnd").value;
   const channel = document.getElementById("manualChannel").value.trim();
-  const desc = document.getElementById("manualDesc").value.trim();
+  const desc = document.getElementById("manualDesc").value.trim(); // 텍스트+이미지 URL이 줄 단위로 섞여있을 수 있음(그대로 저장, 상세페이지가 파싱해서 렌더링)
   const sourceUrl = document.getElementById("manualSourceUrl").value.trim();
   const domain = document.getElementById("manualDomain").value.trim();
-  // 대표이미지 + 상세이미지들을 합쳐서 기존 image 필드 형식(줄바꿈 구분)으로 만든다.
-  // 대표이미지가 항상 맨 앞에 오게 해서, 카드/목록의 썸네일로 정확히 그게 쓰이도록 한다.
-  const thumbnail = document.getElementById("manualThumbnail").value.trim();
-  const detailImagesRaw = document.getElementById("manualDetailImages").value.trim();
-  const detailImages = detailImagesRaw ? detailImagesRaw.split("\n").map(s => s.trim()).filter(Boolean) : [];
-  const allImages = [thumbnail, ...detailImages].filter(Boolean);
-  // 대표이미지를 안 넣고 상세이미지만 넣은 경우를 대비해 중복 제거(같은 URL을 두 번 넣었을 때도 안전)
-  const image = [...new Set(allImages)].join("\n");
+  const image = document.getElementById("manualThumbnail").value.trim(); // 카드/목록 썸네일용 대표이미지 1장
   const statusEl = document.getElementById("manualStatus");
 
   if (!brand || !title || !start || !end) {
