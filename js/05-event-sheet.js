@@ -62,9 +62,21 @@ function openSheet(eventId) {
   document.getElementById("sheetDdayInline").textContent = ev.dday || "";
   // 혜택 칩: "최대 50% 할인 + 추가 10% 쿠폰"처럼 +로 이어진 혜택은 칩 여러 개로 분리
   const benefitIc = `<span class="benefit-chip-ic"><svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M12.6 2.6 21 11a2 2 0 0 1 0 2.8L13.8 21a2 2 0 0 1-2.8 0L2.6 12.6A2 2 0 0 1 2 11.2V4a2 2 0 0 1 2-2h7.2c.5 0 1 .2 1.4.6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7.5" cy="7.5" r="1.3" fill="currentColor"/></svg></span>`;
-  document.getElementById("sheetBenefitRow").innerHTML = (ev.discount || "")
-    .split(/\s+\+\s+/).map(s => s.trim()).filter(Boolean)
-    .map(b => `<span class="benefit-chip">${benefitIc}${escapeHtml(b)}</span>`).join("");
+  const benefitChips = (ev.discount || "").split(/\s+\+\s+/).map(s => s.trim()).filter(Boolean);
+  const benefitHeadingEl = document.getElementById("sheetBenefitHeading");
+  const benefitRowEl = document.getElementById("sheetBenefitRow");
+  // 팝업/전시처럼 애초에 혜택이랄 게 없는 이벤트도 있다. "정보 확인 필요"처럼 마치
+  // 빠진 것처럼 보이는 문구를 억지로 채우지 않고, 섹션 자체를 통째로 숨긴다
+  // ("조건"/"대상" 행과 동일한 원칙 — 값 없으면 빈 자리를 만들지 않는다).
+  if (benefitChips.length) {
+    benefitHeadingEl.hidden = false;
+    benefitRowEl.hidden = false;
+    benefitRowEl.innerHTML = benefitChips.map(b => `<span class="benefit-chip">${benefitIc}${escapeHtml(b)}</span>`).join("");
+  } else {
+    benefitHeadingEl.hidden = true;
+    benefitRowEl.hidden = true;
+    benefitRowEl.innerHTML = "";
+  }
   document.getElementById("sheetPeriod").textContent = ev.period || "";
   // ⚠️ "상세안내"와 "상세페이지 이미지"가 별도 입력칸이라 관리자가 헷갈려서(이미지 URL을
   // 텍스트 칸에 넣는 등) 이미지가 안 뜨는 문제가 실제로 있었다. 이제 desc 하나로 통합해서,

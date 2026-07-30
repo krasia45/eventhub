@@ -21,12 +21,27 @@ ADMIN_SECRET은 Vercel 환경변수로 설정하고, 관리자만 아는 값으�
 from http.server import BaseHTTPRequestHandler
 import json
 import os
+import re
 import sys
 import uuid
 from urllib.parse import urlparse, parse_qs
 
 sys.path.insert(0, os.path.dirname(__file__))
 from _supabase_client import sb_select, sb_insert, sb_update, sb_delete
+
+
+def normalize_domain(raw):
+    """api/admin_url_register.py의 normalize_domain과 동일한 로직.
+    승인 화면(.f-domain)에서 관리자가 프로토콜/www/경로가 섞인 값을 넣어도,
+    실제로 events 테이블에 최종 저장되는 이 지점에서 한 번 더 정제한다."""
+    if not raw:
+        return ""
+    d = raw.strip().lower()
+    d = re.sub(r"^https?://", "", d)
+    d = d.split("/")[0].split("?")[0].split("#")[0]
+    if d.startswith("www."):
+        d = d[4:]
+    return d.strip()
 
 # events 테이블에서 수정 가능한 필드 화이트리스트.
 # id/created_at처럼 시스템이 관리하는 값이나, 임의 컬럼 주입을 막기 위해 명시적으로 허용된 것만 반영한다.
@@ -200,7 +215,7 @@ class handler(BaseHTTPRequestHandler):
                 "desc": data.get("desc") or c.get("desc", ""),
                 "tags": c.get("tags", []),
                 "image": data.get("image") or c.get("image", ""),
-                "domain": data.get("domain", ""),
+                "domain": normalize_domain(data.get("domain", "")),
                 "link": data.get("link") or c.get("source_url"),
                 "source_url": c.get("source_url"),
                 "source_type": c.get("source_type", "unknown"),
@@ -253,7 +268,9 @@ class handler(BaseHTTPRequestHandler):
                 if current:
                     start = clean_patch.get("period_start", current[0].get("period_start")) or ""
                     end = clean_patch.get("period_end", current[0].get("period_end")) or ""
-                    clean_patch["period"] = f"{start} - {end}"
+                    # 종료일을 지워서 저장하면(= 소진시까지 등 무기한으로 전환) "2026.07.01 - "
+                    # 처럼 문구가 비어 보이지 않도록 기본 라벨을 채워준다.
+                    clean_patch["period"] = f"{start} - {end}" if end else f"{start} - 소진시까지"
 
             clean_patch["updated_at"] = "now()"
             sb_update("events", {"id": f"eq.{event_id}"}, clean_patch)

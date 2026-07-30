@@ -49,6 +49,21 @@ def kakao_local_search(path, query, rest_key, timeout=6):
     return data.get("documents", [])
 
 
+def normalize_domain(raw):
+    """관리자가 도메인 칸에 프로토콜/www/경로가 섞인 값을 넣어도(예: "https://www.
+    brand.com/event") 로고 API가 인식할 수 있는 순수 도메인만 남긴다. admin.html에서도
+    똑같이 정제해서 보내지만, 다른 클라이언트가 이 API를 직접 호출할 경우를 대비해
+    서버 쪽에서도 한 번 더 방어한다."""
+    if not raw:
+        return ""
+    d = raw.strip().lower()
+    d = re.sub(r"^https?://", "", d)
+    d = d.split("/")[0].split("?")[0].split("#")[0]
+    if d.startswith("www."):
+        d = d[4:]
+    return d.strip()
+
+
 def extract_meta(html, prop):
     """<meta property="og:xxx" content="..."> 또는 name="xxx" 형태 모두 대응."""
     patterns = [
@@ -263,7 +278,8 @@ class handler(BaseHTTPRequestHandler):
         period_end = (data.get("periodEnd") or "").strip()
         source_url = data.get("sourceUrl")
         manual_image = (data.get("image") or "").strip()
-        manual_domain = (data.get("domain") or "").strip()
+        manual_domain = normalize_domain((data.get("domain") or "").strip())
+        no_end_label = (data.get("noEndLabel") or "").strip()
 
         # ⚠️ 도메인 입력칸은 로고 자동화의 핵심인데, 새로 추가된 필드라 관리자가 깜빡하고
         # 비워두는 경우가 실제로 있었다("도메인 안 넣으면 로고가 아예 안 뜨고 이니셜로 대체됨").
@@ -276,14 +292,20 @@ class handler(BaseHTTPRequestHandler):
                 "blog.naver.com", "post.naver.com", "tiktok.com", "threads.net",
             }
             try:
-                extracted = urlparse(source_url).netloc.replace("www.", "").lower()
+                extracted = normalize_domain(urlparse(source_url).netloc)
                 if extracted and extracted not in SNS_PLATFORM_DOMAINS:
                     manual_domain = extracted
             except Exception:
                 pass
 
-        if not brand or not title or not period_start or not period_end:
-            self._send_json(400, {"error": "브랜드명, 제목, 시작일, 종료일은 필수예요."})
+        # ⚠️ 종료일이 없는 이벤트("소진시까지" 등)를 위해, period_end 자체는 필수가
+        # 아니게 완화했다. 다만 그냥 빈 값을 허용하면 관리자가 깜빡 잊고 비워둔 경우와
+        # 구분이 안 되므로, 반드시 noEndLabel("소진시까지" 등)이 함께 와야만 허용한다.
+        if not brand or not title or not period_start:
+            self._send_json(400, {"error": "브랜드명, 제목, 시작일은 필수예요."})
+            return
+        if not period_end and not no_end_label:
+            self._send_json(400, {"error": "종료일이 없으면 관리자 페이지에서 '종료일 없음'을 체크하고 문구를 입력해주세요."})
             return
         # ⚠️ 이 목록이 실제 카테고리 체계(편의점 추가, 라이프스타일 제거)와 안 맞아서,
         # 프론트 드롭다운을 고쳐도 편의점으로 등록하면 여기서 400으로 거부될 뻔했다.
@@ -291,17 +313,23 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(400, {"error": "카테고리를 선택해주세요."})
             return
 
-        period_label = f"{period_start.replace('-', '.')} - {period_end.replace('-', '.')}"
+        if period_end:
+            period_label = f"{period_start.replace('-', '.')} - {period_end.replace('-', '.')}"
+        else:
+            # period_end는 NULL로 저장 — events.py의 공개 API가 이미 period_end IS NULL을
+            # "아직 진행중"으로 취급하므로, 홈 화면/랭킹/마감순 정렬이 별도 수정 없이도
+            # 자연스럽게 동작한다. 사람이 보는 period 텍스트에만 문구를 채워 넣는다.
+            period_label = f"{period_start.replace('-', '.')} - {no_end_label}"
 
         candidate = {
             "category": category,
             "brand": brand,
             "title": title[:100],
             "subtitle": "관리자가 직접 수동 등록",
-            "discount": discount or "정보 확인 필요",
+            "discount": discount,
             "period": period_label,
             "period_start": period_start,
-            "period_end": period_end,
+            "period_end": period_end or None,
             "channel": channel,
             "desc": desc,
             "conditions": conditions,

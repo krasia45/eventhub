@@ -129,6 +129,11 @@
   <input type="text" id="manualTargetAudience" placeholder="참여 대상 (예: 신규 가입자 한정, 앱 회원 전용 — 없으면 비워두세요)">
   <input type="date" id="manualStart">
   <input type="date" id="manualEnd">
+  <label style="grid-column: 1 / -1; display:flex; align-items:center; gap:6px; font-size:12.5px; color:#555; margin:-4px 0 0;">
+    <input type="checkbox" id="manualNoEndDate" onchange="toggleNoEndDate()">
+    종료일 없음 (소진시까지 / 재고 소진시까지 / 상시 진행 등 — 정해진 종료일이 없는 이벤트)
+  </label>
+  <input type="text" id="manualNoEndLabel" value="소진시까지" placeholder="종료일 대신 보여줄 문구 (예: 소진시까지)" style="grid-column: 1 / -1; display:none;">
   <textarea id="manualChannel" rows="2" placeholder="참여방법/운영시간/주소 등 — 정보가 여러 개면 꼭 줄바꿈으로 구분해주세요&#10;예)&#10;서울 성동구 연무장길 101&#10;11:00-21:00&#10;구매 시 1인 1개 한정"></textarea>
   <textarea id="manualDesc" rows="6" placeholder="상세안내 — 상세페이지에 그대로 노출돼요. 텍스트와 이미지를 자유롭게 섞어 쓸 수 있어요: 한 줄에는 설명 글을, 이미지를 넣고 싶은 자리에는 그 줄에 이미지 URL만 단독으로 넣으면 자동으로 사진으로 보여요. 순서 그대로 나와요.&#10;예)&#10;선착순 1만명에게 할인 쿠폰을 드려요.&#10;https://example.com/photo1.jpg&#10;앱에서 쿠폰함을 확인해주세요.&#10;https://example.com/photo2.jpg"></textarea>
   <p style="font-size:11.5px;color:#999;margin:-6px 0 0;">💡 참여방법에 서로 다른 정보(시간/장소/조건 등)를 한 줄에 이어쓰면 상세페이지에 뭉쳐서 보여요. 꼭 줄마다 하나씩 나눠 입력해주세요.</p>
@@ -184,6 +189,20 @@
 <div id="publishedEventsList"></div>
 
 <script>
+// 관리자가 도메인 칸에 "https://www.brand.com/event/summer" 처럼 프로토콜/www/경로가
+// 섞인 값을 넣으면 로고 API(logos.hunter.io/{domain})가 그 값을 도메인으로 인식하지
+// 못해서 로고가 안 뜨고 이니셜로 대체되는 문제가 있었다. 저장 전에 여기서 순수
+// 도메인만 남기고, 화면 렌더링 쪽(js/03-weather-filters.js)에서도 한 번 더 같은
+// 방식으로 정제해서 이미 저장된 지저분한 값도 화면에서는 바로 고쳐 보이게 한다.
+function normalizeDomain(raw) {
+  if (!raw) return "";
+  let d = String(raw).trim().toLowerCase();
+  d = d.replace(/^https?:\/\//, "");
+  d = d.split("/")[0].split("?")[0].split("#")[0];
+  if (d.startsWith("www.")) d = d.slice(4);
+  return d.trim();
+}
+
 function getKey() {
   return document.getElementById("adminKey").value.trim() || sessionStorage.getItem("eventhub-admin-key") || "";
 }
@@ -321,12 +340,24 @@ async function parseCaption() {
     document.getElementById("manualCategory").value = p.category || "popup";
     document.getElementById("manualDiscount").value = p.discount || "";
     document.getElementById("manualStart").value = p.period_start || "";
-    document.getElementById("manualEnd").value = p.period_end || "";
     document.getElementById("manualChannel").value = p.channel || "";
 
     let msg = "✅ 아래 칸에 자동으로 채웠어요. 내용을 확인하고 필요하면 수정한 뒤 '추가하기'를 눌러주세요.";
-    if (!p.period_start || !p.period_end) {
-      msg += " ⚠️ 기간을 못 찾아서 비어있어요 — 직접 입력해주세요.";
+    if (p.period_start && !p.period_end) {
+      // 시작일은 찾았는데 종료일만 없는 경우 — 파싱 실패보다는 "소진시까지"처럼
+      // 애초에 정해진 종료일이 없는 이벤트일 가능성이 높다. 체크박스를 미리 켜둬서
+      // 관리자가 매번 수동으로 체크하지 않아도 되게 한다(문구는 직접 확인 필요).
+      document.getElementById("manualEnd").value = "";
+      document.getElementById("manualNoEndDate").checked = true;
+      toggleNoEndDate();
+      msg += " ⚠️ 종료일이 명시되어 있지 않아 '종료일 없음(소진시까지)'으로 자동 체크했어요 — 맞는지 확인해주세요.";
+    } else {
+      document.getElementById("manualNoEndDate").checked = false;
+      toggleNoEndDate();
+      document.getElementById("manualEnd").value = p.period_end || "";
+      if (!p.period_start) {
+        msg += " ⚠️ 기간을 못 찾아서 비어있어요 — 직접 입력해주세요.";
+      }
     }
     if (p.confidence_note) {
       msg += ` (AI 메모: ${p.confidence_note})`;
@@ -396,6 +427,18 @@ document.getElementById("imageUploadInput").addEventListener("change", async (e)
   e.target.value = ""; // 같은 파일을 다시 선택해도 change 이벤트가 또 발생하도록 초기화
 });
 
+// 종료일 자체가 없는 이벤트("소진시까지" 등)를 위한 토글.
+// 체크하면 종료일 입력칸을 비우고 잠가서 실수로 날짜가 같이 들어가는 걸 막고,
+// 대신 "소진시까지" 같은 문구를 자유롭게 입력할 수 있는 칸을 보여준다.
+function toggleNoEndDate() {
+  const checked = document.getElementById("manualNoEndDate").checked;
+  const endInput = document.getElementById("manualEnd");
+  const labelInput = document.getElementById("manualNoEndLabel");
+  endInput.disabled = checked;
+  if (checked) endInput.value = "";
+  labelInput.style.display = checked ? "" : "none";
+}
+
 async function registerManual() {
   const key = getKey();
   if (!key) { alert("관리자 키를 먼저 입력해주세요."); return; }
@@ -407,7 +450,9 @@ async function registerManual() {
   const conditions = document.getElementById("manualConditions").value.trim();
   const targetAudience = document.getElementById("manualTargetAudience").value.trim();
   const start = document.getElementById("manualStart").value;
-  const end = document.getElementById("manualEnd").value;
+  const noEndDate = document.getElementById("manualNoEndDate").checked;
+  const end = noEndDate ? "" : document.getElementById("manualEnd").value;
+  const noEndLabel = document.getElementById("manualNoEndLabel").value.trim() || "소진시까지";
   const channel = document.getElementById("manualChannel").value.trim();
   const desc = document.getElementById("manualDesc").value.trim(); // 텍스트+이미지 URL이 줄 단위로 섞여있을 수 있음(그대로 저장, 상세페이지가 파싱해서 렌더링)
   const sourceUrl = document.getElementById("manualSourceUrl").value.trim();
@@ -415,8 +460,8 @@ async function registerManual() {
   const image = document.getElementById("manualThumbnail").value.trim(); // 카드/목록 썸네일용 대표이미지 1장
   const statusEl = document.getElementById("manualStatus");
 
-  if (!brand || !title || !start || !end) {
-    alert("브랜드명, 제목, 시작일, 종료일은 필수예요.");
+  if (!brand || !title || !start || (!end && !noEndDate)) {
+    alert("브랜드명, 제목, 시작일은 필수예요. 종료일이 없는 이벤트라면 '종료일 없음'을 체크해주세요.");
     return;
   }
 
@@ -428,10 +473,11 @@ async function registerManual() {
       body: JSON.stringify({
         key, mode: "manual", category,
         brand, title, discount, channel, desc,
-        domain: domain || null,
+        domain: normalizeDomain(domain) || null,
         conditions: conditions || null,
         targetAudience: targetAudience || null,
-        periodStart: start, periodEnd: end,
+        periodStart: start, periodEnd: noEndDate ? null : end,
+        noEndLabel: noEndDate ? noEndLabel : null,
         sourceUrl: sourceUrl || null,
         image: image || null,
       }),
@@ -445,6 +491,9 @@ async function registerManual() {
     ["manualBrand","manualTitle","manualDiscount","manualStart","manualEnd","manualChannel","manualDesc","manualSourceUrl"].forEach(id => {
       document.getElementById(id).value = "";
     });
+    document.getElementById("manualNoEndDate").checked = false;
+    toggleNoEndDate();
+    document.getElementById("manualNoEndLabel").value = "소진시까지";
     loadCandidates();
   } catch (err) {
     statusEl.textContent = "❌ 요청 중 오류가 발생했어요.";
@@ -572,7 +621,7 @@ async function loadCandidates() {
   }
 
   listEl.innerHTML = data.map(c => `
-    <div class="candidate-card" data-id="${c.id}">
+    <div class="candidate-card" data-id="${c.id}" data-channel="${escapeAttr(c.channel || "")}">
       ${c.image ? `<img class="candidate-preview-img" src="${c.image}" alt="">` : ""}
       <h3>[${c.category}] ${c.brand} — ${c.title}</h3>
       <div class="meta">
@@ -587,6 +636,10 @@ async function loadCandidates() {
         <label style="grid-column: 1 / -1; display:flex; align-items:center; gap:6px; font-size:12.5px; color:#555;">
           <input type="checkbox" class="f-online-only" onchange="toggleLocationInputs(this)"> 온라인 전용 이벤트 (매장 위치 없음 — 내 주변 섹션에서 자동 제외됨)
         </label>
+        <label style="grid-column: 1 / -1; display:flex; align-items:center; gap:6px; font-size:12.5px; color:#555; margin-top:-4px;">
+          <input type="checkbox" class="f-nationwide" onchange="toggleLocationInputs(this)"> 전국 매장 / 위치 다수 (온라인+오프라인을 함께 진행하는 등, 특정 주소 하나로 못 정하는 경우 — 이 경우도 내 주변 섹션에서 자동 제외됨)
+        </label>
+        <p class="location-mode-warning" style="grid-column: 1 / -1; display:none; font-size:11.5px; color:#c0392b; margin:-4px 0 0;"></p>
         <div class="address-row">
           <input type="text" placeholder="주소 또는 장소명 (예: 서울 성동구 연무장길 62 / 더현대 서울)" class="f-address" value="${escapeAttr(guessAddress(c.channel))}">
           <button type="button" class="btn-geocode" onclick="geocodeAndFill(this)">🔍 좌표 확인</button>
@@ -611,29 +664,52 @@ async function loadCandidates() {
 
 function toggleLocationInputs(checkbox) {
   const card = checkbox.closest(".candidate-card");
+  const onlineCb = card.querySelector(".f-online-only");
+  const nationwideCb = card.querySelector(".f-nationwide");
+  // 둘 다 "주소를 특정 못 함"이라는 점은 같지만 의미가 다르므로(순수 온라인 vs
+  // 온라인+전국 매장 등) 동시에 체크되지 않게 막는다.
+  if (checkbox === onlineCb && onlineCb.checked) nationwideCb.checked = false;
+  if (checkbox === nationwideCb && nationwideCb.checked) onlineCb.checked = false;
+
   const addressInput = card.querySelector(".f-address");
   const geocodeBtn = card.querySelector(".btn-geocode");
   const statusEl = card.querySelector(".geocode-status");
-  addressInput.disabled = checkbox.checked;
-  geocodeBtn.disabled = checkbox.checked;
-  if (checkbox.checked) {
+  const warningEl = card.querySelector(".location-mode-warning");
+  const skipAddress = onlineCb.checked || nationwideCb.checked;
+  addressInput.disabled = skipAddress;
+  geocodeBtn.disabled = skipAddress;
+  if (skipAddress) {
     addressInput.value = "";
     card.querySelector(".f-lat").value = "";
     card.querySelector(".f-lng").value = "";
     statusEl.textContent = "";
+  }
+
+  // ⚠️ 카드/상세페이지의 "온라인"·"오프라인"·"온오프라인" 배지는 좌표가 아니라
+  // 참여방법(channel) 텍스트에서 "매장/오프라인/현장/방문" 같은 단어를 찾아서
+  // 판단한다(js/04-render-tabs-ranking-feed.js의 getChannelMode). "전국 매장"으로
+  // 체크했는데 참여방법에 그런 단어가 하나도 없으면 온라인 전용으로 잘못 표시될
+  // 수 있으므로 미리 알려준다 — 승인을 막지는 않고, 참고용 안내만 한다.
+  if (nationwideCb.checked && !/오프라인|매장|현장|방문/.test(card.dataset.channel || "")) {
+    warningEl.style.display = "";
+    warningEl.textContent = "⚠️ 참여방법에 '매장'/'오프라인' 같은 단어가 없어서, 화면에는 온라인 전용으로 표시될 수 있어요. 필요하면 승인 후 '게시된 이벤트 관리'에서 참여방법을 수정해주세요.";
+  } else {
+    warningEl.style.display = "none";
   }
 }
 
 async function approve(id) {
   const card = document.querySelector(`.candidate-card[data-id="${id}"]`);
   const isOnlineOnly = card.querySelector(".f-online-only").checked;
+  const isNationwide = card.querySelector(".f-nationwide").checked;
+  const skipAddress = isOnlineOnly || isNationwide;
   let lat = card.querySelector(".f-lat").value;
   let lng = card.querySelector(".f-lng").value;
 
-  if (!isOnlineOnly) {
+  if (!skipAddress) {
     const address = card.querySelector(".f-address").value.trim();
     if (!address) {
-      alert("주소를 입력해주세요. 매장 없이 온라인으로만 진행되는 이벤트라면 위의 '온라인 전용' 체크박스를 선택해주세요.");
+      alert("주소를 입력해주세요. 매장 없이 온라인으로만 진행되거나, 전국 매장처럼 특정 주소를 정하기 어려운 이벤트라면 위의 체크박스 중 하나를 선택해주세요.");
       return;
     }
     // '🔍 좌표 확인'을 안 누르고 바로 승인을 눌렀다면, 승인 시점에 한 번 더 자동으로 시도
@@ -665,10 +741,10 @@ async function approve(id) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       key, action: "approve", candidateId: id,
-      lat: isOnlineOnly ? null : parseFloat(lat),
-      lng: isOnlineOnly ? null : parseFloat(lng),
+      lat: skipAddress ? null : parseFloat(lat),
+      lng: skipAddress ? null : parseFloat(lng),
       image: card.querySelector(".f-image").value,
-      domain: card.querySelector(".f-domain").value,
+      domain: normalizeDomain(card.querySelector(".f-domain").value),
       link: card.querySelector(".f-link").value,
       conditions: card.querySelector(".f-conditions").value,
       targetAudience: card.querySelector(".f-target").value,

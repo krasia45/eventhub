@@ -330,12 +330,25 @@ function toggleGpsFilter() {
      1) Hunter logo API (real logo)
      2) Google's favicon service for that domain (real site icon)
      3) A clean initials badge, generated from the brand name, as a last resort */
+// 관리자가 도메인 칸에 "https://www.brand.com/event"처럼 프로토콜/www/경로가 섞인
+// 값을 넣으면(admin.html에서 실제로 그런 사례가 있었음) 로고 API가 도메인을 인식
+// 못 해 매번 이니셜로 대체되던 문제가 있었다. 렌더링 시점에 여기서 한 번 더 정제하면
+// 이미 DB에 지저분하게 저장된 과거 데이터도 마이그레이션 없이 화면에서 바로 고쳐진다.
+function normalizeDomain(domain) {
+  if (!domain) return "";
+  let d = String(domain).trim().toLowerCase();
+  d = d.replace(/^https?:\/\//, "");
+  d = d.split("/")[0].split("?")[0].split("#")[0];
+  if (d.startsWith("www.")) d = d.slice(4);
+  return d.trim();
+}
+
 function getLogoUrl(domain) {
-  return `https://logos.hunter.io/${domain}`;
+  return `https://logos.hunter.io/${normalizeDomain(domain)}`;
 }
 
 function getFaviconFallbackUrl(domain) {
-  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+  return `https://www.google.com/s2/favicons?domain=${normalizeDomain(domain)}&sz=128`;
 }
 
 function attachLogoFallback(imgEl, brandName, domain) {
