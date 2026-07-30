@@ -69,7 +69,7 @@ class handler(BaseHTTPRequestHandler):
                     "periodEnd": r.get("period_end"),
                     "periodStart": r.get("period_start"),
                     "createdAt": r.get("created_at"),
-                    "channel": r.get("channel", ""),
+                    "channel": r.get("channel") or "",
                     "conditions": r.get("conditions", ""),
                     "targetAudience": r.get("target_audience", ""),
                     "desc": r.get("desc", ""),

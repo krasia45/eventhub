@@ -128,7 +128,7 @@ function openSheet(eventId) {
     renderEventMap(ev);
 
     document.getElementById("locationAddress").textContent = ev.title;
-    document.getElementById("locationSub").textContent = `${ev.channel.split("\n")[0]}`;
+    document.getElementById("locationSub").textContent = (ev.channel || "").split("\n")[0];
     document.getElementById("locationRouteBtn").href = getKakaoRouteLink(ev);
     document.getElementById("locationNaverBtn").href = getNaverMapLink(ev);
     document.getElementById("locationKakaoBtn").href = getKakaoRouteLink(ev);

@@ -225,7 +225,7 @@ class handler(BaseHTTPRequestHandler):
                 "period_start": item.get("period_start"),
                 "period_end": item.get("period_end"),
                 "period": f"{item.get('period_start', '')} - {item.get('period_end', '')}",
-                "channel": item.get("channel", ""),
+                "channel": item.get("channel") or "",
                 "desc": item.get("desc", ""),
                 "tags": [label],
                 "source_url": item.get("source_url"),
