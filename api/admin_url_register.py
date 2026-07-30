@@ -298,13 +298,19 @@ class handler(BaseHTTPRequestHandler):
             except Exception:
                 pass
 
-        # ⚠️ 종료일이 없는 이벤트("소진시까지" 등)를 위해, period_end 자체는 필수가
-        # 아니게 완화했다. 다만 그냥 빈 값을 허용하면 관리자가 깜빡 잊고 비워둔 경우와
-        # 구분이 안 되므로, 반드시 noEndLabel("소진시까지" 등)이 함께 와야만 허용한다.
-        if not brand or not title or not period_start:
-            self._send_json(400, {"error": "브랜드명, 제목, 시작일은 필수예요."})
+        # ⚠️ 시작일/종료일 둘 다 필수가 아니게 완화했다 — 실제로 수집하다 보면 시작일이
+        # 아예 안 적힌 팝업/전시 게시물도 많다. 다만 "브랜드/제목만 있고 기간이 통째로
+        # 없는" 경우와 관리자가 깜빡 잊은 경우를 구분하기 위해, 최소한의 규칙은 남겨둔다:
+        #   - 시작일/종료일이 둘 다 없으면 반드시 noEndLabel(예: "상시 진행")이 있어야 함
+        #   - 시작일만 있고 종료일이 없으면(소진시까지 등) 반드시 noEndLabel이 있어야 함
+        #   - 종료일만 있고 시작일이 없는 건 그 자체로 자연스러운 경우라 별도 문구 불필요
+        if not brand or not title:
+            self._send_json(400, {"error": "브랜드명, 제목은 필수예요."})
             return
-        if not period_end and not no_end_label:
+        if not period_start and not period_end and not no_end_label:
+            self._send_json(400, {"error": "시작일/종료일이 모두 없으면 관리자 페이지에서 '종료일 없음'을 체크하고 문구를 입력해주세요 (예: 상시 진행)."})
+            return
+        if period_start and not period_end and not no_end_label:
             self._send_json(400, {"error": "종료일이 없으면 관리자 페이지에서 '종료일 없음'을 체크하고 문구를 입력해주세요."})
             return
         # ⚠️ 이 목록이 실제 카테고리 체계(편의점 추가, 라이프스타일 제거)와 안 맞아서,
@@ -313,13 +319,17 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(400, {"error": "카테고리를 선택해주세요."})
             return
 
-        if period_end:
+        if period_start and period_end:
             period_label = f"{period_start.replace('-', '.')} - {period_end.replace('-', '.')}"
-        else:
+        elif period_start:
             # period_end는 NULL로 저장 — events.py의 공개 API가 이미 period_end IS NULL을
             # "아직 진행중"으로 취급하므로, 홈 화면/랭킹/마감순 정렬이 별도 수정 없이도
             # 자연스럽게 동작한다. 사람이 보는 period 텍스트에만 문구를 채워 넣는다.
             period_label = f"{period_start.replace('-', '.')} - {no_end_label}"
+        elif period_end:
+            period_label = f"{period_end.replace('-', '.')}까지"
+        else:
+            period_label = no_end_label
 
         candidate = {
             "category": category,
@@ -328,7 +338,7 @@ class handler(BaseHTTPRequestHandler):
             "subtitle": "관리자가 직접 수동 등록",
             "discount": discount,
             "period": period_label,
-            "period_start": period_start,
+            "period_start": period_start or None,
             "period_end": period_end or None,
             "channel": channel,
             "desc": desc,

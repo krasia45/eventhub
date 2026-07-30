@@ -355,8 +355,10 @@ async function parseCaption() {
       document.getElementById("manualNoEndDate").checked = false;
       toggleNoEndDate();
       document.getElementById("manualEnd").value = p.period_end || "";
-      if (!p.period_start) {
-        msg += " ⚠️ 기간을 못 찾아서 비어있어요 — 직접 입력해주세요.";
+      if (!p.period_start && !p.period_end) {
+        msg += " ⚠️ 기간을 못 찾아서 비어있어요 — 직접 입력하거나, 기간 정보가 아예 없는 이벤트라면 '종료일 없음'을 체크하고 문구를 입력해주세요(예: 상시 진행).";
+      } else if (!p.period_start && p.period_end) {
+        msg += " ℹ️ 시작일은 명시되어 있지 않아 비워뒀어요 — 종료일만으로 등록돼요.";
       }
     }
     if (p.confidence_note) {
@@ -460,8 +462,16 @@ async function registerManual() {
   const image = document.getElementById("manualThumbnail").value.trim(); // 카드/목록 썸네일용 대표이미지 1장
   const statusEl = document.getElementById("manualStatus");
 
-  if (!brand || !title || !start || (!end && !noEndDate)) {
-    alert("브랜드명, 제목, 시작일은 필수예요. 종료일이 없는 이벤트라면 '종료일 없음'을 체크해주세요.");
+  if (!brand || !title) {
+    alert("브랜드명, 제목은 필수예요.");
+    return;
+  }
+  if (!start && !end && !noEndDate) {
+    alert("시작일/종료일이 모두 없으면 '종료일 없음'을 체크하고 문구를 입력해주세요 (예: 상시 진행).");
+    return;
+  }
+  if (start && !end && !noEndDate) {
+    alert("종료일이 없는 이벤트라면 '종료일 없음'을 체크해주세요.");
     return;
   }
 
@@ -476,7 +486,7 @@ async function registerManual() {
         domain: normalizeDomain(domain) || null,
         conditions: conditions || null,
         targetAudience: targetAudience || null,
-        periodStart: start, periodEnd: noEndDate ? null : end,
+        periodStart: start || null, periodEnd: noEndDate ? null : (end || null),
         noEndLabel: noEndDate ? noEndLabel : null,
         sourceUrl: sourceUrl || null,
         image: image || null,

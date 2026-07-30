@@ -68,14 +68,23 @@ function openSheet(eventId) {
   // 팝업/전시처럼 애초에 혜택이랄 게 없는 이벤트도 있다. "정보 확인 필요"처럼 마치
   // 빠진 것처럼 보이는 문구를 억지로 채우지 않고, 섹션 자체를 통째로 숨긴다
   // ("조건"/"대상" 행과 동일한 원칙 — 값 없으면 빈 자리를 만들지 않는다).
-  if (benefitChips.length) {
-    benefitHeadingEl.hidden = false;
-    benefitRowEl.hidden = false;
+  // ⚠️ index.html에 sheetBenefitHeading id가 없는 배포 상태(파일 일부만 반영 등)에서도
+  // 이 함수 전체가 멈추지 않도록 존재 여부를 먼저 확인한다 — 카테고리와 무관하게
+  // 모든 이벤트에서 실행되는 코드라, 여기서 멈추면 카드 전체가 "먹통"이 된다.
+  if (benefitHeadingEl && benefitRowEl) {
+    if (benefitChips.length) {
+      benefitHeadingEl.hidden = false;
+      benefitRowEl.hidden = false;
+      benefitRowEl.innerHTML = benefitChips.map(b => `<span class="benefit-chip">${benefitIc}${escapeHtml(b)}</span>`).join("");
+    } else {
+      benefitHeadingEl.hidden = true;
+      benefitRowEl.hidden = true;
+      benefitRowEl.innerHTML = "";
+    }
+  } else if (benefitRowEl) {
+    // heading은 없어도(구버전 index.html) 칩 목록만이라도 정상 표시
+    benefitRowEl.hidden = benefitChips.length === 0;
     benefitRowEl.innerHTML = benefitChips.map(b => `<span class="benefit-chip">${benefitIc}${escapeHtml(b)}</span>`).join("");
-  } else {
-    benefitHeadingEl.hidden = true;
-    benefitRowEl.hidden = true;
-    benefitRowEl.innerHTML = "";
   }
   document.getElementById("sheetPeriod").textContent = ev.period || "";
   // ⚠️ "상세안내"와 "상세페이지 이미지"가 별도 입력칸이라 관리자가 헷갈려서(이미지 URL을
