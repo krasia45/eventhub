@@ -649,7 +649,6 @@ async function loadCandidates() {
         <label style="grid-column: 1 / -1; display:flex; align-items:center; gap:6px; font-size:12.5px; color:#555; margin-top:-4px;">
           <input type="checkbox" class="f-nationwide" onchange="toggleLocationInputs(this)"> 전국 매장 / 위치 다수 (온라인+오프라인을 함께 진행하는 등, 특정 주소 하나로 못 정하는 경우 — 이 경우도 내 주변 섹션에서 자동 제외됨)
         </label>
-        <p class="location-mode-warning" style="grid-column: 1 / -1; display:none; font-size:11.5px; color:#c0392b; margin:-4px 0 0;"></p>
         <div class="address-row">
           <input type="text" placeholder="주소 또는 장소명 (예: 서울 성동구 연무장길 62 / 더현대 서울)" class="f-address" value="${escapeAttr(guessAddress(c.channel))}">
           <button type="button" class="btn-geocode" onclick="geocodeAndFill(this)">🔍 좌표 확인</button>
@@ -684,7 +683,6 @@ function toggleLocationInputs(checkbox) {
   const addressInput = card.querySelector(".f-address");
   const geocodeBtn = card.querySelector(".btn-geocode");
   const statusEl = card.querySelector(".geocode-status");
-  const warningEl = card.querySelector(".location-mode-warning");
   const skipAddress = onlineCb.checked || nationwideCb.checked;
   addressInput.disabled = skipAddress;
   geocodeBtn.disabled = skipAddress;
@@ -693,18 +691,6 @@ function toggleLocationInputs(checkbox) {
     card.querySelector(".f-lat").value = "";
     card.querySelector(".f-lng").value = "";
     statusEl.textContent = "";
-  }
-
-  // ⚠️ 카드/상세페이지의 "온라인"·"오프라인"·"온오프라인" 배지는 좌표가 아니라
-  // 참여방법(channel) 텍스트에서 "매장/오프라인/현장/방문" 같은 단어를 찾아서
-  // 판단한다(js/04-render-tabs-ranking-feed.js의 getChannelMode). "전국 매장"으로
-  // 체크했는데 참여방법에 그런 단어가 하나도 없으면 온라인 전용으로 잘못 표시될
-  // 수 있으므로 미리 알려준다 — 승인을 막지는 않고, 참고용 안내만 한다.
-  if (nationwideCb.checked && !/오프라인|매장|현장|방문/.test(card.dataset.channel || "")) {
-    warningEl.style.display = "";
-    warningEl.textContent = "⚠️ 참여방법에 '매장'/'오프라인' 같은 단어가 없어서, 화면에는 온라인 전용으로 표시될 수 있어요. 필요하면 승인 후 '게시된 이벤트 관리'에서 참여방법을 수정해주세요.";
-  } else {
-    warningEl.style.display = "none";
   }
 }
 
@@ -753,6 +739,7 @@ async function approve(id) {
       key, action: "approve", candidateId: id,
       lat: skipAddress ? null : parseFloat(lat),
       lng: skipAddress ? null : parseFloat(lng),
+      nationwide: isNationwide,
       image: card.querySelector(".f-image").value,
       domain: normalizeDomain(card.querySelector(".f-domain").value),
       link: card.querySelector(".f-link").value,
@@ -899,6 +886,7 @@ function toggleEditForm(id) {
   form.innerHTML = `
     <input type="text" class="e-brand" placeholder="브랜드" value="${escapeAttr(brand)}">
     <input type="text" class="e-title span2" placeholder="제목" value="${escapeAttr(title)}">
+    <input type="text" class="e-subtitle span2" placeholder="부제목 (있으면 카드에 표시돼요 — 비워두면 표시 안 됨)">
     <input type="text" class="e-discount" placeholder="혜택" value="${escapeAttr(discount || "")}">
     <input type="text" class="e-conditions" placeholder="조건 (없으면 비워두기)">
     <input type="date" class="e-start" value="${periodStart || ""}">
@@ -929,6 +917,10 @@ async function savePublishedEvent(id) {
     image: card.querySelector(".e-image").value.trim(),
   };
   const cleanPatch = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== ""));
+  // ⚠️ subtitle만 예외: 위 filter는 "빈 값 = 안 건드림"이 기본이라, 카드에 잘못 박힌
+  // "관리자가 직접 수동 등록" 같은 내부 메모를 지우고 싶어도 빈 칸으로 저장하면 그냥
+  // 무시돼서 안 지워졌다. subtitle은 비워서 저장하면 실제로 지워지게 항상 포함시킨다.
+  cleanPatch.subtitle = card.querySelector(".e-subtitle").value.trim();
 
   const res = await fetch("/api/admin_candidates", {
     method: "POST",

@@ -188,12 +188,30 @@ class handler(BaseHTTPRequestHandler):
 
             lat = data.get("lat")
             lng = data.get("lng")
+            is_nationwide = bool(data.get("nationwide"))
 
             candidate_rows = sb_select("event_candidates", {"select": "*", "id": f"eq.{candidate_id}"})
             if not candidate_rows:
                 self._send_json(404, {"error": "후보를 찾을 수 없습니다."})
                 return
             c = candidate_rows[0]
+
+            # ⚠️ 카드/상세페이지의 "온라인"·"오프라인"·"온오프라인" 배지는 좌표가 아니라
+            # channel(참여방법) 텍스트에서 "온라인"/"매장·오프라인·현장·방문" 같은 단어를
+            # 찾아서 판단한다(js/04-render-tabs-ranking-feed.js의 getChannelMode). 관리자가
+            # 승인 화면에서 "전국 매장/위치 다수" 체크박스로 온라인+오프라인을 표시했는데,
+            # 정작 참여방법 텍스트에 그 단어가 하나도 없으면 온라인 전용으로 잘못 표시되는
+            # 문제가 있었다 — 텍스트를 관리자가 정확히 쓰기를 기대하는 대신, 여기서 필요한
+            # 단어를 자동으로 보장해서 화면 표시가 체크박스와 항상 일치하게 만든다.
+            channel = c.get("channel") or ""
+            if is_nationwide:
+                missing_markers = []
+                if not re.search(r"온라인", channel):
+                    missing_markers.append("온라인에서도 이용 가능")
+                if not re.search(r"오프라인|매장|현장|방문", channel):
+                    missing_markers.append("전국 매장 등 오프라인에서도 이용 가능")
+                if missing_markers:
+                    channel = "\n".join(missing_markers + ([channel] if channel else []))
 
             new_id = f"real-{uuid.uuid4().hex[:10]}"
             sb_insert("events", {
@@ -209,7 +227,7 @@ class handler(BaseHTTPRequestHandler):
                 "period": c.get("period", ""),
                 "period_start": c.get("period_start"),
                 "period_end": c.get("period_end"),
-                "channel": c.get("channel") or "",
+                "channel": channel,
                 "conditions": data.get("conditions") or c.get("conditions", ""),
                 "target_audience": data.get("targetAudience") or c.get("target_audience", ""),
                 "desc": data.get("desc") or c.get("desc", ""),
