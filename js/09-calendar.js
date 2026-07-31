@@ -150,7 +150,7 @@ function renderCalendarDayDetail(dateKey) {
   listEl.querySelectorAll(".calendar-day-item.event-type").forEach(item => {
     item.addEventListener("click", () => {
       closeCalendar();
-      popModalHistory();
+      popModalHistorySilent();
       openSheet(item.dataset.eventId);
     });
   });

@@ -304,7 +304,7 @@ function renderCouponWallet() {
   listEl.querySelectorAll(".coupon-wallet-item").forEach(item => {
     item.addEventListener("click", () => {
       closeCouponWallet();
-      popModalHistory();
+      popModalHistorySilent();
       openSheet(item.dataset.id);
     });
   });
@@ -446,7 +446,7 @@ function renderRecentView() {
   listEl.querySelectorAll(".coupon-wallet-item").forEach(item => {
     item.addEventListener("click", () => {
       closeRecentView();
-      popModalHistory();
+      popModalHistorySilent();
       openSheet(item.dataset.id);
     });
   });

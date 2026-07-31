@@ -164,7 +164,7 @@ async function renderNotificationList() {
       el.addEventListener("click", (e) => {
         if (e.target.closest(".notif-item-remove")) return;
         closeMoreMenu();
-        popModalHistory();
+        popModalHistorySilent();
         openSheet(el.dataset.id);
       });
     });

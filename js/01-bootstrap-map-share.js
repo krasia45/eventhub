@@ -358,6 +358,19 @@ function popModalHistory() {
   closeFn();
 }
 
+// ── "닫기"가 아니라 "다른 화면으로 넘어가는" 경우 전용.
+// 예: 지갑/최근본/캘린더에서 이벤트를 눌러 상세시트로 들어갈 때. 이 화면들이 프로필
+// 메뉴에서 openFromProfile()로 열렸다면, 스택 맨 위 함수는 "닫고 나서 프로필 재오픈"으로
+// 바뀌어 있는 상태다. popModalHistory()는 그 함수를 실행까지 해버려서, 상세시트로
+// 넘어가려는 순간 프로필 모달이 다시 열려버리는 버그가 있었다(정작 의도는 "닫기"가
+// 아니라 "다른 화면 보기"였는데). 이 함수는 스택 정리만 하고 실행은 하지 않는다.
+function popModalHistorySilent() {
+  if (modalCloseStack.length === 0) return;
+  modalCloseStack.pop();
+  suppressNextPopstate = true;
+  history.back();
+}
+
 window.addEventListener("popstate", () => {
   if (suppressNextPopstate) {
     suppressNextPopstate = false;
