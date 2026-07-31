@@ -195,9 +195,6 @@ document.getElementById("privacyGuideOverlay").addEventListener("click", (e) => 
   }
 });
 
-document.getElementById("profileTravelBtn").addEventListener("click", () => {
-  openFromProfile(openTravelPlanner);
-});
 document.getElementById("profileRecentMenuBtn").addEventListener("click", () => {
   openFromProfile(openRecentView);
 });

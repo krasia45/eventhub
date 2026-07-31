@@ -311,8 +311,15 @@ function getKakaoRouteLink(ev) {
 }
 
 function getNaverMapLink(ev) {
-  // 네이버지도 검색 링크 (좌표+브랜드명 기반)
-  return `https://map.naver.com/p/search/${encodeURIComponent(ev.brand + " " + ev.title)}`;
+  // ⚠️ 예전엔 브랜드+제목으로 텍스트 검색을 했는데("스타벅스 SUMMER2 프로모션"),
+  // "SUMMER2 프로모션" 같은 캠페인명은 실제 장소명이 아니라서 네이버지도가 엉뚱한
+  // 곳을 검색 결과로 보여주거나 검색 결과 목록만 뜨는 문제가 있었다. 카카오맵
+  // 버튼(getKakaoRouteLink)처럼 좌표 기반으로 바꿔서 항상 실제 이벤트 위치로
+  // 고정되게 한다. (네이버는 공식적으로 앱 전용 URL Scheme(nmap://)만 문서화하고
+  // 있고, 앱 미설치 환경까지 고려한 웹 링크는 공식 문서가 없어 커뮤니티에서 널리
+  // 쓰이는 좌표 기반 웹 링크 형식을 사용한다 — 배포 후 실제 기기에서 한 번 눌러
+  // 확인해보는 걸 권장한다.)
+  return `https://map.naver.com/p?lat=${ev.lat}&lng=${ev.lng}&title=${encodeURIComponent(ev.brand)}`;
 }
 
 /* ==================================================================

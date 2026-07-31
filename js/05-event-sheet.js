@@ -138,7 +138,6 @@ function openSheet(eventId) {
 
     document.getElementById("locationAddress").textContent = ev.title;
     document.getElementById("locationSub").textContent = (ev.channel || "").split("\n")[0];
-    document.getElementById("locationRouteBtn").href = getKakaoRouteLink(ev);
     document.getElementById("locationNaverBtn").href = getNaverMapLink(ev);
     document.getElementById("locationKakaoBtn").href = getKakaoRouteLink(ev);
   } else {
@@ -347,6 +346,15 @@ sheetOverlay.addEventListener("click", (e) => {
     closeSheet();
     popModalHistory();
   }
+});
+
+// 상세페이지 미니맵의 "지도 크게 보기" — 지도 페이지로 이동하면서 이 이벤트 위치를 정중앙에 맞춘다.
+document.getElementById("mapExpandBtn").addEventListener("click", () => {
+  const ev = EVENTS.find(e => e.id === activeEventId);
+  if (!ev || ev.lat == null || ev.lng == null) return;
+  closeSheet();
+  popModalHistory();
+  openMapPage(ev);
 });
 
 function toggleLike(eventId) {

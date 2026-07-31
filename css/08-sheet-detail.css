@@ -54,11 +54,15 @@
   color: var(--accent);
 }
 
-/* ---------- 위치 안내: 주소/시간 + 지도서비스 3버튼 ---------- */
+/* ---------- 위치 안내: 주소/시간 + "길찾기" 섹션(네이버지도·카카오맵 2버튼) ----------
+   ⚠️ 예전엔 "길찾기"·"카카오맵" 버튼이 따로 있었는데 실제로는 getKakaoRouteLink()로
+   완전히 같은 링크를 가리키고 있었다(이름만 다른 중복). "길찾기"를 개별 버튼이 아니라
+   네이버지도/카카오맵 버튼들을 묶는 섹션 라벨로 바꿔서 중복을 없앴다. */
 .location-detail-card { margin-top: 12px; }
 .location-address { font-size: 13.5px; font-weight: 700; color: var(--text-1); }
 .location-sub { font-size: 12px; color: var(--text-3); margin-top: 3px; margin-bottom: 12px; }
-.location-btn-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.location-directions-label { font-size: 12px; font-weight: 800; color: var(--text-3); margin-bottom: 6px; }
+.location-btn-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .location-btn {
   text-align: center;
   padding: 10px 4px;
@@ -137,12 +141,30 @@
 .kakao-share-btn:active { transform: scale(0.98); }
 
 .kakao-map-wrap {
+  position: relative;
   width: 100%;
   border-radius: var(--radius-sm);
   overflow: hidden;
   margin: 8px 0 10px;
   border: 1px solid var(--border);
 }
+.map-expand-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-1);
+  box-shadow: var(--shadow-card);
+  z-index: 2;
+}
+html[data-theme="dark"] .map-expand-btn { background: rgba(31, 31, 40, 0.92); }
+.map-expand-btn:active { transform: scale(0.94); }
 .kakao-map { width: 100%; height: 200px; background: var(--bg); }
 .map-status {
   height: 200px;

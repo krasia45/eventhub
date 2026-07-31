@@ -1,5 +1,28 @@
 /* ===================== 검색 자동완성 / 인기 검색어 ===================== */
 .search-bar-wrap { position: relative; flex: 1; min-width: 0; }
+
+/* ── 검색결과 화면 안에 있는 재검색용 검색창 ──
+   기존 .search-bar는 홈 헤더 레이아웃(.search-bar-row)에 맞춰진 flex:1이라
+   .page-header(뒤로가기 버튼 + 텍스트 영역) 안에 그대로 끼워넣으면 폭 계산이 꼬인다.
+   그래서 이 화면 전용으로 가볍게 새로 만든다. */
+.search-results-header-text { flex: 1; min-width: 0; }
+.page-header-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+}
+.page-header-search-bar .search-icon { color: var(--text-3); flex-shrink: 0; }
+.page-header-search-bar input {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--text-1);
+}
+.page-header-search-bar input::placeholder { color: var(--text-3); }
 .search-suggestions {
   position: absolute;
   top: calc(100% + 6px);

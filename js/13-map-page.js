@@ -377,11 +377,11 @@ function hideMapRefreshBtn() {
 }
 
 /* ---------- 페이지 열기/닫기 ---------- */
-async function openMapPage() {
+async function openMapPage(focusEvent) {
   document.getElementById("mapPageOverlay").classList.add("open");
   pushModalHistory(closeMapPage);
   renderMapPageFilters();
-  await initMapPageMap();
+  await initMapPageMap(focusEvent);
   // ⚠️ 예전엔 runMapPageSearch()를 먼저 불러서, 그 안의 "더 많은 이벤트 보기" 버튼 계산이
   // mapSheetHeight가 아직 0(초기값)인 상태에서 실행됐다. 그러면 "하단(collapsed)"으로
   // 잘못 판정돼서 버튼이 처음부터 숨겨진 채로 시작됐다(특히 지도 로딩이 빠른 웹에서 잘 드러남).
@@ -403,20 +403,24 @@ function closeMapPage() {
 /* ---------- 지도 초기화: 현재 위치 기준 시작 ---------- */
 let mapMyLocationOverlay = null; // 현재 위치 파란 점
 
-async function initMapPageMap() {
+async function initMapPageMap(focusEvent) {
   const mapEl = document.getElementById("mapPageKakaoMap");
 
   try {
     await loadKakaoMapSdk();
 
     if (!mapPageInitialized) {
-      // 현재 사용자 위치(거부/실패 시 서울시청)로 시작 — 정확도 우선 옵션으로 재시도
-      const loc = await getMapUserLocation();
+      // 상세페이지의 "지도 크게 보기"로 들어온 경우엔 해당 이벤트 위치를 바로 중심으로
+      // 잡는다 — 현재 위치(GPS) 조회를 기다릴 필요가 없어서 더 빠르고, 권한 팝업도
+      // 불필요하게 뜨지 않는다. 일반 지도 탭 진입은 기존처럼 현재 위치 기준.
+      const loc = focusEvent
+        ? { lat: focusEvent.lat, lng: focusEvent.lng }
+        : await getMapUserLocation();
       mapPageKakaoMapInstance = new kakao.maps.Map(mapEl, {
         center: new kakao.maps.LatLng(loc.lat, loc.lng),
-        level: 7,
+        level: focusEvent ? 4 : 7,
       });
-      renderMyLocationDot(loc);
+      if (!focusEvent) renderMyLocationDot(loc);
 
       // 지도 이동/확대축소 감지 → "현재 지역에서 찾기" 버튼 표시 + 바텀시트 자동 접힘
       kakao.maps.event.addListener(mapPageKakaoMapInstance, "idle", () => {
@@ -434,6 +438,10 @@ async function initMapPageMap() {
     } else {
       // 재진입 시 지도 크기 재계산 (display:none 상태에서 초기화됐을 수 있음)
       mapPageKakaoMapInstance.relayout();
+      if (focusEvent) {
+        mapPageKakaoMapInstance.setCenter(new kakao.maps.LatLng(focusEvent.lat, focusEvent.lng));
+        mapPageKakaoMapInstance.setLevel(4);
+      }
     }
 
   } catch (err) {

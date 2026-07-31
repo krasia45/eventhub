@@ -30,6 +30,15 @@ document.getElementById("globalSearch").addEventListener("keydown", (e) => {
   searchInput.blur();
 });
 
+// 검색 결과 화면 안에서도 다시 검색할 수 있도록 — 뒤로 나가지 않고 그 자리에서 갱신
+document.getElementById("searchResultsInput").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  const q = e.target.value.trim();
+  if (!q) return;
+  openSearchResults(q);
+  e.target.blur();
+});
+
 /* ---------- 검색 자동완성 / 인기 검색어 ---------- */
 const searchInput = document.getElementById("globalSearch");
 const suggestionsEl = document.getElementById("searchSuggestions");
@@ -168,7 +177,7 @@ function openSearchResults(query) {
   ));
   sortSearchMatches(matches, currentSearchSort);
 
-  document.getElementById("searchResultsQuery").textContent = `"${q}"`;
+  document.getElementById("searchResultsInput").value = q;
   document.getElementById("searchResultsCount").textContent = `총 ${matches.length}개의 이벤트`;
 
   const grid = document.getElementById("searchResultsGrid");
