@@ -56,6 +56,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
+  // ⚠️ origin 체크가 없어서, 카카오맵 SDK가 불러오는 daumcdn.net 같은 제3자 리소스까지
+  // 서비스워커가 가로채고 있었다. 이 앱의 오프라인 캐싱과는 무관한 리소스라 손댈 이유가
+  // 없고, opaque 응답 캐싱 시도 등 불필요한 부작용만 생길 수 있어 아예 통과시킨다.
+  if (url.origin !== self.location.origin) return;
+
   // API 요청(/api/*)은 서비스워커가 아예 관여하지 않음 — 항상 네트워크로 직행
   if (url.pathname.startsWith("/api/")) return;
 

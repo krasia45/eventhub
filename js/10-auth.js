@@ -48,7 +48,12 @@ function renderProfileHub() {
   const shortName = (currentUser.email || currentUser.user_metadata?.name || "회원").split("@")[0];
   document.getElementById("profileAvatar").textContent = shortName.charAt(0).toUpperCase();
   document.getElementById("profileGreeting").textContent = `안녕하세요, ${shortName}님`;
-  document.getElementById("profileSavedCount").textContent = likedEvents.size;
+  // ⚠️ likedEvents.size를 그대로 쓰면, 찜은 했지만 이후 관리자가 삭제한 이벤트의
+  // id까지 그대로 세어버려서 실제 쿠폰함에 보이는 개수와 안 맞았다(예: 테스트하다
+  // 지운 이벤트). 쿠폰함 화면(renderCouponWallet의 "전체 N")과 똑같이, 지금 실제로
+  // 존재하는 이벤트만 세어서 두 화면의 숫자가 항상 일치하게 만든다.
+  document.getElementById("profileSavedCount").textContent =
+    [...likedEvents].filter(id => EVENTS.some(ev => ev.id === id)).length;
   document.getElementById("profileScheduleCount").textContent =
     (typeof personalSchedules !== "undefined" ? personalSchedules.length : 0);
   renderProfileTaste();

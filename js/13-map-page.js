@@ -414,12 +414,29 @@ async function initMapPageMap(focusEvent) {
       // 잡는다 — 현재 위치(GPS) 조회를 기다릴 필요가 없어서 더 빠르고, 권한 팝업도
       // 불필요하게 뜨지 않는다. 일반 지도 탭 진입은 기존처럼 현재 위치 기준.
       const loc = focusEvent
-        ? { lat: focusEvent.lat, lng: focusEvent.lng }
+        ? { lat: Number(focusEvent.lat), lng: Number(focusEvent.lng) }
         : await getMapUserLocation();
+
+      // ⚠️ 좌표가 숫자가 아니거나(NaN) 지구 범위를 벗어나면, 카카오맵은 에러를 던지지
+      // 않고 그냥 타일 요청 자체를 안 한 채로 회색 화면만 보여준다 — 증상만 봐서는
+      // 원인을 알기 어려워서, 미리 걸러내고 명확한 로그를 남긴다.
+      const isValidCoord = Number.isFinite(loc.lat) && Number.isFinite(loc.lng)
+        && Math.abs(loc.lat) <= 90 && Math.abs(loc.lng) <= 180;
+      if (!isValidCoord) {
+        console.error("[지도 디버그] 유효하지 않은 좌표라 서울시청으로 대체합니다:", loc);
+        loc.lat = 37.5665;
+        loc.lng = 126.9780;
+      }
+
       mapPageKakaoMapInstance = new kakao.maps.Map(mapEl, {
         center: new kakao.maps.LatLng(loc.lat, loc.lng),
         level: focusEvent ? 4 : 7,
       });
+      // 오버레이가 열리는 트랜지션(transform) 도중이라 레이아웃 계산 타이밍이 애매할
+      // 가능성에 대비해 생성 직후에도 한 번 재계산해준다(재진입 시엔 이미 하고 있었음).
+      mapPageKakaoMapInstance.relayout();
+      console.log("[지도 디버그] 카카오맵 생성 완료 — center:", loc, "level:", focusEvent ? 4 : 7);
+
       if (!focusEvent) renderMyLocationDot(loc);
 
       // 지도 이동/확대축소 감지 → "현재 지역에서 찾기" 버튼 표시 + 바텀시트 자동 접힘
@@ -439,8 +456,13 @@ async function initMapPageMap(focusEvent) {
       // 재진입 시 지도 크기 재계산 (display:none 상태에서 초기화됐을 수 있음)
       mapPageKakaoMapInstance.relayout();
       if (focusEvent) {
-        mapPageKakaoMapInstance.setCenter(new kakao.maps.LatLng(focusEvent.lat, focusEvent.lng));
-        mapPageKakaoMapInstance.setLevel(4);
+        const lat = Number(focusEvent.lat), lng = Number(focusEvent.lng);
+        if (Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+          mapPageKakaoMapInstance.setCenter(new kakao.maps.LatLng(lat, lng));
+          mapPageKakaoMapInstance.setLevel(4);
+        } else {
+          console.error("[지도 디버그] 재진입 시 유효하지 않은 좌표라 중심 이동을 건너뜁니다:", focusEvent);
+        }
       }
     }
 
