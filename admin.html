@@ -266,13 +266,15 @@ async function geocodeAndFill(btn) {
    (승인자가 반드시 확인 후 필요하면 수정해야 함 — 참고용 추정치일 뿐) */
 function guessAddress(channel) {
   if (!channel) return "";
-  let firstLine = channel.split("\n")[0].trim();
-  firstLine = firstLine.replace(/\([^)]*\)/g, "").trim(); // "(정확한 주소는 승인 시 재확인 필요)" 같은 괄호 설명 제거
+  // ⚠️ 예전엔 첫 줄만 확인했는데, "LOCATION\n서울시 종로구 북촌로 47\n(안국역...)\nHOURS\n..."
+  // 처럼 팝업/전시 게시물에서 주소가 둘째 줄 이후에 오는 경우가 흔해서 계속 못 찾고
+  // 있었다. 전체 줄을 훑어서 주소처럼 보이는 첫 줄을 찾도록 바꿨다.
+  const lines = channel.split("\n").map(l => l.replace(/\([^)]*\)/g, "").trim()).filter(Boolean);
   // ⚠️ 한글은 JS 정규식의 \b(단어 경계)가 인식하지 못해 (공백|문자열 끝)으로 대체 처리함
-  const looksLikeAddress =
-    /[가-힣]+(구|군)(\s|$)/.test(firstLine) ||   // "성동구", "강남구"처럼 구/군 단위가 보이는 경우
-    /\d+(길|로)(\s|$)/.test(firstLine);          // "연무장길 62"처럼 도로명 주소가 보이는 경우
-  return looksLikeAddress ? firstLine : "";
+  const looksLikeAddress = (line) =>
+    /[가-힣]+(구|군)(\s|$)/.test(line) ||   // "성동구", "강남구"처럼 구/군 단위가 보이는 경우
+    /\d+(길|로)(\s|$)/.test(line);          // "연무장길 62"처럼 도로명 주소가 보이는 경우
+  return lines.find(looksLikeAddress) || "";
 }
 
 /* HTML 속성(value="...")에 안전하게 끼워넣기 위한 이스케이프 */
@@ -650,7 +652,7 @@ async function loadCandidates() {
           <input type="checkbox" class="f-nationwide" onchange="toggleLocationInputs(this)"> 전국 매장 / 위치 다수 (온라인+오프라인을 함께 진행하는 등, 특정 주소 하나로 못 정하는 경우 — 이 경우도 내 주변 섹션에서 자동 제외됨)
         </label>
         <div class="address-row">
-          <input type="text" placeholder="주소 또는 장소명 (예: 서울 성동구 연무장길 62 / 더현대 서울)" class="f-address" value="${escapeAttr(guessAddress(c.channel))}">
+          <input type="text" placeholder="주소 또는 장소명 (예: 서울 성동구 연무장길 62 / 더현대 서울)" class="f-address" value="${escapeAttr(c.address || guessAddress(c.channel))}">
           <button type="button" class="btn-geocode" onclick="geocodeAndFill(this)">🔍 좌표 확인</button>
         </div>
         <p class="geocode-status"></p>

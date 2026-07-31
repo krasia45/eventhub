@@ -72,6 +72,8 @@ create table event_candidates (
   period_start date,
   period_end date,
   channel text,
+  address text,                           -- 팝업/오프라인 매장 주소. 승인 화면의 주소 입력칸을 미리 채우는 용도
+                                           -- (좌표 확정은 여전히 승인 시 관리자가 확인 버튼을 눌러야 함)
   "desc" text,
   tags text[] default '{}',
   domain text,

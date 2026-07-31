@@ -280,6 +280,7 @@ class handler(BaseHTTPRequestHandler):
         manual_image = (data.get("image") or "").strip()
         manual_domain = normalize_domain((data.get("domain") or "").strip())
         no_end_label = (data.get("noEndLabel") or "").strip()
+        address = (data.get("address") or "").strip()
 
         # ⚠️ 도메인 입력칸은 로고 자동화의 핵심인데, 새로 추가된 필드라 관리자가 깜빡하고
         # 비워두는 경우가 실제로 있었다("도메인 안 넣으면 로고가 아예 안 뜨고 이니셜로 대체됨").
@@ -339,6 +340,7 @@ class handler(BaseHTTPRequestHandler):
             "period_start": period_start or None,
             "period_end": period_end or None,
             "channel": channel,
+            "address": address or None,
             "desc": desc,
             "conditions": conditions,
             "target_audience": target_audience,
