@@ -299,16 +299,14 @@ class handler(BaseHTTPRequestHandler):
                 pass
 
         # ⚠️ 시작일/종료일 둘 다 필수가 아니게 완화했다 — 실제로 수집하다 보면 시작일이
-        # 아예 안 적힌 팝업/전시 게시물도 많다. 다만 "브랜드/제목만 있고 기간이 통째로
-        # 없는" 경우와 관리자가 깜빡 잊은 경우를 구분하기 위해, 최소한의 규칙은 남겨둔다:
-        #   - 시작일/종료일이 둘 다 없으면 반드시 noEndLabel(예: "상시 진행")이 있어야 함
-        #   - 시작일만 있고 종료일이 없으면(소진시까지 등) 반드시 noEndLabel이 있어야 함
-        #   - 종료일만 있고 시작일이 없는 건 그 자체로 자연스러운 경우라 별도 문구 불필요
+        # 아예 안 적힌 팝업/전시 게시물도 많다. 스프레드시트 일괄등록처럼 원본 데이터
+        # 자체에 기간 정보가 없는 경우까지 매번 "종료일 없음" 문구를 억지로 채우게
+        # 하면 등록 자체가 막혀버리므로, 완전히 정보가 없는 경우는 그냥 통과시키고
+        # (혜택이 빈 값이어도 허용하는 것과 같은 원칙) period는 빈 값으로 저장한다.
+        # 다만 "시작일은 있는데 종료일만 없는" 애매한 경우는 여전히 문구를 요구한다 —
+        # 이건 실제로 "소진시까지"류 문구가 필요한 경우가 대부분이라 구분 가치가 있다.
         if not brand or not title:
             self._send_json(400, {"error": "브랜드명, 제목은 필수예요."})
-            return
-        if not period_start and not period_end and not no_end_label:
-            self._send_json(400, {"error": "시작일/종료일이 모두 없으면 관리자 페이지에서 '종료일 없음'을 체크하고 문구를 입력해주세요 (예: 상시 진행)."})
             return
         if period_start and not period_end and not no_end_label:
             self._send_json(400, {"error": "종료일이 없으면 관리자 페이지에서 '종료일 없음'을 체크하고 문구를 입력해주세요."})
@@ -329,7 +327,7 @@ class handler(BaseHTTPRequestHandler):
         elif period_end:
             period_label = f"{period_end.replace('-', '.')}까지"
         else:
-            period_label = no_end_label
+            period_label = no_end_label  # 완전히 정보 없으면 빈 문자열 그대로 저장
 
         candidate = {
             "category": category,
