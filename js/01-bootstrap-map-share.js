@@ -87,6 +87,10 @@ function loadKakaoMapSdk() {
     script.onerror = () => reject(new Error("카카오맵 SDK 로드 실패"));
     document.head.appendChild(script);
   });
+  // ⚠️ 실패한(reject된) 프로미스를 그대로 캐시해두면, 원인(도메인 미등록 등)을 고친
+  // 뒤에도 새로고침 전까진 계속 같은 실패만 재사용되어 재시도가 아예 안 됐다.
+  // 실패했을 땐 캐시를 비워서 다음 호출이 스크립트를 다시 불러오도록 한다.
+  kakaoMapSdkPromise.catch(() => { kakaoMapSdkPromise = null; });
   return kakaoMapSdkPromise;
 }
 
@@ -383,30 +387,38 @@ function wrapTopModalClose(afterCloseFn) {
   };
 }
 
-// ── "찜한 이벤트/최근 본 이벤트/캘린더/알림" 같은 목록 화면에서 항목을 눌러 상세시트를
-// 열 때 공통으로 쓴다. 상세시트를 닫으면 정확히 그 목록 화면으로 돌아가야 하는데,
-// 그 화면이 애초에 어떻게 열렸는지(프로필 메뉴를 거쳤는지, 하단 탭을 바로 눌렀는지 등)는
-// 매번 다를 수 있다. 그래서 "지금 스택 맨 위에 있던 게 뭐였는지"를 그대로 캡처해뒀다가,
-// 상세시트가 닫힐 때 그 목록 화면을 다시 열고 캡처해둔 걸 그대로 복원한다 — 그러면
-// 목록 화면이 프로필에서 열렸었다면(닫으면 프로필로 복귀하도록 랩핑되어 있었다면)
-// 그 관계도 끊기지 않고 그대로 이어진다. 즉 "어디서 들어왔든 상세를 닫으면 들어왔던
-// 곳으로 돌아간다"가 목록의 depth와 무관하게 항상 성립한다.
-// reopenFn은 openCalendar()처럼 비동기(async)일 수 있어 await로 처리한다.
-function openSheetFromParentScreen(eventId, closeParentFn, reopenParentFn) {
-  const parentStackEntry = modalCloseStack.length > 0
+// ── 어떤 모달형 화면(A)에서 다른 화면(B)으로 "이동"할 때 공통으로 쓴다(닫는 게 아니라
+// 대체하는 것). B를 닫으면 정확히 A로 돌아가야 하는데, A가 어떻게 열렸는지(프로필 메뉴를
+// 거쳤는지, 하단 탭을 바로 눌렀는지, 목록 화면에서 항목을 눌러 들어왔는지 등)는 매번
+// 다를 수 있다. 그래서 "지금 스택 맨 위에 있던 게 뭐였는지"를 그대로 캡처해뒀다가, B가
+// 닫힐 때 A를 다시 열고 캡처해둔 걸 그대로 복원한다 — 그러면 A가 프로필/다른 화면에서
+// 열렸었다면 그 관계도 끊기지 않고 그대로 이어진다. 즉 "어디서 들어왔든 닫으면 들어왔던
+// 곳으로 돌아간다"가 화면이 몇 단계로 이어져 있든 항상 성립한다.
+//   closeCurrentFn: 지금 화면(A)을 닫는 함수
+//   openTargetFn: 새로 열 화면(B)을 여는 함수 — 내부에서 pushModalHistory를 호출해야 함
+//   reopenCurrentFn: B가 닫힐 때 다시 A를 여는 함수 — openCalendar()처럼 비동기(async)일 수
+//   있어 await로 처리한다
+function navigateReplacingScreen(closeCurrentFn, openTargetFn, reopenCurrentFn) {
+  const capturedEntry = modalCloseStack.length > 0
     ? modalCloseStack[modalCloseStack.length - 1]
     : null;
 
-  closeParentFn();
+  closeCurrentFn();
   popModalHistorySilent();
-  openSheet(eventId);
+  openTargetFn();
 
   wrapTopModalClose(async () => {
-    await reopenParentFn();
-    if (parentStackEntry) {
-      modalCloseStack[modalCloseStack.length - 1] = parentStackEntry;
+    await reopenCurrentFn();
+    if (capturedEntry) {
+      modalCloseStack[modalCloseStack.length - 1] = capturedEntry;
     }
   });
+}
+
+// ── "찜한 이벤트/최근 본 이벤트/캘린더/알림" 같은 목록 화면에서 항목을 눌러 상세시트를
+// 열 때 쓰는 편의 함수. navigateReplacingScreen의 특수한 형태(대상 화면이 항상 상세시트).
+function openSheetFromParentScreen(eventId, closeParentFn, reopenParentFn) {
+  navigateReplacingScreen(closeParentFn, () => openSheet(eventId), reopenParentFn);
 }
 
 window.addEventListener("popstate", () => {

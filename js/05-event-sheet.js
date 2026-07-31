@@ -349,12 +349,11 @@ sheetOverlay.addEventListener("click", (e) => {
 });
 
 // 상세페이지 미니맵의 "지도 크게 보기" — 지도 페이지로 이동하면서 이 이벤트 위치를 정중앙에 맞춘다.
+// 지도 페이지를 닫으면 (다른 곳이 아니라) 정확히 이 상세시트로 돌아오게 한다.
 document.getElementById("mapExpandBtn").addEventListener("click", () => {
   const ev = EVENTS.find(e => e.id === activeEventId);
   if (!ev || ev.lat == null || ev.lng == null) return;
-  closeSheet();
-  popModalHistorySilent();
-  openMapPage(ev);
+  navigateReplacingScreen(closeSheet, () => openMapPage(ev), () => openSheet(ev.id));
 });
 
 function toggleLike(eventId) {
