@@ -163,9 +163,7 @@ async function renderNotificationList() {
     listEl.querySelectorAll(".notif-item[data-id]").forEach(el => {
       el.addEventListener("click", (e) => {
         if (e.target.closest(".notif-item-remove")) return;
-        closeMoreMenu();
-        popModalHistorySilent();
-        openSheet(el.dataset.id);
+        openSheetFromParentScreen(el.dataset.id, closeMoreMenu, openMoreMenu);
       });
     });
     listEl.querySelectorAll(".notif-item-remove").forEach(btn => {

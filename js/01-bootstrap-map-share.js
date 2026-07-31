@@ -371,6 +371,44 @@ function popModalHistorySilent() {
   history.back();
 }
 
+// ── 스택 맨 위 닫기 함수를 "닫힌 뒤 추가로 이걸 한다"와 합쳐서 교체한다.
+// openFromProfile()이 원래 이 로직을 자체적으로 갖고 있었는데, 상세시트가 목록 화면
+// 위에서 열릴 때도 똑같은 패턴이 필요해져서 공용 함수로 뺐다.
+function wrapTopModalClose(afterCloseFn) {
+  if (modalCloseStack.length === 0) return;
+  const originalClose = modalCloseStack[modalCloseStack.length - 1];
+  modalCloseStack[modalCloseStack.length - 1] = () => {
+    originalClose();
+    afterCloseFn();
+  };
+}
+
+// ── "찜한 이벤트/최근 본 이벤트/캘린더/알림" 같은 목록 화면에서 항목을 눌러 상세시트를
+// 열 때 공통으로 쓴다. 상세시트를 닫으면 정확히 그 목록 화면으로 돌아가야 하는데,
+// 그 화면이 애초에 어떻게 열렸는지(프로필 메뉴를 거쳤는지, 하단 탭을 바로 눌렀는지 등)는
+// 매번 다를 수 있다. 그래서 "지금 스택 맨 위에 있던 게 뭐였는지"를 그대로 캡처해뒀다가,
+// 상세시트가 닫힐 때 그 목록 화면을 다시 열고 캡처해둔 걸 그대로 복원한다 — 그러면
+// 목록 화면이 프로필에서 열렸었다면(닫으면 프로필로 복귀하도록 랩핑되어 있었다면)
+// 그 관계도 끊기지 않고 그대로 이어진다. 즉 "어디서 들어왔든 상세를 닫으면 들어왔던
+// 곳으로 돌아간다"가 목록의 depth와 무관하게 항상 성립한다.
+// reopenFn은 openCalendar()처럼 비동기(async)일 수 있어 await로 처리한다.
+function openSheetFromParentScreen(eventId, closeParentFn, reopenParentFn) {
+  const parentStackEntry = modalCloseStack.length > 0
+    ? modalCloseStack[modalCloseStack.length - 1]
+    : null;
+
+  closeParentFn();
+  popModalHistorySilent();
+  openSheet(eventId);
+
+  wrapTopModalClose(async () => {
+    await reopenParentFn();
+    if (parentStackEntry) {
+      modalCloseStack[modalCloseStack.length - 1] = parentStackEntry;
+    }
+  });
+}
+
 window.addEventListener("popstate", () => {
   if (suppressNextPopstate) {
     suppressNextPopstate = false;

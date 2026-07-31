@@ -303,9 +303,7 @@ function renderCouponWallet() {
 
   listEl.querySelectorAll(".coupon-wallet-item").forEach(item => {
     item.addEventListener("click", () => {
-      closeCouponWallet();
-      popModalHistorySilent();
-      openSheet(item.dataset.id);
+      openSheetFromParentScreen(item.dataset.id, closeCouponWallet, openCouponWallet);
     });
   });
   listEl.querySelectorAll(".coupon-wallet-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));
@@ -445,9 +443,7 @@ function renderRecentView() {
 
   listEl.querySelectorAll(".coupon-wallet-item").forEach(item => {
     item.addEventListener("click", () => {
-      closeRecentView();
-      popModalHistorySilent();
-      openSheet(item.dataset.id);
+      openSheetFromParentScreen(item.dataset.id, closeRecentView, openRecentView);
     });
   });
   listEl.querySelectorAll(".coupon-wallet-logo").forEach(img => attachLogoFallback(img, img.dataset.brand, img.dataset.domain));

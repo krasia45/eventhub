@@ -127,13 +127,7 @@ function openFromProfile(openFn) {
   popModalHistory();
   openFn();
   // 방금 열린 화면의 닫기 함수(스택 최상단)를 "닫고 나서 프로필 재오픈"으로 교체
-  if (modalCloseStack.length > 0) {
-    const originalClose = modalCloseStack[modalCloseStack.length - 1];
-    modalCloseStack[modalCloseStack.length - 1] = () => {
-      originalClose();
-      openAuthModal();
-    };
-  }
+  wrapTopModalClose(openAuthModal);
 }
 
 /* ---------- 나의 활동 카드 3개: 각 화면으로 바로 이동 (닫으면 프로필 복귀) ---------- */

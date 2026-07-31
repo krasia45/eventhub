@@ -353,7 +353,7 @@ document.getElementById("mapExpandBtn").addEventListener("click", () => {
   const ev = EVENTS.find(e => e.id === activeEventId);
   if (!ev || ev.lat == null || ev.lng == null) return;
   closeSheet();
-  popModalHistory();
+  popModalHistorySilent();
   openMapPage(ev);
 });
 
