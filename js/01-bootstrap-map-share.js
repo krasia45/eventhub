@@ -178,6 +178,15 @@ const APP_STORE_LINKS = {
 /* ---------- 공유하기: 인스타그램/페이스북/X(트위터)/카카오톡 실제 앱 아이콘 스타일 그리드 ---------- */
 function openShareFlow(ev) {
   const shareUrl = getEventShareUrl(ev);
+  // 카카오톡 버튼을 누른 "그 순간"에 SDK 로딩(네트워크 요청)이 시작되면, 로딩이 끝나고
+  // Kakao.Share.sendDefault()가 실제로 실행될 땐 탭(사용자 제스처) 시점에서 시간이 좀
+  // 지나있게 된다. PC 브라우저는 이 정도 지연에 관대해서 로그인 팝업이라도 뜨지만,
+  // 모바일 브라우저(특히 iOS Safari)는 훨씬 엄격해서 그 사이 지연이 있으면 앱 전환/팝업을
+  // 조용히 막아버린다 — 그래서 PC에선 되는데 폰에서는 반응이 없는 증상으로 나타났다.
+  // 공유 시트를 여는 시점에 미리 백그라운드로 로딩을 걸어두면(에러는 무시—실제 실패
+  // 처리는 클릭 시점에 shareToKakao에서 함), 사용자가 카카오톡 버튼을 누를 때쯤엔 이미
+  // 로딩이 끝나있어서 탭과 거의 동시에 실행된다.
+  loadKakaoShareSdk().catch(() => {});
   openShareMenu(ev, shareUrl);
 }
 
