@@ -202,3 +202,7 @@
 .feed-title-ic svg { width: 100%; height: 100%; }
 .feed-title-ic-target { width: auto; height: auto; font-size: 16px; vertical-align: -2px; }
 .feed-count { font-size: 12.5px; color: var(--text-3); font-weight: 600; }
+/* "내 주변 20km" 칩이 원래 "내 주변 인기 이벤트" 헤더에 있었는데, 실제로는 이 "전체
+   이벤트" 목록을 거리로 걸러주는 기능이라 여기로 옮겼다 — 있던 자리엔 위치 상태
+   안내(nearbyLocationStatus)가 새로 생겨서 두 가지 "위치" UI가 겹쳐 보였었다. */
+.feed-head-right { display: flex; align-items: center; gap: 8px; }

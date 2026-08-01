@@ -132,7 +132,7 @@ async function renderNearbySection() {
   if (EVENTS.length === 0) { section.hidden = true; nearbyHasData = false; updateDiscoverySectionsVisibility(); return; }
 
   const loc = await getQuietLocation();
-  const NEARBY_RADIUS_KM = 15;
+  const NEARBY_RADIUS_KM = 5; // 팝업/카페/체험 중심이라 "내 주변"은 걸어갈 만한 거리감이어야 자연스럽다
 
   const nearby = EVENTS
     .filter(ev => ev.lat != null && ev.lng != null && isEventLive(ev)) // 좌표 없는 온라인 전용 이벤트, 종료된 이벤트는 '내 주변'에서 애초에 제외
@@ -155,7 +155,7 @@ async function renderNearbySection() {
     actionBtn.textContent = "내 위치 설정";
     actionBtn.dataset.mode = "request";
   } else {
-    statusLabel.textContent = "📍 내 위치 기준 20km";
+    statusLabel.textContent = "📍 내 위치 기준 5km";
     actionBtn.textContent = "↻ 주변 다시 찾기";
     actionBtn.dataset.mode = "refresh";
   }
