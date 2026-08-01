@@ -610,7 +610,7 @@ document.getElementById("inviteShareBtn").addEventListener("click", async () => 
       content: {
         title: "EventHub — 놓치면 아까운 할인/팝업 정보 모음",
         description: "친구가 EventHub로 초대했어요! 가입하고 같이 써봐요 🎉",
-        imageUrl: `${window.location.origin}/img/eventhub-share.png`,
+        imageUrl: `${window.location.origin}/icons/icon-512.png`,
         link: { mobileWebUrl: inviteLink, webUrl: inviteLink },
       },
       buttons: [{ title: "EventHub 시작하기", link: { mobileWebUrl: inviteLink, webUrl: inviteLink } }],

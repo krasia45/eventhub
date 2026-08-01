@@ -115,12 +115,19 @@ function loadKakaoShareSdk() {
 
 async function shareToKakao(ev, shareUrl) {
   await loadKakaoShareSdk();
+  // ⚠️ 예전엔 ev.image를 그대로 넣었는데, 두 가지 경우에 카카오톡 공유 자체가 실패했다:
+  //  1) 대표이미지가 비어있는 이벤트 — Kakao Share API는 imageUrl이 빈 문자열이면 거부한다.
+  //  2) 대표이미지 칸에 여러 장(줄바꿈 구분)이 들어있는 이벤트 — 그 여러 줄짜리 문자열을
+  //     통째로 "하나의 URL"로 보내니 당연히 유효하지 않은 값이 된다.
+  // 카드 썸네일에 이미 쓰고 있는 getEventThumbnail()로 "첫 장만, 없으면 빈 문자열"을 뽑고,
+  // 그래도 없으면 프로젝트에 실제로 있는 아이콘 이미지로 대체한다.
+  const imageUrl = getEventThumbnail(ev) || `${window.location.origin}/icons/icon-512.png`;
   window.Kakao.Share.sendDefault({
     objectType: "feed",
     content: {
       title: `${ev.brand} · ${ev.title}`,
       description: `${ev.discount} · ${ev.period}`,
-      imageUrl: ev.image,
+      imageUrl,
       link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
     },
     buttons: [{ title: "이벤트 보러가기", link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }],
