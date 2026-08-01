@@ -146,8 +146,27 @@ async function renderNearbySection() {
   nearbyHasData = true;
   section.hidden = false;
 
+  // 위치 출처 안내 — 실제 GPS 기반인지, 권한이 없어서 서울시청 기준으로 대체된 건지
+  // 명확히 구분해서 보여준다("내 주변"이라고 해놓고 실제 위치인 척하지 않기 위함).
+  const statusLabel = document.getElementById("nearbyLocationLabel");
+  const actionBtn = document.getElementById("nearbyLocationActionBtn");
+  if (loc.fallback) {
+    statusLabel.textContent = "📍 서울시청 기준으로 보고 있어요";
+    actionBtn.textContent = "내 위치 설정";
+    actionBtn.dataset.mode = "request";
+  } else {
+    statusLabel.textContent = "📍 내 위치 기준 20km";
+    actionBtn.textContent = "↻ 주변 다시 찾기";
+    actionBtn.dataset.mode = "refresh";
+  }
+
   scroll.innerHTML = nearby.map(({ ev, dist }, idx) => {
-    const distLabel = dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`;
+    // ⚠️ 위치 권한이 없으면 이 거리는 "서울시청 기준" 거리일 뿐 사용자의 실제 위치와
+    // 무관해서, "3.2km"처럼 진짜 거리인 척 보여주면 오해를 살 수 있다. 이 경우엔 아예
+    // 숫자를 생략한다 — .card-distance는 border/background가 있는 pill이라, 빈 텍스트를
+    // 넣어도 태그 자체를 렌더링하면 빈 배지가 남는다는 점에 주의(그래서 조건부로
+    // 아예 빼버린다, 값만 비우지 않는다).
+    const distLabel = loc.fallback ? "" : (dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`);
     const stats = eventStatsCache[ev.id] || { views: 0, likes: 0 };
     const cardDiscountText = escapeHtml((ev.discount || "").split(/\s+\+\s+/)[0].trim());
     const conditionsHtml = ev.conditions
@@ -177,7 +196,7 @@ async function renderNearbySection() {
         ${conditionsHtml}
         <div class="nearby-card-mode-row">
           <span class="card-mode-row">${getChannelMode(ev)}</span>
-          <span class="card-distance">${distLabel}</span>
+          ${distLabel ? `<span class="card-distance">${distLabel}</span>` : ""}
         </div>
         <div class="nearby-card-stats">
           <span>👁 ${formatCount(stats.views)}</span>

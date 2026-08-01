@@ -36,6 +36,26 @@
   gap: 4px;
   line-height: 1;
 }
+/* 실제 GPS인지, 권한이 없어서 서울시청 기준으로 대체된 건지 명확히 알려주는 안내줄.
+   버튼 문구/동작은 상태에 따라 JS에서 "내 위치 설정" ↔ "↻ 주변 다시 찾기"로 바뀐다. */
+.nearby-location-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+#nearbyLocationActionBtn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+#nearbyLocationActionBtn:disabled { opacity: 0.5; }
 .nearby-title-ic {
   display: inline-flex;
   width: 18px;

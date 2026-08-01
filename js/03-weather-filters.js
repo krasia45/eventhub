@@ -5,10 +5,10 @@ function getQuietLocation() {
   // GPS 필터처럼 명시적 버튼 클릭 없이, 이미 허용된 위치 권한이 있으면 사용하고
   // 없거나 거부되면 서울 기준으로 조용히 대체합니다.
   return new Promise((resolve) => {
-    if (!navigator.geolocation) { resolve(DEFAULT_WEATHER_LOCATION); return; }
+    if (!navigator.geolocation) { resolve({ ...DEFAULT_WEATHER_LOCATION, fallback: true }); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => resolve(DEFAULT_WEATHER_LOCATION),
+      () => resolve({ ...DEFAULT_WEATHER_LOCATION, fallback: true }),
       { timeout: 5000 }
     );
   });

@@ -418,6 +418,29 @@ function renderSelectedFilterChips() {
 }
 document.getElementById("gpsFilterChip").addEventListener("click", toggleGpsFilter);
 
+// "내 위치 설정"(권한 요청) / "↻ 주변 다시 찾기"(수동 새로고침) 겸용 버튼.
+// 두 경우 다 renderNearbySection()이 내부적으로 getQuietLocation()을 다시 호출해서
+// 처리하므로, 여기서는 로딩 표시만 해주고 다시 그리기만 하면 된다. watchPosition 같은
+// 지속 추적은 쓰지 않고, 클릭했을 때만 위치를 한 번 조회한다.
+document.getElementById("nearbyLocationActionBtn").addEventListener("click", async () => {
+  const btn = document.getElementById("nearbyLocationActionBtn");
+  const label = document.getElementById("nearbyLocationLabel");
+  const wasRequestingPermission = btn.dataset.mode === "request";
+
+  btn.disabled = true;
+  label.textContent = "📍 위치 확인 중...";
+
+  await renderNearbySection();
+
+  btn.disabled = false;
+  // 권한을 요청했는데도 여전히 서울시청 기준(fallback)이면, 브라우저가 이미 여러 번
+  // 거부돼서 재요청 자체를 조용히 막고 있다는 뜻이다(반복 거부 시 브라우저가 프롬프트를
+  // 아예 다시 안 띄움) — 아무 설명 없이 그냥 실패한 것처럼 보이지 않게 안내한다.
+  if (wasRequestingPermission && document.getElementById("nearbyLocationActionBtn").dataset.mode === "request") {
+    showToast("위치 권한이 허용되지 않았어요. 브라우저 설정에서 위치 권한을 확인해주세요.");
+  }
+});
+
 /* ---------- Render: Ranking (조회수·좋아요 기반 실제 랭킹, 카테고리별) ---------- */
 let rankingShowCount = 5;
 
