@@ -406,7 +406,7 @@ let mapMyLocationOverlay = null; // 현재 위치 파란 점
 // ── 좌표 중심으로 반경 radiusKm를 확실히 담는 지도 범위를 맞춘다.
 // 줌 레벨 숫자(level: 7 등)로 "대략 몇 km"를 맞추려면 카카오맵 레벨-거리 대응표가
 // 필요한데 정확한 수치를 신뢰할 수 없었다. 그 상태로 감으로 정하면, "내 주변 인기
-// 이벤트"(5km 기준)에 뜬 이벤트가 지도 페이지 하단 목록엔 안 뜨는 불일치가 생길 수
+// 이벤트"(현재 반경 기준)에 뜬 이벤트가 지도 페이지 하단 목록엔 안 뜨는 불일치가 생길 수
 // 있다. 위경도 1도 ≈ 111km라는 확실한 수치로 경계 상자를 직접 계산해서 setBounds
 // 하면, 두 화면의 "내 주변" 기준이 항상 정확히 일치한다.
 function fitMapToRadiusKm(loc, radiusKm) {
@@ -452,9 +452,9 @@ async function initMapPageMap(focusEvent) {
       // 오버레이가 열리는 트랜지션(transform) 도중이라 레이아웃 계산 타이밍이 애매할
       // 가능성에 대비해 생성 직후에도 한 번 재계산해준다(재진입 시엔 이미 하고 있었음).
       mapPageKakaoMapInstance.relayout();
-      // "내 주변 인기 이벤트"(홈)와 정확히 같은 5km 반경이 지도 화면에 담기도록 맞춘다
+      // "내 주변 인기 이벤트"(홈)와 정확히 같은 반경이 지도 화면에 담기도록 맞춘다
       // — 홈에서 보이던 이벤트가 지도 하단 목록에도 그대로 나오게 하기 위함.
-      if (!focusEvent) fitMapToRadiusKm(loc, 5);
+      if (!focusEvent) fitMapToRadiusKm(loc, 10);
       console.log("[지도 디버그] 카카오맵 생성 완료 — center:", loc, "level:", focusEvent ? 4 : 7);
 
       if (!focusEvent) renderMyLocationDot(loc);
@@ -492,7 +492,7 @@ async function initMapPageMap(focusEvent) {
         const isValidCoord = Number.isFinite(loc.lat) && Number.isFinite(loc.lng)
           && Math.abs(loc.lat) <= 90 && Math.abs(loc.lng) <= 180;
         if (isValidCoord) {
-          fitMapToRadiusKm(loc, 5); // "내 주변 인기 이벤트"와 동일한 5km 반경으로 정확히 맞춤
+          fitMapToRadiusKm(loc, 10); // "내 주변 인기 이벤트"와 동일한 10km 반경으로 정확히 맞춤
           if (!loc.fallback) renderMyLocationDot(loc);
         } else {
           console.error("[지도 디버그] 재진입 시(주변 이벤트) 유효하지 않은 좌표라 중심 이동을 건너뜁니다:", loc);
