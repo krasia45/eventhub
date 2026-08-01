@@ -114,7 +114,13 @@ function loadKakaoShareSdk() {
 }
 
 async function shareToKakao(ev, shareUrl) {
-  await loadKakaoShareSdk();
+  // ⚠️ 폰에서 "눌러도 아무 반응 없음" 증상은 SDK 로딩 프로미스가 resolve도 reject도 안
+  // 하고 그냥 멈춰있을 때 나타난다(에러도 안 나니 catch도 못 걸림). 무한정 기다리지 않고
+  // 일정 시간 후엔 포기하도록 타임아웃을 둬서, 최소한 대체 동작(catch)으로는 넘어가게 한다.
+  await Promise.race([
+    loadKakaoShareSdk(),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("카카오 공유 SDK 로딩 타임아웃(5초)")), 5000)),
+  ]);
   // ⚠️ 예전엔 ev.image를 그대로 넣었는데, 두 가지 경우에 카카오톡 공유 자체가 실패했다:
   //  1) 대표이미지가 비어있는 이벤트 — Kakao Share API는 imageUrl이 빈 문자열이면 거부한다.
   //  2) 대표이미지 칸에 여러 장(줄바꿈 구분)이 들어있는 이벤트 — 그 여러 줄짜리 문자열을
@@ -228,16 +234,15 @@ function openShareMenu(ev, shareUrl) {
       if (platform === "kakao") {
         try { await shareToKakao(ev, shareUrl); }
         catch (err) {
-          console.error(
-            "카카오톡 공유 실패:", err,
-            "\n→ 흔한 원인: 카카오 디벨로퍼스에서 이 앱에 '카카오톡 공유' 제품이 활성화 안 됐거나,\n" +
-            "  Web 플랫폼 도메인 등록이 안 돼 있을 수 있어요(지도 SDK 문제와 같은 원인 계열)."
-          );
-          // ⚠️ 임시 진단용: 개발자도구 없이도 폰에서 바로 에러 내용을 캡처할 수 있도록
-          // 토스트 대신 alert로 띄운다 — 화면에서 사라지지 않고 직접 닫을 때까지 남아있다.
-          // 원인 확인되면 다시 showToast로 되돌릴 예정.
-          const errText = (err && (err.msg || err.message)) || JSON.stringify(err) || String(err);
-          alert("[진단용] 카카오톡 공유 실패\n\n" + errText);
+          console.error("카카오톡 공유 실패:", err);
+          // 카카오톡 공유가 안 될 때(SDK 문제 등) 그냥 아무 반응 없이 끝나지 않도록,
+          // 친구 초대 공유와 동일한 방식으로 링크 복사로 대체한다.
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            showToast("카카오톡 공유를 열지 못해 링크를 복사했어요. 카카오톡에 붙여넣어 주세요.");
+          } catch {
+            showToast(`공유 링크: ${shareUrl}`);
+          }
         }
       } else if (platform === "facebook") {
         // sharer.php는 유니버설 링크로 등록돼 있어 앱 설치 시 자동으로 앱이 뜨고,
