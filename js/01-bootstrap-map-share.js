@@ -233,7 +233,11 @@ function openShareMenu(ev, shareUrl) {
             "\n→ 흔한 원인: 카카오 디벨로퍼스에서 이 앱에 '카카오톡 공유' 제품이 활성화 안 됐거나,\n" +
             "  Web 플랫폼 도메인 등록이 안 돼 있을 수 있어요(지도 SDK 문제와 같은 원인 계열)."
           );
-          showToast("카카오톡 공유를 불러오지 못했어요.");
+          // ⚠️ 임시 진단용: 개발자도구 없이도 폰에서 바로 에러 내용을 캡처할 수 있도록
+          // 토스트 대신 alert로 띄운다 — 화면에서 사라지지 않고 직접 닫을 때까지 남아있다.
+          // 원인 확인되면 다시 showToast로 되돌릴 예정.
+          const errText = (err && (err.msg || err.message)) || JSON.stringify(err) || String(err);
+          alert("[진단용] 카카오톡 공유 실패\n\n" + errText);
         }
       } else if (platform === "facebook") {
         // sharer.php는 유니버설 링크로 등록돼 있어 앱 설치 시 자동으로 앱이 뜨고,
