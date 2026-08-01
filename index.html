@@ -161,9 +161,12 @@
     <!-- ===== 내 주변 인기 이벤트 (GPS 기반, 위치 권한 없으면 서울 기준으로 조용히 대체) ===== -->
     <section class="nearby-section" id="nearbySection" hidden>
       <div class="section-head nearby-section-head">
-        <h2 id="nearbyTitle"><span class="nearby-title-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8"/></svg></span> 내 주변 인기 이벤트</h2>
-        <div class="nearby-gps-row">
-          <button class="map-page-open-btn" id="mapPageOpenBtn" aria-label="지도에서 더 찾아보기">🗺️ 지도에서 더 찾아보기</button>
+        <div class="nearby-title-row">
+          <h2 id="nearbyTitle"><span class="nearby-title-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8"/></svg></span> 내 주변 인기 이벤트</h2>
+          <!-- 헤더의 지도 아이콘(mapHeaderBtn)과 동일한 SVG를 그대로 재사용 -->
+          <button class="icon-btn nearby-map-btn" id="mapPageOpenBtn" aria-label="지도에서 더 찾아보기">
+            <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 4v14M15 6v14" stroke="currentColor" stroke-width="1.7"/></svg>
+          </button>
         </div>
         <div class="nearby-location-status" id="nearbyLocationStatus">
           <span id="nearbyLocationLabel">📍 서울시청 기준으로 보고 있어요</span>

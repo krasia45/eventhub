@@ -9,6 +9,19 @@
   align-items: stretch;
   gap: 8px;
 }
+.nearby-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+/* 헤더의 지도 아이콘(.icon-btn)과 같은 모양이지만, 제목 글자(17px) 옆에 나란히
+   놓이는 자리라 헤더 버튼(38px)보다 조금 작게 조정한다. */
+.nearby-map-btn {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
 .nearby-gps-row {
   display: flex;
   align-items: center;
