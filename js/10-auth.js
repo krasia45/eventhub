@@ -128,11 +128,7 @@ function renderProfileFollowList() {
    해결: 새 화면이 pushModalHistory로 등록한 "닫기 함수"를 래핑해서,
    그 화면이 닫힐 때(뒤로가기든 X버튼이든) 프로필이 자동으로 다시 열리게 한다. */
 function openFromProfile(openFn) {
-  closeAuthModal();
-  popModalHistory();
-  openFn();
-  // 방금 열린 화면의 닫기 함수(스택 최상단)를 "닫고 나서 프로필 재오픈"으로 교체
-  wrapTopModalClose(openAuthModal);
+  navigateReplacingScreen(closeAuthModal, openFn, openAuthModal);
 }
 
 /* ---------- 나의 활동 카드 3개: 각 화면으로 바로 이동 (닫으면 프로필 복귀) ---------- */

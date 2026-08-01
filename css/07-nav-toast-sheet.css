@@ -272,6 +272,10 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
   gap: 5px;
   z-index: 2;
 }
+/* ⚠️ 같은 CSS 특이도 함정: display:flex가 있으면 JS로 [hidden]을 줘도 계속 "존재"한다
+   (내용은 비워서 눈에 크게 띄진 않지만, 사진이 1장뿐인 이벤트에서도 빈 dots 영역이
+   레이아웃에 남는다). .info-row 등과 동일한 이유로 명시적으로 막아준다. */
+.sheet-photo-dots[hidden] { display: none; }
 .sheet-photo-dot {
   width: 6px; height: 6px;
   border-radius: 50%;
@@ -341,6 +345,10 @@ html[data-theme="dark"] .bottom-nav { background: rgba(31,31,40,0.96); }
   gap: 8px 18px;
   margin-bottom: 20px;
 }
+/* ⚠️ .info-row와 동일한 CSS 특이도 함정: display:flex가 있으면 JS로 [hidden]을
+   줘도 계속 보인다. 혜택 정보가 없는 이벤트(팝업/전시 등)에서 "혜택" 섹션을
+   완전히 숨기려면 이 규칙이 반드시 필요하다. */
+.benefit-chip-row[hidden] { display: none; }
 .benefit-chip {
   display: inline-flex;
   align-items: center;

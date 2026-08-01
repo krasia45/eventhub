@@ -20,6 +20,7 @@ import urllib.request
 import urllib.error
 import urllib.parse
 from urllib.parse import urlparse
+from datetime import date
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -62,6 +63,41 @@ def normalize_domain(raw):
     if d.startswith("www."):
         d = d[4:]
     return d.strip()
+
+
+KOREAN_WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"]
+
+
+def format_date_kr(date_str):
+    """'YYYY-MM-DD' -> '2026.07.31(금)' 형태로. 실제 브랜드들(BBQ, 카카오 등)도 요일을
+    같이 표기하는 경우가 많다 — 고객이 캘린더를 따로 안 봐도 무슨 요일인지 바로 알 수
+    있어서다. 파싱에 실패하면(형식이 이상한 값, None 등) 요일 없이 점(.) 구분자로만
+    표시하거나(문자열인 경우) 빈 문자열을 돌려준다(문자열조차 아닌 경우)."""
+    try:
+        d = date.fromisoformat(date_str)
+    except (ValueError, TypeError):
+        return date_str.replace("-", ".") if isinstance(date_str, str) else ""
+    return f"{d.year}.{d.month:02d}.{d.day:02d}({KOREAN_WEEKDAYS[d.weekday()]})"
+
+
+def format_time_kr(raw):
+    """<input type="time">이 주는 "HH:MM"(24시간)을 "오전 10:00" / "오후 6:00" 같은
+    사람이 읽는 문구로 바꾼다. 시작/종료 "시각"까지 알아야 하는 이벤트(예: 선착순
+    쿠폰 오후 6시 마감)를 위해, 별도 컬럼 없이 기존 period 문구에 자연스럽게 합쳐서
+    쓴다 — "소진시까지" 같은 자유 문구를 이미 이 방식으로 다루고 있어서 스키마 변경
+    없이 바로 확장된다. 형식이 이상하면(예: 빈 값) None을 돌려주고 그냥 무시한다."""
+    if not raw:
+        return None
+    try:
+        hour_str, minute_str = raw.split(":")
+        hour, minute = int(hour_str), int(minute_str)
+    except (ValueError, AttributeError):
+        return None
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        return None
+    period = "오전" if hour < 12 else "오후"
+    hour12 = hour % 12 or 12
+    return f"{period} {hour12}:{minute:02d}"
 
 
 def extract_meta(html, prop):
@@ -276,6 +312,8 @@ class handler(BaseHTTPRequestHandler):
         desc = (data.get("desc") or "").strip()
         period_start = (data.get("periodStart") or "").strip()
         period_end = (data.get("periodEnd") or "").strip()
+        start_time_kr = format_time_kr((data.get("startTime") or "").strip())
+        end_time_kr = format_time_kr((data.get("endTime") or "").strip())
         source_url = data.get("sourceUrl")
         manual_image = (data.get("image") or "").strip()
         manual_domain = normalize_domain((data.get("domain") or "").strip())
@@ -318,15 +356,24 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(400, {"error": "카테고리를 선택해주세요."})
             return
 
+        # ⚠️ period_start/period_end는 date 타입이라 시각을 저장할 수 없다. 그렇다고
+        # 컬럼을 새로 만들지 않고, 이미 "소진시까지" 같은 자유 문구를 붙이던 방식 그대로
+        # 사람이 보는 period 문구에 시각을 자연스럽게 끼워 넣는다 — 새 컬럼/새 화면 없이
+        # "몇 시부터/몇 시까지" 이벤트를 표현할 수 있다.
+        def with_time(date_str, time_kr):
+            d = format_date_kr(date_str)
+            return f"{d} {time_kr}" if time_kr else d
+
         if period_start and period_end:
-            period_label = f"{period_start.replace('-', '.')} - {period_end.replace('-', '.')}"
+            period_label = f"{with_time(period_start, start_time_kr)} - {with_time(period_end, end_time_kr)}"
         elif period_start:
             # period_end는 NULL로 저장 — events.py의 공개 API가 이미 period_end IS NULL을
             # "아직 진행중"으로 취급하므로, 홈 화면/랭킹/마감순 정렬이 별도 수정 없이도
             # 자연스럽게 동작한다. 사람이 보는 period 텍스트에만 문구를 채워 넣는다.
-            period_label = f"{period_start.replace('-', '.')} - {no_end_label}"
+            period_label = f"{with_time(period_start, start_time_kr)} - {no_end_label}"
         elif period_end:
-            period_label = f"{period_end.replace('-', '.')}까지"
+            end_label = with_time(period_end, end_time_kr)
+            period_label = f"{end_label}까지"
         else:
             period_label = no_end_label  # 완전히 정보 없으면 빈 문자열 그대로 저장
 

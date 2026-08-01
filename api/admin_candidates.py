@@ -25,6 +25,7 @@ import re
 import sys
 import uuid
 from urllib.parse import urlparse, parse_qs
+from datetime import date
 
 sys.path.insert(0, os.path.dirname(__file__))
 from _supabase_client import sb_select, sb_insert, sb_update, sb_delete
@@ -42,6 +43,20 @@ def normalize_domain(raw):
     if d.startswith("www."):
         d = d[4:]
     return d.strip()
+
+
+KOREAN_WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"]
+
+
+def format_date_kr(date_str):
+    """api/admin_url_register.py의 format_date_kr과 동일한 로직.
+    'YYYY-MM-DD' -> '2026.07.31(금)' — 게시된 이벤트의 기간을 수정할 때도 수동등록과
+    같은 형식(요일 포함)으로 period 문구를 다시 만든다."""
+    try:
+        d = date.fromisoformat(date_str)
+    except (ValueError, TypeError):
+        return date_str.replace("-", ".") if isinstance(date_str, str) else ""
+    return f"{d.year}.{d.month:02d}.{d.day:02d}({KOREAN_WEEKDAYS[d.weekday()]})"
 
 # events 테이블에서 수정 가능한 필드 화이트리스트.
 # id/created_at처럼 시스템이 관리하는 값이나, 임의 컬럼 주입을 막기 위해 명시적으로 허용된 것만 반영한다.
@@ -218,25 +233,25 @@ class handler(BaseHTTPRequestHandler):
                 "id": new_id,
                 "category": c["category"],
                 "brand": c["brand"],
-                "merchant_type": data.get("merchantType", "브랜드"),
+                "merchant_type": data.get("merchantType") or "브랜드",
                 "is_verified_real": True,
                 "lat": lat, "lng": lng,
                 "title": c["title"],
-                "subtitle": c.get("subtitle", ""),
-                "discount": c.get("discount", ""),
-                "period": c.get("period", ""),
+                "subtitle": c.get("subtitle") or "",
+                "discount": c.get("discount") or "",
+                "period": c.get("period") or "",
                 "period_start": c.get("period_start"),
                 "period_end": c.get("period_end"),
                 "channel": channel,
-                "conditions": data.get("conditions") or c.get("conditions", ""),
-                "target_audience": data.get("targetAudience") or c.get("target_audience", ""),
-                "desc": data.get("desc") or c.get("desc", ""),
-                "tags": c.get("tags", []),
-                "image": data.get("image") or c.get("image", ""),
-                "domain": normalize_domain(data.get("domain", "")),
+                "conditions": data.get("conditions") or c.get("conditions") or "",
+                "target_audience": data.get("targetAudience") or c.get("target_audience") or "",
+                "desc": data.get("desc") or c.get("desc") or "",
+                "tags": c.get("tags") or [],
+                "image": data.get("image") or c.get("image") or "",
+                "domain": normalize_domain(data.get("domain") or ""),
                 "link": data.get("link") or c.get("source_url"),
                 "source_url": c.get("source_url"),
-                "source_type": c.get("source_type", "unknown"),
+                "source_type": c.get("source_type") or "unknown",
                 "source_checked_at": "now()",
             })
             sb_insert("event_stats", {"event_id": new_id, "views": 0, "likes": 0})
@@ -286,9 +301,16 @@ class handler(BaseHTTPRequestHandler):
                 if current:
                     start = clean_patch.get("period_start", current[0].get("period_start")) or ""
                     end = clean_patch.get("period_end", current[0].get("period_end")) or ""
-                    # 종료일을 지워서 저장하면(= 소진시까지 등 무기한으로 전환) "2026.07.01 - "
-                    # 처럼 문구가 비어 보이지 않도록 기본 라벨을 채워준다.
-                    clean_patch["period"] = f"{start} - {end}" if end else f"{start} - 소진시까지"
+                    if start and end:
+                        clean_patch["period"] = f"{format_date_kr(start)} - {format_date_kr(end)}"
+                    elif start:
+                        # 종료일을 지워서 저장하면(= 소진시까지 등 무기한으로 전환) "2026.07.01(수) - "
+                        # 처럼 문구가 비어 보이지 않도록 기본 라벨을 채워준다.
+                        clean_patch["period"] = f"{format_date_kr(start)} - 소진시까지"
+                    elif end:
+                        clean_patch["period"] = f"{format_date_kr(end)}까지"
+                    else:
+                        clean_patch["period"] = "소진시까지"
 
             clean_patch["updated_at"] = "now()"
             sb_update("events", {"id": f"eq.{event_id}"}, clean_patch)

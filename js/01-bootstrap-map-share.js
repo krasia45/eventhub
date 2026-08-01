@@ -341,38 +341,49 @@ function getNaverMapLink(ev) {
    ================================================================== */
 const modalCloseStack = []; // 열려있는 모달들의 "닫기 함수" 스택 (맨 위 = 가장 최근에 연 모달)
 let suppressNextPopstate = false;
+// ⚠️ history.back()은 비동기다 — 호출한 그 자리에서 즉시 히스토리가 줄어드는 게 아니라,
+// 브라우저가 나중 시점에 popstate를 발생시키며 처리한다. 그런데 "닫고 나서 다른 화면을
+// 다시 연다"(예: 지갑 닫고 프로필 재오픈) 같은 경우, back() 호출 직후 같은 틱 안에서
+// pushModalHistory가 또 호출돼 history.pushState()가 실행되곤 했다 — 아직 처리 안 된
+// back()과 그 직후의 pushState()가 서로 경합하면서, 실제 브라우저 히스토리 깊이가
+// 우리가 추적하는 것보다 계속 줄어드는 문제가 있었다. 여러 화면을 오가다 보면 이게
+// 누적되어, 결국 뒤로가기/X 버튼이 앱의 히스토리를 다 지나쳐 앱 자체를 벗어나버리는
+// 심각한 버그로 이어졌다. 이 플래그가 켜져 있으면 pushModalHistory가 pushState 대신
+// replaceState를 쓴다 — replaceState는 완전히 동기적이라 경합 자체가 생기지 않는다.
+let nextPushShouldReplace = false;
 
 function pushModalHistory(closeFn, url) {
   modalCloseStack.push(closeFn);
-  history.pushState({ eventhubModalDepth: modalCloseStack.length }, "", url || location.href);
+  if (nextPushShouldReplace) {
+    nextPushShouldReplace = false;
+    history.replaceState({ eventhubModalDepth: modalCloseStack.length }, "", url || location.href);
+  } else {
+    history.pushState({ eventhubModalDepth: modalCloseStack.length }, "", url || location.href);
+  }
 }
 
 // 버튼/바깥영역 클릭 등 "UI 조작으로" 모달을 닫을 때 호출.
 // 실제 화면을 닫는 로직(예: closeSheet())은 호출한 쪽에서 이미 실행했다고 가정하고,
-// 여기서는 히스토리 스택만 정리한다. history.back()이 이전 URL로 자동 복원해준다.
+// 여기서는 히스토리 스택만 정리한다.
+//
+// closeFn이 순수하게 "닫기"만 한다면 history.back()으로 이전 URL을 복원한다. 하지만
+// closeFn 안에서 (wrapTopModalClose로 걸어둔) "닫고 나서 다른 화면을 새로 연다"가
+// 실행되면, 그 화면이 자체적으로 pushModalHistory를 호출해 스택 깊이가 다시 늘어난다
+// — 이 경우엔 back()을 부르면 안 된다(위 설명 참고). 실행 전후로 스택 깊이를 비교해서
+// 어느 쪽인지 판단한다.
 function popModalHistory() {
   if (modalCloseStack.length === 0) return;
-  // ⚠️ 이전엔 pop만 하고 실행을 안 해서, openFromProfile()이 "닫고 나서 프로필 재오픈"으로
-  // 교체해둔 close함수가 X버튼 클릭 시에는 무시되고 그냥 홈이 보이는 버그가 있었다.
-  // (시스템 뒤로가기 popstate 핸들러만 스택의 함수를 실행하고 있었음)
-  // 스택에서 꺼낸 함수를 여기서도 실행하면, X버튼이든 뒤로가기든 항상 같은 결과가 되어 통일된다.
   const closeFn = modalCloseStack.pop();
-  suppressNextPopstate = true;
-  history.back();
+  const depthBeforeClose = modalCloseStack.length;
+  nextPushShouldReplace = true; // closeFn이 뭔가 새로 열면 그 push가 replaceState를 쓰게 함
   closeFn();
-}
-
-// ── "닫기"가 아니라 "다른 화면으로 넘어가는" 경우 전용.
-// 예: 지갑/최근본/캘린더에서 이벤트를 눌러 상세시트로 들어갈 때. 이 화면들이 프로필
-// 메뉴에서 openFromProfile()로 열렸다면, 스택 맨 위 함수는 "닫고 나서 프로필 재오픈"으로
-// 바뀌어 있는 상태다. popModalHistory()는 그 함수를 실행까지 해버려서, 상세시트로
-// 넘어가려는 순간 프로필 모달이 다시 열려버리는 버그가 있었다(정작 의도는 "닫기"가
-// 아니라 "다른 화면 보기"였는데). 이 함수는 스택 정리만 하고 실행은 하지 않는다.
-function popModalHistorySilent() {
-  if (modalCloseStack.length === 0) return;
-  modalCloseStack.pop();
-  suppressNextPopstate = true;
-  history.back();
+  if (modalCloseStack.length === depthBeforeClose) {
+    // closeFn이 새로 아무것도 안 열었다 — 순수하게 "닫기"였으므로 진짜로 뒤로가기 처리
+    nextPushShouldReplace = false; // 안 쓰였을 수 있으니 다음 무관한 push에 영향 안 주게 정리
+    suppressNextPopstate = true;
+    history.back();
+  }
+  // else: closeFn 안에서 이미 새 화면이 replaceState로 열렸으므로 여기서 더 손댈 게 없다.
 }
 
 // ── 스택 맨 위 닫기 함수를 "닫힌 뒤 추가로 이걸 한다"와 합쳐서 교체한다.
@@ -398,14 +409,29 @@ function wrapTopModalClose(afterCloseFn) {
 //   openTargetFn: 새로 열 화면(B)을 여는 함수 — 내부에서 pushModalHistory를 호출해야 함
 //   reopenCurrentFn: B가 닫힐 때 다시 A를 여는 함수 — openCalendar()처럼 비동기(async)일 수
 //   있어 await로 처리한다
+//
+// ⚠️ closeCurrentFn()과 openTargetFn()을 각각 따로 실행하면 popModalHistory와 무관하게
+// history.back()이 끼어들 틈이 없어 보이지만, 예전 버전은 popModalHistorySilent()(내부적
+// 으로 history.back() 호출)를 부른 "직후" 같은 틱에서 openTargetFn()이 pushModalHistory로
+// pushState를 또 호출해 위에서 설명한 것과 동일한 경합이 있었다. 이제는 "닫고+연다"를
+// 하나의 closeFn으로 합쳐서 popModalHistory() 한 번에 맡긴다 — popModalHistory()가
+// 스스로 depth 변화를 감지해 안전하게 replaceState로 처리해준다.
 function navigateReplacingScreen(closeCurrentFn, openTargetFn, reopenCurrentFn) {
   const capturedEntry = modalCloseStack.length > 0
     ? modalCloseStack[modalCloseStack.length - 1]
     : null;
 
-  closeCurrentFn();
-  popModalHistorySilent();
-  openTargetFn();
+  if (modalCloseStack.length > 0) {
+    modalCloseStack[modalCloseStack.length - 1] = () => {
+      closeCurrentFn();
+      openTargetFn();
+    };
+    popModalHistory();
+  } else {
+    // 스택이 비어있는 예외적인 경우 — popModalHistory를 거칠 대상이 없으므로 그냥 순서대로 처리
+    closeCurrentFn();
+    openTargetFn();
+  }
 
   wrapTopModalClose(async () => {
     await reopenCurrentFn();
@@ -426,10 +452,15 @@ window.addEventListener("popstate", () => {
     suppressNextPopstate = false;
     return;
   }
-  // 시스템 뒤로가기(제스처/버튼)가 눌린 경우: 가장 최근에 연 모달을 닫는다
+  // 시스템 뒤로가기(제스처/버튼)가 눌린 경우: 가장 최근에 연 모달을 닫는다.
+  // closeFn이 (wrapTopModalClose로 걸린) 재오픈까지 포함하고 있다면, 그 재오픈이
+  // 새로 쌓는 히스토리는 pushState 대신 replaceState를 쓰게 한다 — 그래야 뒤로가기
+  // 한 번이 실제로 한 단계만 이동한 것과 일치한다(위 popModalHistory 설명 참고).
   if (modalCloseStack.length > 0) {
     const closeFn = modalCloseStack.pop();
+    nextPushShouldReplace = true;
     closeFn();
+    nextPushShouldReplace = false; // closeFn이 아무것도 새로 안 열었다면 다음 무관한 push에 영향 안 주게 정리
   }
 });
 

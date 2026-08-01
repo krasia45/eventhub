@@ -129,6 +129,9 @@
   <input type="text" id="manualTargetAudience" placeholder="참여 대상 (예: 신규 가입자 한정, 앱 회원 전용 — 없으면 비워두세요)">
   <input type="date" id="manualStart">
   <input type="date" id="manualEnd">
+  <label style="grid-column: 1 / -1; font-size:12px; color:#666; margin:-4px 0 -2px;">시작/마감 시각 (선택 — 몇 시부터 · 몇 시까지처럼 시간이 있는 이벤트라면 입력하세요)</label>
+  <input type="time" id="manualStartTime">
+  <input type="time" id="manualEndTime">
   <label style="grid-column: 1 / -1; display:flex; align-items:center; gap:6px; font-size:12.5px; color:#555; margin:-4px 0 0;">
     <input type="checkbox" id="manualNoEndDate" onchange="toggleNoEndDate()">
     종료일 없음 (소진시까지 / 재고 소진시까지 / 상시 진행 등 — 정해진 종료일이 없는 이벤트)
@@ -454,8 +457,10 @@ async function registerManual() {
   const conditions = document.getElementById("manualConditions").value.trim();
   const targetAudience = document.getElementById("manualTargetAudience").value.trim();
   const start = document.getElementById("manualStart").value;
+  const startTime = document.getElementById("manualStartTime").value; // "HH:MM" 또는 빈 값 (선택)
   const noEndDate = document.getElementById("manualNoEndDate").checked;
   const end = noEndDate ? "" : document.getElementById("manualEnd").value;
+  const endTime = noEndDate ? "" : document.getElementById("manualEndTime").value; // 종료일 없음이면 시각도 의미 없음
   const noEndLabel = document.getElementById("manualNoEndLabel").value.trim() || "소진시까지";
   const channel = document.getElementById("manualChannel").value.trim();
   const desc = document.getElementById("manualDesc").value.trim(); // 텍스트+이미지 URL이 줄 단위로 섞여있을 수 있음(그대로 저장, 상세페이지가 파싱해서 렌더링)
@@ -489,6 +494,7 @@ async function registerManual() {
         conditions: conditions || null,
         targetAudience: targetAudience || null,
         periodStart: start || null, periodEnd: noEndDate ? null : (end || null),
+        startTime: startTime || null, endTime: endTime || null,
         noEndLabel: noEndDate ? noEndLabel : null,
         sourceUrl: sourceUrl || null,
         image: image || null,
@@ -500,7 +506,7 @@ async function registerManual() {
       return;
     }
     statusEl.textContent = `✅ "${title}" 후보로 추가됐어요. 아래에서 승인해주세요.`;
-    ["manualBrand","manualTitle","manualDiscount","manualStart","manualEnd","manualChannel","manualDesc","manualSourceUrl"].forEach(id => {
+    ["manualBrand","manualTitle","manualDiscount","manualStart","manualEnd","manualStartTime","manualEndTime","manualChannel","manualDesc","manualSourceUrl"].forEach(id => {
       document.getElementById(id).value = "";
     });
     document.getElementById("manualNoEndDate").checked = false;

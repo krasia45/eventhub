@@ -217,20 +217,20 @@ class handler(BaseHTTPRequestHandler):
 
             candidates.append({
                 "category": category,
-                "brand": item.get("brand", ""),
-                "title": item.get("title", ""),
-                "subtitle": item.get("confidence_note", ""),
-                "discount": item.get("discount", ""),
-                "conditions": item.get("conditions", ""),
+                "brand": item.get("brand") or "",
+                "title": item.get("title") or "",
+                "subtitle": item.get("confidence_note") or "",
+                "discount": item.get("discount") or "",
+                "conditions": item.get("conditions") or "",
                 "period_start": item.get("period_start"),
                 "period_end": item.get("period_end"),
                 "period": f"{item.get('period_start', '')} - {item.get('period_end', '')}",
                 "channel": item.get("channel") or "",
-                "desc": item.get("desc", ""),
+                "desc": item.get("desc") or "",
                 "tags": [label],
                 "source_url": item.get("source_url"),
                 "source_type": "ai_scan",
-                "ai_confidence_note": item.get("confidence_note", ""),
+                "ai_confidence_note": item.get("confidence_note") or "",
                 "status": "pending",
             })
 
